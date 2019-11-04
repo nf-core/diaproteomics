@@ -6,8 +6,9 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - r-base>3.5
   - conda-forge::r-rmarkdown=1.10
   - openms=2.4.0
-  - comet-ms=2016013
   - python
-  - pyopenms
+  - pyprophet
+  - msproteomicstools
