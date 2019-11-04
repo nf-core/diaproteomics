@@ -1,13 +1,9 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-diaproteomics-1.0dev
+name: nf-core-diaproteomics-percolator-1.0dev
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
   - defaults
 dependencies:
-  - conda-forge::r-rmarkdown=1.10
-  - openms=2.4.0
-  - comet-ms=2016013
-  - python
-  - pyopenms
+  - percolator=3.1
