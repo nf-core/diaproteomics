@@ -63,7 +63,7 @@ if (params.help){
 
 
 // Validate inputs
-params.mzmls = params.mzmls ?: { log.error "No read data privided. Make sure you have used the '--mzmls' option."; exit 1 }()
+params.dia_mzmls = params.dia_mzmls ?: { log.error "No read data privided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
 params.fasta = params.fasta ?: { log.error "No read data privided. Make sure you have used the '--fasta' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
@@ -137,9 +137,9 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 
 
 
-Channel.fromPath( params.mzmls )
-        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.mzmls}\nNB: Path needs to be enclosed in quotes!" }
-        .into { input_mzmls; input_mzmls_align }
+Channel.fromPath( params.dia_mzmls )
+        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
+        .into { input_mzmls }
 
 
 // Header log info
@@ -148,7 +148,7 @@ def summary = [:]
 summary['Pipeline Name']  = 'nf-core/diaproteomics'
 summary['Pipeline Version'] = workflow.manifest.version
 summary['Run Name']     = custom_runName ?: workflow.runName
-summary['mzMLs']        = params.mzmls
+summary['mzMLs']        = params.dia_mzmls
 summary['Spectral Library']    = params.spectral_lib
 summary['Max Memory']   = params.max_memory
 summary['Max CPUs']     = params.max_cpus
@@ -220,7 +220,6 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     FileInfo --help &> v_openms.txt
     pyprophet -version
-    R DIAlignR.rscrpt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -252,16 +251,19 @@ process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
+     file lib_file_nd from input_lib
 
     output:
- 
+     file "${lib_file_nd.baseName}_decoy.fasta" into input_lib_decoy
+
     when:
      !params.skip_decoys
 
     script:
      """
-     OpenSwathDecoyGenerator -in
-                             -out
+     OpenSwathDecoyGenerator -in ${input_lib} \\
+                             -method ${method} \\
+                             -out ${input_lib_decoy} \\
      """
 }
 
@@ -273,31 +275,51 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
+     file mzml_file from input_mzmls
+     file lib_file from input_lib_decoy.mix(input_lib).first()
 
     output:
+     file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
+     file "${mzml_file.baseName}.osw" into osw_files
 
     script:
      """
-     OpenSwathWorkflow -in
-                       -out
+     OpenSwathWorkflow -in ${mzml_file} \\
+                       -tr ${lib_file} \\
+                       -swath_windows_file ${swath_windows_file} \\
+                       -tr_irt ${irt_file} \\
+                       -out_osw ${mzml_file.baseName}.osw \\
+                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
+                       -mz_extraction_window ${mz_extraction_window} \\
+                       -ppm \\
+                       -rt_extraction_window ${rt_extraction_window} \\
+                       -RTNormalization:estimateBestPeptides \\
+                       -RTNormalization:alignmentMethod lowess \\
+                       -RTNormalization:outlierMethod none \\
+                       -threads ${task.cpus}
+                       $force_option \\
      """
 }
 
 
 /*
- * STEP 2 - Pyprophet FDR Scoring
+ * STEP 2 - Pyprophet merging of OpenSwath results
  */
-process run_pyprophet_fdr_scoring {
+process merge_openswath_output {
     publishDir "${params.outdir}/"
 
     input:
+     file all_osws from osw_files.collect{it}
+     file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
 
     output:
+     file "merged_osw_file.osw" into merged_osw_file
 
     script:
      """
-     pyprophet -in
-               -out
+     pyprophet merge --template=${lib_file_1} \\
+                     --out=merged_osw_file.osw \\
+                     ${all_osws} \\
      """
 }
 
@@ -305,35 +327,60 @@ process run_pyprophet_fdr_scoring {
 /*
  * STEP 3 - Pyprophet FDR Scoring
  */
-process run_pyprophet_fdr_scoring {
+process run_fdr_scoring {
     publishDir "${params.outdir}/"
 
     input:
+     file merged_osw from merged_osw_file
 
     output:
+     file ${merged_osw.baseName}_scored.osw into merged_osw_scored
 
     script:
      """
-     pyprophet -in
-               -out
+     pyprophet score -in=${merged_osw} \\
+                     -level=${fdr_level} \\
+                     -out=${merged_osw.baseName}_scored.osw \\
      """
 }
 
 
 /*
- * STEP 4 - Align DIA Chromatograms
+ * STEP 4 - Pyprophet Export
  */
-process run_dialignr {
+process export_pyprophet_results {
     publishDir "${params.outdir}/"
 
     input:
+     file scored_osw from merged_osw_scored
 
     output:
+     file "*.tsv" into pyprophet_results
 
     script:
      """
-     R DIAlignR.Rscrpt -in
-                       -out
+     pyprophet export -in=${merged_osw} \\
+                      -out=legacy.tsv \\
+     """
+}
+
+
+/*
+ * STEP 5 - Align DIA Chromatograms using TRIC
+ */
+process align_dia_runs {
+    publishDir "${params.outdir}/"
+
+    input:
+     file pyresults from pyprophet_results
+
+    output:
+     file "aligned.tsv" into TRIC_result
+
+    script:
+     """
+     feature_alignment.py -in ${pyresults}
+                          -out aligned.tsv
      """
 }
 
