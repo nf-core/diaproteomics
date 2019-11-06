@@ -3,29 +3,27 @@ from __future__ import print_function
 from collections import OrderedDict
 import re
 
-# TODO nf-core: Add additional regexes for new tools in process get_software_versions
 regexes = {
     'nf-core/diaproteomics': ['v_pipeline.txt', r"(\S+)"],
     'Nextflow': ['v_nextflow.txt', r"(\S+)"],
-    'FastQC': ['v_fastqc.txt', r"FastQC v(\S+)"],
-    'MultiQC': ['v_multiqc.txt', r"multiqc, version (\S+)"],
+    'OpenMS': ['v_openms.txt', r"Version: (\S+)"],
+    'Pyprophet': ['v_pyprophet.txt', r"version: (\S+)"],
+    'Msproteomicstools': ['v_msproteomicstools.txt', r"(\S+)"]
 }
 results = OrderedDict()
-results['nf-core/diaproteomics'] = '<span style="color:#999999;\">N/A</span>'
+results['nf-core/mhcquant'] = '<span style="color:#999999;\">N/A</span>'
 results['Nextflow'] = '<span style="color:#999999;\">N/A</span>'
-results['FastQC'] = '<span style="color:#999999;\">N/A</span>'
-results['MultiQC'] = '<span style="color:#999999;\">N/A</span>'
+results['OpenMS'] = '<span style="color:#999999;\">N/A</span>'
+results['Pyprophet']= '<span style="color:#999999;\">N/A</span>'
+results['Msproteomicstools']= '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():
-    try:
-        with open(v[0]) as x:
-            versions = x.read()
-            match = re.search(v[1], versions)
-            if match:
-                results[k] = "v{}".format(match.group(1))
-    except IOError:
-        results[k] = False
+    with open(v[0]) as x:
+        versions = x.read()
+        match = re.search(v[1], versions)
+        if match:
+            results[k] = "v{}".format(match.group(1))
 
 # Remove software set to false in results
 for k in results:
@@ -35,8 +33,8 @@ for k in results:
 # Dump to YAML
 print ('''
 id: 'software_versions'
-section_name: 'nf-core/diaproteomics Software Versions'
-section_href: 'https://github.com/nf-core/diaproteomics'
+section_name: 'nf-core/mhcquant Software Versions'
+section_href: 'https://github.com/nf-core/mhcquant'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |
