@@ -40,6 +40,7 @@ def helpMessage() {
       --fdr_threshold                   Threshold for FDR filtering
       --fdr_level                       Level of FDR calculation ('ms1', 'ms2', 'transition')
       --prec_charge                     Precursor charge (eg. "2:3")
+      --force_option                    Force the Analysis despite severe warnings
 
     Other options:
       --outdir                          The output directory where the results will be saved
@@ -64,8 +65,8 @@ if (params.help){
 
 
 // Validate inputs
-params.dia_mzmls = params.dia_mzmls ?: { log.error "No read data privided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
-params.fasta = params.fasta ?: { log.error "No read data privided. Make sure you have used the '--fasta' option."; exit 1 }()
+params.dia_mzmls = params.dia_mzmls ?: { log.error "No dia mzml data provided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
+params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 
@@ -75,6 +76,9 @@ params.outdir = params.outdir ?: { log.warn "No output directory provided. Will 
 
 //MS params
 params.generate_spectral_lib = false
+params.skip_decoy_generation = false
+params.irts = ''
+
 params.min_transitions = 4
 params.max_transitions = 6
 params.mz_extraction_window = 30
@@ -89,6 +93,7 @@ params.variable_mods = 'Oxidation (M)'
 params.decoy_method = 'shuffle'
 params.spectrum_batch_size = 500
 
+params.force_option = false
 
 /*
  * SET UP CONFIGURATION VARIABLES
@@ -141,11 +146,18 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 
 Channel.fromPath( params.dia_mzmls )
         .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
-        .into { input_mzmls }
+        .set { input_mzmls }
 
 Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .into { input_swath_windows }
+        .set { input_swath_windows }
+
+if( !params.irts == '') {
+	Channel.fromPath( params.irts)
+        	.set { input_irts }
+} else {
+	input_irts = Channel.empty()
+}
 
 /*
  * Create a channel for input spectral library
@@ -154,22 +166,26 @@ if( params.generate_spectral_lib) {
 
     input_spectral_lib = Channel.empty()
 
-} else if( params.skip_decoy_generation) {
+} else if( !params.skip_decoy_generation) {
     Channel
         .fromPath( params.spectral_lib )
         .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .into { input_lib; input_lib_1 }
+        .set { input_lib_nd }
+
+    input_lib = Channel.empty()
+    input_lib_1 = Channel.empty()
 
 } else {
     Channel
         .fromPath( params.spectral_lib )
         .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .set { input_lib; input_lib_1 }
+        .into { input_lib; input_lib_1 }
 
     input_lib_decoy = Channel.empty()
     input_lib_decoy_1 = Channel.empty()
 
 }
+
 
 
 // Header log info
@@ -250,7 +266,7 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     FileInfo --help &> v_openms.txt
     pyprophet --version &> v_pyprophet.txt
-    python -c "import msproteomicstools; print(msproteomicstools.__version__)" &> v_msproteomicstools.txt
+    #python -c "import msproteomicstoolslib; print(msproteomicstoolslib.__version__)" &> v_msproteomicstools.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -282,19 +298,19 @@ process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib
+     file lib_file_nd from input_lib_nd
 
     output:
-     file "${lib_file_nd.baseName}_decoy.fasta" into (input_lib_decoy, input_lib_decoy_1)
+     file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
 
     when:
      !params.skip_decoy_generation
 
     script:
      """
-     OpenSwathDecoyGenerator -in ${input_lib} \\
-                             -method ${decoy_method} \\
-                             -out ${input_lib_decoy} \\
+     OpenSwathDecoyGenerator -in ${lib_file_nd} \\
+                             -method ${params.decoy_method} \\
+                             -out "${lib_file_nd.baseName}_decoy.pqp" \\
      """
 }
 
@@ -307,7 +323,9 @@ process run_openswathworkflow {
 
     input:
      file mzml_file from input_mzmls
+     file swath_file from input_swath_windows
      file lib_file from input_lib_decoy.mix(input_lib).first()
+     file irt_file from input_irts
 
     output:
      file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
@@ -317,18 +335,18 @@ process run_openswathworkflow {
      """
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
-                       -swath_windows_file ${swath_windows_file} \\
+                       -swath_windows_file ${input_swath_windows} \\
                        -tr_irt ${irt_file} \\
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
-                       -mz_extraction_window ${mz_extraction_window} \\
+                       -mz_extraction_window ${params.mz_extraction_window} \\
                        -ppm \\
-                       -rt_extraction_window ${rt_extraction_window} \\
+                       -rt_extraction_window ${params.rt_extraction_window} \\
                        -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:alignmentMethod lowess \\
                        -RTNormalization:outlierMethod none \\
-                       -threads ${task.cpus}
-                       $force_option \\
+                       -threads ${task.cpus} \\
+                       ${params.force_option} \\
      """
 }
 
@@ -365,7 +383,7 @@ process run_fdr_scoring {
      file merged_osw from merged_osw_file
 
     output:
-     file ${merged_osw.baseName}_scored.osw into merged_osw_scored
+     file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
 
     script:
      """

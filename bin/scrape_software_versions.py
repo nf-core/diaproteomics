@@ -8,14 +8,14 @@ regexes = {
     'Nextflow': ['v_nextflow.txt', r"(\S+)"],
     'OpenMS': ['v_openms.txt', r"Version: (\S+)"],
     'Pyprophet': ['v_pyprophet.txt', r"version: (\S+)"],
-    'Msproteomicstools': ['v_msproteomicstools.txt', r"(\S+)"]
+    #'Msproteomicstools': ['v_msproteomicstools.txt', r"(\S+)"]
 }
 results = OrderedDict()
-results['nf-core/mhcquant'] = '<span style="color:#999999;\">N/A</span>'
+results['nf-core/diaproteomics'] = '<span style="color:#999999;\">N/A</span>'
 results['Nextflow'] = '<span style="color:#999999;\">N/A</span>'
 results['OpenMS'] = '<span style="color:#999999;\">N/A</span>'
 results['Pyprophet']= '<span style="color:#999999;\">N/A</span>'
-results['Msproteomicstools']= '<span style="color:#999999;\">N/A</span>'
+#results['Msproteomicstools']= '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():
@@ -33,8 +33,8 @@ for k in results:
 # Dump to YAML
 print ('''
 id: 'software_versions'
-section_name: 'nf-core/mhcquant Software Versions'
-section_href: 'https://github.com/nf-core/mhcquant'
+section_name: 'nf-core/diaproteomics Software Versions'
+section_href: 'https://github.com/nf-core/diaproteomics'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |
