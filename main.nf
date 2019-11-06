@@ -17,27 +17,28 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' -profile standard,docker
+    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
 
     Mandatory arguments:
       --dia_mzmls                       Path to input data (must be surrounded with quotes)
+      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
 
     DIA Mass Spectrometry Search:
-      --spectral_lib                    Path to Fasta reference
+      --spectral_lib                    Path to spectral library input file (pqp)
       --irts                            Path to internal retention time standards (pqp)
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
       --dda_pepxmls                     Path to DDA pepXML input for library generation
       --dda_mzmls                       Path to DDA mzML input for library generation
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
+      --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum peptide length for filtering
       --max_transitions                 Maximum peptide length for filtering
-      --precursor_mass_tolerance        Mass tolerance of precursor mass (ppm)
-      --fragment_mass_tolerance         Mass tolerance of fragment mass bin (ppm)
-      --fragment_bin_offset             Offset of fragment mass bin (Comet specific parameter)
+      --mz_extraction_window            Mass tolerance for transition extraction (ppm)
+      --rt_extraction_window            RT window for transition extraction (seconds)
       --fdr_threshold                   Threshold for FDR filtering
-      --fdr_level                       Level of FDR calculation ('peptide-level-fdrs', 'transition-level-fdrs', 'protein-level-fdrs')
+      --fdr_level                       Level of FDR calculation ('ms1', 'ms2', 'transition')
       --prec_charge                     Precursor charge (eg. "2:3")
 
     Other options:
@@ -73,18 +74,19 @@ params.outdir = params.outdir ?: { log.warn "No output directory provided. Will 
  */
 
 //MS params
+params.generate_spectral_lib = false
 params.min_transitions = 4
 params.max_transitions = 6
-params.fragment_mass_tolerance = 0.02
-params.precursor_mass_tolerance = 5
+params.mz_extraction_window = 30
+params.rt_extraction_window = 600
 params.fdr_threshold = 0.01
-params.fdr_level = 'peptide-level-fdrs'
-fdr_level = (params.fdr_level == 'transition-level-fdrs') ? '' : '-'+params.fdr_level
+params.fdr_level = 'transition'
 
 params.number_mods = 3
 params.num_hits = 1
 params.prec_charge = '2:3'
 params.variable_mods = 'Oxidation (M)'
+params.decoy_method = 'shuffle'
 params.spectrum_batch_size = 500
 
 
@@ -140,6 +142,34 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 Channel.fromPath( params.dia_mzmls )
         .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
         .into { input_mzmls }
+
+Channel.fromPath( params.swath_windows)
+        .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
+        .into { input_swath_windows }
+
+/*
+ * Create a channel for input spectral library
+ */
+if( params.generate_spectral_lib) {
+
+    input_spectral_lib = Channel.empty()
+
+} else if( params.skip_decoy_generation) {
+    Channel
+        .fromPath( params.spectral_lib )
+        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
+        .into { input_lib; input_lib_1 }
+
+} else {
+    Channel
+        .fromPath( params.spectral_lib )
+        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
+        .set { input_lib; input_lib_1 }
+
+    input_lib_decoy = Channel.empty()
+    input_lib_decoy_1 = Channel.empty()
+
+}
 
 
 // Header log info
@@ -219,7 +249,8 @@ process get_software_versions {
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
     FileInfo --help &> v_openms.txt
-    pyprophet -version
+    pyprophet --version &> v_pyprophet.txt
+    python -c "import msproteomicstools; print(msproteomicstools.__version__)" &> v_msproteomicstools.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -254,15 +285,15 @@ process generate_decoys_for_spectral_library {
      file lib_file_nd from input_lib
 
     output:
-     file "${lib_file_nd.baseName}_decoy.fasta" into input_lib_decoy
+     file "${lib_file_nd.baseName}_decoy.fasta" into (input_lib_decoy, input_lib_decoy_1)
 
     when:
-     !params.skip_decoys
+     !params.skip_decoy_generation
 
     script:
      """
      OpenSwathDecoyGenerator -in ${input_lib} \\
-                             -method ${method} \\
+                             -method ${decoy_method} \\
                              -out ${input_lib_decoy} \\
      """
 }
@@ -338,9 +369,10 @@ process run_fdr_scoring {
 
     script:
      """
-     pyprophet score -in=${merged_osw} \\
-                     -level=${fdr_level} \\
-                     -out=${merged_osw.baseName}_scored.osw \\
+     pyprophet score --in=${merged_osw} \\
+                     --level=${fdr_level} \\
+                     --out=${merged_osw.baseName}_scored.osw \\
+                     --threads=${task.cpus} \\
      """
 }
 
@@ -359,8 +391,8 @@ process export_pyprophet_results {
 
     script:
      """
-     pyprophet export -in=${merged_osw} \\
-                      -out=legacy.tsv \\
+     pyprophet export --in=${merged_osw} \\
+                      --out=legacy.tsv \\
      """
 }
 
@@ -379,8 +411,8 @@ process align_dia_runs {
 
     script:
      """
-     feature_alignment.py -in ${pyresults}
-                          -out aligned.tsv
+     feature_alignment.py --in ${pyresults}
+                          --out aligned.tsv
      """
 }
 
