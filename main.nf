@@ -336,7 +336,7 @@ process run_openswathworkflow {
                        -tr ${lib_file} \\
                        -swath_windows_file ${swath_file} \\
                        -tr_irt ${irt_file} \\
-                       -min_rsq ${irt_min_rsq} \\
+                       -min_rsq ${params.irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
