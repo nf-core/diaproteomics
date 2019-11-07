@@ -322,9 +322,9 @@ process run_openswathworkflow {
 
     input:
      file mzml_file from input_mzmls
-     file swath_file from input_swath_windows
+     file swath_file from input_swath_windows.first()
      file lib_file from input_lib_decoy.mix(input_lib).first()
-     file irt_file from input_irts
+     file irt_file from input_irts.first()
 
     output:
      file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
@@ -342,8 +342,7 @@ process run_openswathworkflow {
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -ppm \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
-                       -RTNormalization:estimateBestPeptides \\
-                       -RTNormalization:alignmentMethod lowess \\
+                       -RTNormalization:alignmentMethod linear \\
                        -RTNormalization:outlierMethod none \\
                        -threads ${task.cpus} \\
                        ${force_option} \\

@@ -10,5 +10,5 @@ dependencies:
   - conda-forge::r-rmarkdown=1.10
   - openms=2.4.0
   - python
-  - pyprophet
+  - pyprophet=2.1.3
   - msproteomicstools
