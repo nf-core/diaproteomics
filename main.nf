@@ -28,6 +28,7 @@ def helpMessage() {
     DIA Mass Spectrometry Search:
       --spectral_lib                    Path to spectral library input file (pqp)
       --irts                            Path to internal retention time standards (pqp)
+      --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
       --dda_pepxmls                     Path to DDA pepXML input for library generation
       --dda_mzmls                       Path to DDA mzML input for library generation
@@ -67,6 +68,7 @@ if (params.help){
 // Validate inputs
 params.dia_mzmls = params.dia_mzmls ?: { log.error "No dia mzml data provided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
+params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 
@@ -77,8 +79,8 @@ params.outdir = params.outdir ?: { log.warn "No output directory provided. Will 
 //MS params
 params.generate_spectral_lib = false
 params.skip_decoy_generation = false
-params.irts = ''
 
+params.irt_min_rsq = 0.95
 params.min_transitions = 4
 params.max_transitions = 6
 params.mz_extraction_window = 30
@@ -94,7 +96,7 @@ params.decoy_method = 'shuffle'
 params.spectrum_batch_size = 500
 
 params.force_option = false
-
+params.force_option ?: { force_option='-force'; force_option='' }()
 /*
  * SET UP CONFIGURATION VARIABLES
  */
@@ -152,12 +154,9 @@ Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
         .set { input_swath_windows }
 
-if( !params.irts == '') {
-	Channel.fromPath( params.irts)
-        	.set { input_irts }
-} else {
-	input_irts = Channel.empty()
-}
+Channel.fromPath( params.irts)
+        .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
+        .set { input_irts }
 
 /*
  * Create a channel for input spectral library
@@ -335,8 +334,9 @@ process run_openswathworkflow {
      """
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
-                       -swath_windows_file ${input_swath_windows} \\
+                       -swath_windows_file ${swath_file} \\
                        -tr_irt ${irt_file} \\
+                       -min_rsq ${irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
@@ -346,7 +346,7 @@ process run_openswathworkflow {
                        -RTNormalization:alignmentMethod lowess \\
                        -RTNormalization:outlierMethod none \\
                        -threads ${task.cpus} \\
-                       ${params.force_option} \\
+                       ${force_option} \\
      """
 }
 
