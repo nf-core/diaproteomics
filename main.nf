@@ -38,7 +38,10 @@ def helpMessage() {
       --max_transitions                 Maximum peptide length for filtering
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
-      --fdr_threshold                   Threshold for FDR filtering
+      --pyprophet_fdr_threshold         Threshold for FDR filtering
+      --aligment_target_fdr             Target FDR for alignment
+      --alignment_max_fdr               Maximal FDR of aligned chromatograms
+      --alignment_score               Minimum scores of aligned chromatograms
       --fdr_level                       Level of FDR calculation ('ms1', 'ms2', 'transition')
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
@@ -86,6 +89,9 @@ params.max_transitions = 6
 params.mz_extraction_window = 30
 params.rt_extraction_window = 600
 params.fdr_threshold = 0.01
+params.alignment_target_fdr = 0.05
+params.alignment_max_fdr = 0.1
+params.alignment_score = 0.001
 params.fdr_level = 'ms2'
 
 params.number_mods = 3
@@ -429,17 +435,17 @@ process align_dia_runs {
 
     script:
      """
-     feature_alignment.py --in ${pyresults}
-                          --out aligned.tsv
-			  --method LocalMST
-                          --realign_method lowess_cython
-                          --max_rt_diff 60 
-                          --mst:useRTCorrection True
-                          --mst:Stdev_multiplier 3.0 
-                          --fdr_cutoff 0.01
-                          --max_fdr_quality 0.05
-                          --target_fdr -1
-                          --max_fdr_quality 0.05 
+     feature_alignment.py --in ${pyresults} \\
+                          --out aligned.tsv \\
+                          --method LocalMST \\
+                          --realign_method linear \\
+                          --max_rt_diff 60 \\
+                          --mst:useRTCorrection True \\
+                          --mst:Stdev_multiplier 3.0 \\
+                          --fdr_cutoff ${params.alignment_target_fdr} \\
+                          --max_fdr_quality ${params.alignment_max_fdr} \\
+                          --target_fdr -1 \\
+                          --alignment_score ${params.alignment_score} \\
      """
 }
 
