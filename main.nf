@@ -431,6 +431,15 @@ process align_dia_runs {
      """
      feature_alignment.py --in ${pyresults}
                           --out aligned.tsv
+			  --method LocalMST
+                          --realign_method lowess_cython
+                          --max_rt_diff 60 
+                          --mst:useRTCorrection True
+                          --mst:Stdev_multiplier 3.0 
+                          --fdr_cutoff 0.01
+                          --max_fdr_quality 0.05
+                          --target_fdr -1
+                          --max_fdr_quality 0.05 
      """
 }
 
