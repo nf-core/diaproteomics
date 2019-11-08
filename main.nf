@@ -408,7 +408,7 @@ process export_pyprophet_results {
 
     script:
      """
-     pyprophet export --in=${merged_osw} \\
+     pyprophet export --in=${scored_osw} \\
                       --out=legacy.tsv \\
      """
 }
