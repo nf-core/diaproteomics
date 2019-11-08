@@ -409,6 +409,7 @@ process export_pyprophet_results {
     script:
      """
      pyprophet export --in=${scored_osw} \\
+                      --max_rs_peakgroup_qvalue=${params.fdr_threshold} \\
                       --out=legacy.tsv \\
      """
 }
