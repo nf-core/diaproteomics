@@ -387,7 +387,7 @@ process run_fdr_scoring {
     script:
      """
      pyprophet score --in=${merged_osw} \\
-                     --level=${fdr_level} \\
+                     --level=${params.fdr_level} \\
                      --out=${merged_osw.baseName}_scored.osw \\
                      --threads=${task.cpus} \\
      """
