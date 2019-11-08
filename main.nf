@@ -86,7 +86,7 @@ params.max_transitions = 6
 params.mz_extraction_window = 30
 params.rt_extraction_window = 600
 params.fdr_threshold = 0.01
-params.fdr_level = 'transition'
+params.fdr_level = 'ms2'
 
 params.number_mods = 3
 params.num_hits = 1
