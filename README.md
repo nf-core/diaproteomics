@@ -10,25 +10,14 @@
 
 ## Introduction
 
-The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
+nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative processing of data independant (DIA) proteomics data.
 
-## Quick Start
+The workflow is based on the [OpenSwathWorkflow](http://www.openswath.org/en/latest/) for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. Finally, exctracted chromatograms are realigned and quantified using the TRIC algorithm.
 
-i. Install [`nextflow`](https://nf-co.re/usage/installation)
-
-ii. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
-
-iii. Download the pipeline and test it on a minimal dataset with a single command
+Run
 
 ```bash
-nextflow run nf-core/diaproteomics -profile test,<docker/singularity/conda>
-```
-
-iv. Start running your own analysis!
-
-<!-- TODO nf-core: Update the default command above used to run the pipeline -->
-```bash
-nextflow run nf-core/diaproteomics -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile test,docker
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
