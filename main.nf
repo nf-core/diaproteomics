@@ -29,6 +29,7 @@ def helpMessage() {
       --spectral_lib                    Path to spectral library input file (pqp)
       --irts                            Path to internal retention time standards (pqp)
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
+      --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
       --dda_pepxmls                     Path to DDA pepXML input for library generation
       --dda_mzmls                       Path to DDA mzML input for library generation
@@ -38,11 +39,16 @@ def helpMessage() {
       --max_transitions                 Maximum peptide length for filtering
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
-      --pyprophet_fdr_threshold         Threshold for FDR filtering
-      --aligment_target_fdr             Target FDR for alignment
-      --alignment_max_fdr               Maximal FDR of aligned chromatograms
-      --alignment_score               Minimum scores of aligned chromatograms
-      --fdr_level                       Level of FDR calculation ('ms1', 'ms2', 'transition')
+      --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
+      --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
+      --pyprophet_peakgroup_fdr         Threshold for FDR filtering
+      --pyprophet_peptide_fdr           Threshold for global Peptide FDR
+      --pyprophet_protein_fdr           Threshold for global Protein FDR
+      --realigment_target_fdr           Target FDR for realigned chromatograms
+      --realignment_max_fdr             Maximal FDR of realigned chromatograms
+      --realignment_score               Minimum scores of realigned chromatograms
+      --realignment_method              Method for realignment ('linear', 'lowess', 'lowess_cython')
+      --realignment_rt_difference       Maximal difference in RT across realigned chromatograms
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -84,15 +90,23 @@ params.generate_spectral_lib = false
 params.skip_decoy_generation = false
 
 params.irt_min_rsq = 0.95
+params.irt_alignment_method = 'linear'
 params.min_transitions = 4
 params.max_transitions = 6
 params.mz_extraction_window = 30
 params.rt_extraction_window = 600
-params.fdr_threshold = 0.01
-params.alignment_target_fdr = 0.05
-params.alignment_max_fdr = 0.1
-params.alignment_score = 0.001
-params.fdr_level = 'ms2'
+
+params.realignment_target_fdr = 0.05
+params.realignment_max_fdr = 0.1
+params.realignment_score = 0.001
+params.realignment_method = 'lowess_cython'
+params.realignment_rt_difference = 60
+
+params.pyprophet_fdr_ms_level = 'ms2'
+params.pyprophet_global_fdr_level = ''
+params.pyprophet_peakgroup_fdr = 0.01
+params.pyprophet_peptide_fdr = 0.01
+params.pyprophet_protein_fdr = 0.01
 
 params.number_mods = 3
 params.num_hits = 1
@@ -191,7 +205,11 @@ if( params.generate_spectral_lib) {
 
 }
 
-
+//if (params.pyprophet_global_fdr_level==''){
+//    merged_osw_scored_global = Channel.empty()
+//} else {
+//   merged_osw_scored = Channel.empty()
+//}
 
 // Header log info
 log.info nfcoreHeader()
@@ -348,7 +366,7 @@ process run_openswathworkflow {
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -ppm \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
-                       -RTNormalization:alignmentMethod linear \\
+                       -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:outlierMethod none \\
                        -threads ${task.cpus} \\
                        ${force_option} \\
@@ -390,39 +408,71 @@ process run_fdr_scoring {
     output:
      file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
 
+    when:
+     params.pyprophet_global_fdr_level==''
+
     script:
      """
      pyprophet score --in=${merged_osw} \\
-                     --level=${params.fdr_level} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${merged_osw.baseName}_scored.osw \\
                      --threads=${task.cpus} \\
      """
 }
 
+/*
+ * STEP 4 - Pyprophet global FDR Scoring
+ */
+process run_global_fdr_scoring {
+    publishDir "${params.outdir}/"
+
+    input:
+     file scored_osw from merged_osw_file
+
+    output:
+     file "${scored_osw.baseName}_global.osw" into merged_osw_scored_global
+
+    when:
+     params.pyprophet_global_fdr_level!=''
+
+    script:
+     """
+     pyprophet score --in=${scored_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${scored_osw.baseName}_scored.osw \\
+                     --threads=${task.cpus} \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
+                                                    --out=${scored_osw.baseName}_global.osw \\
+                                                    --context=global \\
+     """
+}
 
 /*
- * STEP 4 - Pyprophet Export
+ * STEP 5 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
 
     input:
-     file scored_osw from merged_osw_scored
+     file global_osw from merged_osw_scored.mix(merged_osw_scored_global)
 
     output:
      file "*.tsv" into pyprophet_results
 
     script:
      """
-     pyprophet export --in=${scored_osw} \\
-                      --max_rs_peakgroup_qvalue=${params.fdr_threshold} \\
+     pyprophet export --in=${global_osw} \\
+                      --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
+                      --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
+                      --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
                       --out=legacy.tsv \\
      """
 }
 
 
 /*
- * STEP 5 - Align DIA Chromatograms using TRIC
+ * STEP 6 - Align DIA Chromatograms using TRIC
  */
 process align_dia_runs {
     publishDir "${params.outdir}/"
@@ -438,14 +488,14 @@ process align_dia_runs {
      feature_alignment.py --in ${pyresults} \\
                           --out aligned.tsv \\
                           --method LocalMST \\
-                          --realign_method linear \\
-                          --max_rt_diff 60 \\
+                          --realign_method ${params.realignment_method} \\
+                          --max_rt_diff ${params.realignment_rt_difference} \\
                           --mst:useRTCorrection True \\
                           --mst:Stdev_multiplier 3.0 \\
-                          --fdr_cutoff ${params.alignment_target_fdr} \\
-                          --max_fdr_quality ${params.alignment_max_fdr} \\
+                          --fdr_cutoff ${params.realignment_target_fdr} \\
+                          --max_fdr_quality ${params.realignment_max_fdr} \\
                           --target_fdr -1 \\
-                          --alignment_score ${params.alignment_score} \\
+                          --alignment_score ${params.realignment_score} \\
      """
 }
 
