@@ -12,7 +12,7 @@
 
 nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative processing of data independant (DIA) proteomics data.
 
-The workflow is based on the [OpenSwathWorkflow] (http://www.openswath.org/en/latest/) for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. Finally, exctracted chromatograms are realigned and quantified using the TRIC algorithm.
+The workflow is based on the [OpenSwathWorkflow](http://www.openswath.org/en/latest/) for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. Finally, exctracted chromatograms are realigned and quantified using the TRIC algorithm.
 
 Run
 
