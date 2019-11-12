@@ -116,7 +116,13 @@ params.decoy_method = 'shuffle'
 params.spectrum_batch_size = 500
 
 params.force_option = false
-params.force_option ?: { force_option='-force'; force_option='' }()
+
+if (params.force_option){
+ force_option='-force'
+} else {
+ force_option=''
+}
+
 /*
  * SET UP CONFIGURATION VARIABLES
  */
