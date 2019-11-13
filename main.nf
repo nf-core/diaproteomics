@@ -116,7 +116,13 @@ params.decoy_method = 'shuffle'
 params.spectrum_batch_size = 500
 
 params.force_option = false
-params.force_option ?: { force_option='-force'; force_option='' }()
+
+if (params.force_option){
+ force_option='-force'
+} else {
+ force_option=''
+}
+
 /*
  * SET UP CONFIGURATION VARIABLES
  */
@@ -200,8 +206,7 @@ if( params.generate_spectral_lib) {
         .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
         .into { input_lib; input_lib_1 }
 
-    input_lib_decoy = Channel.empty()
-    input_lib_decoy_1 = Channel.empty()
+    input_lib_nd = Channel.empty()
 
 }
 

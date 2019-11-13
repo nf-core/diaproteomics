@@ -12,3 +12,4 @@ dependencies:
   - openms=2.4.0
   - python=2.7.15
   - msproteomicstools=0.8.0
+  - statsmodels=0.10.1
