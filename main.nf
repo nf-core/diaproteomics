@@ -373,20 +373,18 @@ process run_openswathworkflow {
                        -rt_extraction_window ${params.rt_extraction_window} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:outlierMethod none \\
-                       -mz_extraction_window_ms1 10
-                       -mz_extraction_window_ms1_unit ppm
-                       -mz_correction_function regression_delta_ppm
-                       -use_ms1_traces
-                       -Scoring:stop_report_after_feature 5
-                       -Scoring:TransitionGroupPicker:compute_peak_quality false
-                       -Scoring:Scores:use_ms1_mi
-                       -Scoring:Scores:use_mi_score
-                       -batchSize 1000
-                       -ms1_isotopes 3
-                       -enable_uis_scoring
-                       -Scoring:uis_threshold_sn -1
+                       -mz_correction_function quadratic_regression_delta_ppm \\
+                       -use_ms1_traces \\
+                       -Scoring:stop_report_after_feature 5 \\
+                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+                       -Scoring:Scores:use_ms1_mi \\
+                       -Scoring:Scores:use_mi_score \\
+                       -batchSize 1000 \\
+                       -Scoring:DIAScoring:dia_nr_isotopes 3 \\
+                       -enable_uis_scoring \\
+                       -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\
+                       ${force_option} \\                       
      """
 }
 
