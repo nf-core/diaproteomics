@@ -113,7 +113,6 @@ params.num_hits = 1
 params.prec_charge = '2:3'
 params.variable_mods = 'Oxidation (M)'
 params.decoy_method = 'shuffle'
-params.spectrum_batch_size = 500
 
 params.force_option = false
 
