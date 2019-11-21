@@ -293,7 +293,6 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     FileInfo --help &> v_openms.txt
     pyprophet --version &> v_pyprophet.txt
-    #python -c "import msproteomicstoolslib; print(msproteomicstoolslib.__version__)" &> v_msproteomicstools.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
