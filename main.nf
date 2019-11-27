@@ -370,6 +370,7 @@ process run_openswathworkflow {
                        -ppm \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
+                       -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
                        -use_ms1_traces \\
