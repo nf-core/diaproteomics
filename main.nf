@@ -39,6 +39,7 @@ def helpMessage() {
       --max_transitions                 Maximum peptide length for filtering
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
+      --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
       --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
       --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
@@ -102,6 +103,7 @@ params.realignment_score = 0.001
 params.realignment_method = 'lowess_cython'
 params.realignment_rt_difference = 60
 
+params.pyprophet_classifier = 'LDA'
 params.pyprophet_fdr_ms_level = 'ms2'
 params.pyprophet_global_fdr_level = ''
 params.pyprophet_peakgroup_fdr = 0.01
@@ -430,6 +432,7 @@ process run_fdr_scoring {
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${merged_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
      """
 }
