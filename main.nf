@@ -104,7 +104,7 @@ params.realignment_method = 'lowess_cython'
 params.realignment_rt_difference = 60
 
 params.pyprophet_classifier = 'LDA'
-params.pyprophet_fdr_ms_level = 'ms2'
+params.pyprophet_fdr_ms_level = 'ms1ms2'
 params.pyprophet_global_fdr_level = ''
 params.pyprophet_peakgroup_fdr = 0.01
 params.pyprophet_peptide_fdr = 0.01
