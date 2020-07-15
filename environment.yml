@@ -1,15 +1,19 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-diaproteomics-1.0
+name: nf-core-diaproteomics-1.0dev
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
+  - conda-forge::python=3.6
+  - conda-forge::markdown=3.1.1
+  - conda-forge::pymdown-extensions=6.0
+  - conda-forge::pygments=2.5.2
   - anaconda::openjdk=8.0.152
-  - r-base=3.6.1
-  - conda-forge::r-rmarkdown=1.16
-  - openms=2.4.0
-  - python=2.7.15
-  - msproteomicstools=0.8.0
-  - statsmodels=0.10.1
+  - r-base
+  - openms-thirdparty=2.5.0
+  - pyprophet=2.1.4
+  - networkx
+  - bioconda:easypqp=0.1.7
+  - bioconductor-dialignr
