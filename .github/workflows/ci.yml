@@ -21,7 +21,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Pull docker image
         run: |
-          docker pull nfcore/diaproteomics:dev && docker tag nfcore/diaproteomics:dev nfcore/diaproteoimcs:dev
+          docker pull nfcore/diaproteomics:dev && docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
       - name: Run pipeline with test data
         run: |
           sudo nextflow run ${GITHUB_WORKSPACE} -profile test,docker
