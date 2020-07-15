@@ -9,257 +9,159 @@
 ----------------------------------------------------------------------------------------
 */
 
-
 def helpMessage() {
+    // TODO nf-core: Add to this help message with new command line parameters
     log.info nfcoreHeader()
     log.info"""
+
     Usage:
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
+    nextflow run nf-core/diaproteomics --input '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
-      --dia_mzmls                       Path to input data (must be surrounded with quotes)
-      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
-      -profile                          Configuration profile to use. Can use multiple (comma separated)
-                                        Available: standard, conda, docker, singularity, awsbatch, test
+      --input [file]                  Path to input data (must be surrounded with quotes)
+      -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
+                                      Available: conda, docker, singularity, test, awsbatch, <institute> and more
 
-    DIA Mass Spectrometry Search:
-      --spectral_lib                    Path to spectral library input file (pqp)
-      --irts                            Path to internal retention time standards (pqp)
-      --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
-      --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --dda_pepxmls                     Path to DDA pepXML input for library generation
-      --dda_mzmls                       Path to DDA mzML input for library generation
-      --skip_decoy_generation           Use a spectral library that already includes decoy sequences
-      --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
-      --min_transitions                 Minimum peptide length for filtering
-      --max_transitions                 Maximum peptide length for filtering
-      --mz_extraction_window            Mass tolerance for transition extraction (ppm)
-      --rt_extraction_window            RT window for transition extraction (seconds)
-      --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
-      --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
-      --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
-      --pyprophet_peakgroup_fdr         Threshold for FDR filtering
-      --pyprophet_peptide_fdr           Threshold for global Peptide FDR
-      --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --realigment_target_fdr           Target FDR for realigned chromatograms
-      --realignment_max_fdr             Maximal FDR of realigned chromatograms
-      --realignment_score               Minimum scores of realigned chromatograms
-      --realignment_method              Method for realignment ('linear', 'lowess', 'lowess_cython')
-      --realignment_rt_difference       Maximal difference in RT across realigned chromatograms
-      --prec_charge                     Precursor charge (eg. "2:3")
-      --force_option                    Force the Analysis despite severe warnings
+    Options:
+      --genome [str]                  Name of iGenomes reference
+      --single_end [bool]             Specifies that the input is single-end reads
+
+    References                        If not specified in the configuration file or you wish to overwrite any of the references
+      --fasta [file]                  Path to fasta reference
 
     Other options:
-      --outdir                          The output directory where the results will be saved
-      --email                           Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      -name                             Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+      --outdir [file]                 The output directory where the results will be saved
+      --publish_dir_mode [str]        Mode for publishing results in the output directory. Available: symlink, rellink, link, copy, copyNoFollow, move (Default: copy)
+      --email [email]                 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
+      --email_on_fail [email]         Same as --email, except only send mail if the workflow is not successful
+      --max_multiqc_email_size [str]  Threshold size for MultiQC report to be attached in notification email. If file generated by pipeline exceeds the threshold, it will not be attached (Default: 25MB)
+      -name [str]                     Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
 
     AWSBatch options:
-      --awsqueue                        The AWSBatch JobQueue that needs to be set when running on AWSBatch
-      --awsregion                       The AWS Region for your AWS Batch job to run on
+      --awsqueue [str]                The AWSBatch JobQueue that needs to be set when running on AWSBatch
+      --awsregion [str]               The AWS Region for your AWS Batch job to run on
+      --awscli [str]                  Path to the AWS CLI tool
     """.stripIndent()
 }
 
-/*
- * SET UP CONFIGURATION VARIABLES
- */
-
 // Show help message
-if (params.help){
+if (params.help) {
     helpMessage()
     exit 0
 }
 
-
-// Validate inputs
-params.dia_mzmls = params.dia_mzmls ?: { log.error "No dia mzml data provided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
-params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
-params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
-params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
-
-
-/*
- * Define the default parameters
- */
-
-//MS params
-params.generate_spectral_lib = false
-params.skip_decoy_generation = false
-
-params.irt_min_rsq = 0.95
-params.irt_alignment_method = 'linear'
-params.min_transitions = 4
-params.max_transitions = 6
-params.mz_extraction_window = 30
-params.rt_extraction_window = 600
-
-params.realignment_target_fdr = 0.05
-params.realignment_max_fdr = 0.1
-params.realignment_score = 0.001
-params.realignment_method = 'lowess_cython'
-params.realignment_rt_difference = 60
-
-params.pyprophet_classifier = 'LDA'
-params.pyprophet_fdr_ms_level = 'ms1ms2'
-params.pyprophet_global_fdr_level = ''
-params.pyprophet_peakgroup_fdr = 0.01
-params.pyprophet_peptide_fdr = 0.01
-params.pyprophet_protein_fdr = 0.01
-
-params.number_mods = 3
-params.num_hits = 1
-params.prec_charge = '2:3'
-params.variable_mods = 'Oxidation (M)'
-params.decoy_method = 'shuffle'
-
-params.force_option = false
-
-if (params.force_option){
- force_option='-force'
-} else {
- force_option=''
-}
-
 /*
  * SET UP CONFIGURATION VARIABLES
  */
 
-
-// Configurable variables
-params.name = false
-params.email = false
-params.plaintext_email = false
-
-output_docs = file("$baseDir/docs/output.md")
-
-
-// AWSBatch sanity checking
-if(workflow.profile == 'awsbatch'){
-    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
-    if (!workflow.workDir.startsWith('s3') || !params.outdir.startsWith('s3')) exit 1, "Specify S3 URLs for workDir and outdir parameters on AWSBatch!"
+// Check if genome exists in the config file
+if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
+    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
 }
+
+// TODO nf-core: Add any reference files that are needed
+// Configurable reference genomes
 //
 // NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// If you want to use the above in a process, define the following:
+// If you want to use the channel below in a process, define the following:
 //   input:
-//   file fasta from fasta
+//   file fasta from ch_fasta
 //
+params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
+if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 // Has the run name been specified by the user?
-//  this has the bonus effect of catching both -name and --name
+// this has the bonus effect of catching both -name and --name
 custom_runName = params.name
-if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
-  custom_runName = workflow.runName
+if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
+    custom_runName = workflow.runName
 }
 
-
-if( workflow.profile == 'awsbatch') {
-  // AWSBatch sanity checking
-  if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
-  // Check outdir paths to be S3 buckets if running on AWSBatch
-  // related: https://github.com/nextflow-io/nextflow/issues/813
-  if (!params.outdir.startsWith('s3:')) exit 1, "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
-  // Prevent trace files to be stored on S3 since S3 does not support rolling files.
-  if (workflow.tracedir.startsWith('s3:')) exit 1, "Specify a local tracedir or run without trace! S3 cannot be used for tracefiles."
+// Check AWS batch settings
+if (workflow.profile.contains('awsbatch')) {
+    // AWSBatch sanity checking
+    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+    // Check outdir paths to be S3 buckets if running on AWSBatch
+    // related: https://github.com/nextflow-io/nextflow/issues/813
+    if (!params.outdir.startsWith('s3:')) exit 1, "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
+    // Prevent trace files to be stored on S3 since S3 does not support rolling files.
+    if (params.tracedir.startsWith('s3:')) exit 1, "Specify a local tracedir or run without trace! S3 cannot be used for tracefiles."
 }
 
 // Stage config files
-ch_multiqc_config = Channel.fromPath(params.multiqc_config)
-ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
-
-
-
-Channel.fromPath( params.dia_mzmls )
-        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_mzmls }
-
-Channel.fromPath( params.swath_windows)
-        .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_swath_windows }
-
-Channel.fromPath( params.irts)
-        .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_irts }
+ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
+ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
+ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
+ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 /*
- * Create a channel for input spectral library
+ * Create a channel for input read files
  */
-if( params.generate_spectral_lib) {
-
-    input_spectral_lib = Channel.empty()
-
-} else if( !params.skip_decoy_generation) {
-    Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .set { input_lib_nd }
-
-    input_lib = Channel.empty()
-    input_lib_1 = Channel.empty()
-
+if (params.input_paths) {
+    if (params.single_end) {
+        Channel
+            .from(params.input_paths)
+            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true) ] ] }
+            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
+            .into { ch_read_files_fastqc; ch_read_files_trimming }
+    } else {
+        Channel
+            .from(params.input_paths)
+            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true), file(row[1][1], checkIfExists: true) ] ] }
+            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
+            .into { ch_read_files_fastqc; ch_read_files_trimming }
+    }
 } else {
     Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .into { input_lib; input_lib_1 }
-
-    input_lib_nd = Channel.empty()
-
+        .fromFilePairs(params.input, size: params.single_end ? 1 : 2)
+        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.input}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
+        .into { ch_read_files_fastqc; ch_read_files_trimming }
 }
-
-//if (params.pyprophet_global_fdr_level==''){
-//    merged_osw_scored_global = Channel.empty()
-//} else {
-//   merged_osw_scored = Channel.empty()
-//}
 
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
-summary['Pipeline Name']  = 'nf-core/diaproteomics'
-summary['Pipeline Version'] = workflow.manifest.version
-summary['Run Name']     = custom_runName ?: workflow.runName
-summary['mzMLs']        = params.dia_mzmls
-summary['Spectral Library']    = params.spectral_lib
-summary['Max Memory']   = params.max_memory
-summary['Max CPUs']     = params.max_cpus
-summary['Max Time']     = params.max_time
-summary['Output dir']   = params.outdir
-summary['Working dir']  = workflow.workDir
-summary['Container Engine'] = workflow.containerEngine
-if(workflow.containerEngine) summary['Container'] = workflow.container
-summary['Current home']   = "$HOME"
-summary['Current user']   = "$USER"
-summary['Current path']   = "$PWD"
-summary['Working dir']    = workflow.workDir
-summary['Output dir']     = params.outdir
-summary['Script dir']     = workflow.projectDir
-summary['Config Profile'] = workflow.profile
-if(workflow.profile == 'awsbatch'){
-   summary['AWS Region']    = params.awsregion
-   summary['AWS Queue']     = params.awsqueue
+if (workflow.revision) summary['Pipeline Release'] = workflow.revision
+summary['Run Name']         = custom_runName ?: workflow.runName
+// TODO nf-core: Report custom parameters here
+summary['Reads']            = params.input
+summary['Fasta Ref']        = params.fasta
+summary['Data Type']        = params.single_end ? 'Single-End' : 'Paired-End'
+summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
+if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
+summary['Output dir']       = params.outdir
+summary['Launch dir']       = workflow.launchDir
+summary['Working dir']      = workflow.workDir
+summary['Script dir']       = workflow.projectDir
+summary['User']             = workflow.userName
+if (workflow.profile.contains('awsbatch')) {
+    summary['AWS Region']   = params.awsregion
+    summary['AWS Queue']    = params.awsqueue
+    summary['AWS CLI']      = params.awscli
 }
 summary['Config Profile'] = workflow.profile
-if(params.config_profile_description) summary['Config Description'] = params.config_profile_description
-if(params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
-if(params.config_profile_url)         summary['Config URL']         = params.config_profile_url
-if(params.email) {
-  summary['E-mail Address']  = params.email
-  summary['MultiQC maxsize'] = params.maxMultiqcEmailFileSize
+if (params.config_profile_description) summary['Config Profile Description'] = params.config_profile_description
+if (params.config_profile_contact)     summary['Config Profile Contact']     = params.config_profile_contact
+if (params.config_profile_url)         summary['Config Profile URL']         = params.config_profile_url
+summary['Config Files'] = workflow.configFiles.join(', ')
+if (params.email || params.email_on_fail) {
+    summary['E-mail Address']    = params.email
+    summary['E-mail on failure'] = params.email_on_fail
+    summary['MultiQC maxsize']   = params.max_multiqc_email_size
 }
 log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
-log.info "\033[2m----------------------------------------------------\033[0m"
+log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Check the hostnames against configured profiles
 checkHostname()
 
-def create_workflow_summary(summary) {
-    def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
-    yaml_file.text  = """
+Channel.from(summary.collect{ [it.key, it.value] })
+    .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
+    .reduce { a, b -> return [a, b].join("\n            ") }
+    .map { x -> """
     id: 'nf-core-diaproteomics-summary'
     description: " - this information is collected when the pipeline is started."
     section_name: 'nf-core/diaproteomics Workflow Summary'
@@ -267,255 +169,106 @@ def create_workflow_summary(summary) {
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
-${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }.join("\n")}
+            $x
         </dl>
-    """.stripIndent()
-
-   return yaml_file
-}
-
+    """.stripIndent() }
+    .set { ch_workflow_summary }
 
 /*
  * Parse software version numbers
  */
 process get_software_versions {
-    publishDir "${params.outdir}/pipeline_info", mode: 'copy',
-    saveAs: {filename ->
-        if (filename.indexOf(".csv") > 0) filename
-        else null
-    }
-    
+    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
+        saveAs: { filename ->
+                      if (filename.indexOf(".csv") > 0) filename
+                      else null
+                }
+
     output:
-    file 'software_versions_mqc.yaml' into software_versions_yaml
+    file 'software_versions_mqc.yaml' into ch_software_versions_yaml
     file "software_versions.csv"
 
     script:
+    // TODO nf-core: Get all tools to print their version number here
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    FileInfo --help &> v_openms.txt
-    pyprophet --version &> v_pyprophet.txt
+    fastqc --version > v_fastqc.txt
+    multiqc --version > v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
-
 /*
- * STEP 0 - Output Description HTML
+ * STEP 1 - FastQC
  */
-process output_documentation {
-    publishDir "${params.outdir}/Documentation", mode: 'copy'
+process fastqc {
+    tag "$name"
+    label 'process_medium'
+    publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
+        saveAs: { filename ->
+                      filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"
+                }
 
     input:
-    file output_docs
+    set val(name), file(reads) from ch_read_files_fastqc
+
+    output:
+    file "*_fastqc.{zip,html}" into ch_fastqc_results
+
+    script:
+    """
+    fastqc --quiet --threads $task.cpus $reads
+    """
+}
+
+/*
+ * STEP 2 - MultiQC
+ */
+process multiqc {
+    publishDir "${params.outdir}/MultiQC", mode: params.publish_dir_mode
+
+    input:
+    file (multiqc_config) from ch_multiqc_config
+    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+    // TODO nf-core: Add in log files from your new processes for MultiQC to find!
+    file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
+    file ('software_versions/*') from ch_software_versions_yaml.collect()
+    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+
+    output:
+    file "*multiqc_report.html" into ch_multiqc_report
+    file "*_data"
+    file "multiqc_plots"
+
+    script:
+    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
+    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
+    custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
+    // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
+    """
+    multiqc -f $rtitle $rfilename $custom_config_file .
+    """
+}
+
+/*
+ * STEP 3 - Output Description HTML
+ */
+process output_documentation {
+    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
+
+    input:
+    file output_docs from ch_output_docs
+    file images from ch_output_docs_images
 
     output:
     file "results_description.html"
 
     script:
     """
-    markdown_to_html.r $output_docs results_description.html
+    markdown_to_html.py $output_docs -o results_description.html
     """
 }
-
-
-/*
- * STEP 0.5 - Decoy Generation for Spectral Library
- */
-process generate_decoys_for_spectral_library {
-    publishDir "${params.outdir}/"
-
-    input:
-     file lib_file_nd from input_lib_nd
-
-    output:
-     file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
-
-    when:
-     !params.skip_decoy_generation
-
-    script:
-     """
-     OpenSwathDecoyGenerator -in ${lib_file_nd} \\
-                             -method ${params.decoy_method} \\
-                             -out "${lib_file_nd.baseName}_decoy.pqp" \\
-     """
-}
-
-
-/*
- * STEP 1 - OpenSwathWorkFlow
- */
-process run_openswathworkflow {
-    publishDir "${params.outdir}/"
-
-    input:
-     file mzml_file from input_mzmls
-     file swath_file from input_swath_windows.first()
-     file lib_file from input_lib_decoy.mix(input_lib).first()
-     file irt_file from input_irts.first()
-
-    output:
-     file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
-     file "${mzml_file.baseName}.osw" into osw_files
-
-    script:
-     """
-     OpenSwathWorkflow -in ${mzml_file} \\
-                       -tr ${lib_file} \\
-                       -swath_windows_file ${swath_file} \\
-                       -tr_irt ${irt_file} \\
-                       -min_rsq ${params.irt_min_rsq} \\
-                       -out_osw ${mzml_file.baseName}.osw \\
-                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
-                       -mz_extraction_window ${params.mz_extraction_window} \\
-                       -ppm \\
-                       -rt_extraction_window ${params.rt_extraction_window} \\
-                       -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
-                       -RTNormalization:estimateBestPeptides \\
-                       -RTNormalization:outlierMethod none \\
-                       -mz_correction_function quadratic_regression_delta_ppm \\
-                       -use_ms1_traces \\
-                       -Scoring:stop_report_after_feature 5 \\
-                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
-                       -Scoring:Scores:use_ms1_mi \\
-                       -Scoring:Scores:use_mi_score \\
-                       -batchSize 1000 \\
-                       -Scoring:DIAScoring:dia_nr_isotopes 3 \\
-                       -enable_uis_scoring \\
-                       -Scoring:uis_threshold_sn -1 \\
-                       -threads ${task.cpus} \\
-                       ${force_option} \\                       
-     """
-}
-
-
-/*
- * STEP 2 - Pyprophet merging of OpenSwath results
- */
-process merge_openswath_output {
-    publishDir "${params.outdir}/"
-
-    input:
-     file all_osws from osw_files.collect{it}
-     file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
-
-    output:
-     file "merged_osw_file.osw" into merged_osw_file
-
-    script:
-     """
-     pyprophet merge --template=${lib_file_1} \\
-                     --out=merged_osw_file.osw \\
-                     ${all_osws} \\
-     """
-}
-
-
-/*
- * STEP 3 - Pyprophet FDR Scoring
- */
-process run_fdr_scoring {
-    publishDir "${params.outdir}/"
-
-    input:
-     file merged_osw from merged_osw_file
-
-    output:
-     file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
-
-    when:
-     params.pyprophet_global_fdr_level==''
-
-    script:
-     """
-     pyprophet score --in=${merged_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --threads=${task.cpus} \\
-     """
-}
-
-/*
- * STEP 4 - Pyprophet global FDR Scoring
- */
-process run_global_fdr_scoring {
-    publishDir "${params.outdir}/"
-
-    input:
-     file scored_osw from merged_osw_file
-
-    output:
-     file "${scored_osw.baseName}_global.osw" into merged_osw_scored_global
-
-    when:
-     params.pyprophet_global_fdr_level!=''
-
-    script:
-     """
-     pyprophet score --in=${scored_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${scored_osw.baseName}_scored.osw \\
-                     --threads=${task.cpus} \\
-
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global.osw \\
-                                                    --context=global \\
-     """
-}
-
-/*
- * STEP 5 - Pyprophet Export
- */
-process export_pyprophet_results {
-    publishDir "${params.outdir}/"
-
-    input:
-     file global_osw from merged_osw_scored.mix(merged_osw_scored_global)
-
-    output:
-     file "*.tsv" into pyprophet_results
-
-    script:
-     """
-     pyprophet export --in=${global_osw} \\
-                      --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
-                      --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
-                      --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
-                      --out=legacy.tsv \\
-     """
-}
-
-
-/*
- * STEP 6 - Align DIA Chromatograms using TRIC
- */
-process align_dia_runs {
-    publishDir "${params.outdir}/"
-
-    input:
-     file pyresults from pyprophet_results
-
-    output:
-     file "aligned.tsv" into TRIC_result
-
-    script:
-     """
-     feature_alignment.py --in ${pyresults} \\
-                          --out aligned.tsv \\
-                          --method LocalMST \\
-                          --realign_method ${params.realignment_method} \\
-                          --max_rt_diff ${params.realignment_rt_difference} \\
-                          --mst:useRTCorrection True \\
-                          --mst:Stdev_multiplier 3.0 \\
-                          --fdr_cutoff ${params.realignment_target_fdr} \\
-                          --max_fdr_quality ${params.realignment_max_fdr} \\
-                          --target_fdr -1 \\
-                          --alignment_score ${params.realignment_score} \\
-     """
-}
-
 
 /*
  * Completion e-mail notification
@@ -525,7 +278,7 @@ workflow.onComplete {
     // Set up the e-mail variables
     def subject = "[nf-core/diaproteomics] Successful: $workflow.runName"
     if (!workflow.success) {
-      subject = "[nf-core/diaproteomics] FAILED: $workflow.runName"
+        subject = "[nf-core/diaproteomics] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
@@ -546,17 +299,16 @@ workflow.onComplete {
     if (workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
     if (workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
     if (workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
-    if (workflow.container) email_fields['summary']['Docker image'] = workflow.container
     email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
-    // TODO nf-core: If not using MultiQC, strip out this code (including params.maxMultiqcEmailFileSize)
+    // TODO nf-core: If not using MultiQC, strip out this code (including params.max_multiqc_email_size)
     // On success try attach the multiqc report
     def mqc_report = null
     try {
         if (workflow.success) {
-            mqc_report = multiqc_report.getVal()
+            mqc_report = ch_multiqc_report.getVal()
             if (mqc_report.getClass() == ArrayList) {
                 log.warn "[nf-core/diaproteomics] Found multiple reports from process 'multiqc', will use only one"
                 mqc_report = mqc_report[0]
@@ -584,7 +336,7 @@ workflow.onComplete {
     def email_html = html_template.toString()
 
     // Render the sendmail template
-    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report, mqcMaxSize: params.maxMultiqcEmailFileSize.toBytes() ]
+    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
     def sf = new File("$baseDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
@@ -592,59 +344,63 @@ workflow.onComplete {
     // Send the HTML e-mail
     if (email_address) {
         try {
-          if ( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
-          // Try to send HTML e-mail using sendmail
-          [ 'sendmail', '-t' ].execute() << sendmail_html
-          log.info "[nf-core/diaproteomics] Sent summary e-mail to $email_address (sendmail)"
+            if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
+            // Try to send HTML e-mail using sendmail
+            [ 'sendmail', '-t' ].execute() << sendmail_html
+            log.info "[nf-core/diaproteomics] Sent summary e-mail to $email_address (sendmail)"
         } catch (all) {
-          // Catch failures and try with plaintext
-          [ 'mail', '-s', subject, email_address ].execute() << email_txt
-          log.info "[nf-core/diaproteomics] Sent summary e-mail to $email_address (mail)"
+            // Catch failures and try with plaintext
+            def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
+            if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
+              mail_cmd += [ '-A', mqc_report ]
+            }
+            mail_cmd.execute() << email_html
+            log.info "[nf-core/diaproteomics] Sent summary e-mail to $email_address (mail)"
         }
     }
 
     // Write summary e-mail HTML to a file
-    def output_d = new File( "${params.outdir}/pipeline_info/" )
+    def output_d = new File("${params.outdir}/pipeline_info/")
     if (!output_d.exists()) {
-      output_d.mkdirs()
+        output_d.mkdirs()
     }
-    def output_hf = new File( output_d, "pipeline_report.html" )
+    def output_hf = new File(output_d, "pipeline_report.html")
     output_hf.withWriter { w -> w << email_html }
-    def output_tf = new File( output_d, "pipeline_report.txt" )
+    def output_tf = new File(output_d, "pipeline_report.txt")
     output_tf.withWriter { w -> w << email_txt }
 
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
     c_green = params.monochrome_logs ? '' : "\033[0;32m";
+    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
     c_red = params.monochrome_logs ? '' : "\033[0;31m";
+    c_reset = params.monochrome_logs ? '' : "\033[0m";
 
     if (workflow.stats.ignoredCount > 0 && workflow.success) {
-      log.info "${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}"
-      log.info "${c_red}Number of ignored errored process(es) : ${workflow.stats.ignoredCount} ${c_reset}"
-      log.info "${c_green}Number of successfully ran process(es) : ${workflow.stats.succeedCount} ${c_reset}"
+        log.info "-${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}-"
+        log.info "-${c_red}Number of ignored errored process(es) : ${workflow.stats.ignoredCount} ${c_reset}-"
+        log.info "-${c_green}Number of successfully ran process(es) : ${workflow.stats.succeedCount} ${c_reset}-"
     }
 
     if (workflow.success) {
-        log.info "${c_purple}[nf-core/diaproteomics]${c_green} Pipeline completed successfully${c_reset}"
+        log.info "-${c_purple}[nf-core/diaproteomics]${c_green} Pipeline completed successfully${c_reset}-"
     } else {
         checkHostname()
-        log.info "${c_purple}[nf-core/diaproteomics]${c_red} Pipeline completed with errors${c_reset}"
+        log.info "-${c_purple}[nf-core/diaproteomics]${c_red} Pipeline completed with errors${c_reset}-"
     }
 
 }
 
 
-def nfcoreHeader(){
+def nfcoreHeader() {
     // Log colors ANSI codes
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_dim = params.monochrome_logs ? '' : "\033[2m";
     c_black = params.monochrome_logs ? '' : "\033[0;30m";
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
     c_blue = params.monochrome_logs ? '' : "\033[0;34m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
     c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
+    c_dim = params.monochrome_logs ? '' : "\033[2m";
+    c_green = params.monochrome_logs ? '' : "\033[0;32m";
+    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
+    c_reset = params.monochrome_logs ? '' : "\033[0m";
     c_white = params.monochrome_logs ? '' : "\033[0;37m";
+    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
 
     return """    -${c_dim}--------------------------------------------------${c_reset}-
                                             ${c_green},--.${c_black}/${c_green},-.${c_reset}
@@ -657,7 +413,7 @@ def nfcoreHeader(){
     """.stripIndent()
 }
 
-def checkHostname(){
+def checkHostname() {
     def c_reset = params.monochrome_logs ? '' : "\033[0m"
     def c_white = params.monochrome_logs ? '' : "\033[0;37m"
     def c_red = params.monochrome_logs ? '' : "\033[1;91m"
