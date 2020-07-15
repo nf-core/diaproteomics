@@ -382,6 +382,7 @@ process run_global_fdr_scoring {
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${scored_osw.baseName}_scored.osw \\
                      --threads=${task.cpus} \\
+
      pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
                                                     --out=${scored_osw.baseName}_global.osw \\
                                                     --context=global \\
