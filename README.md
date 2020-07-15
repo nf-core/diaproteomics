@@ -1,6 +1,6 @@
 # ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
 
-**Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**.
+**Automated quantitative analysis of DIA proteomics mass spectrometry measurements**
 
 [![GitHub Actions CI Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
@@ -12,7 +12,11 @@
 
 ## Introduction
 
-The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
+nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative processing of data independant (DIA) proteomics data.
+
+The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. 
+
+The pipeline container contains all dependencies to easily extend it with EasyPQP library generation and DIAlignR chromatogram alignment and quantification.
 
 ## Quick Start
 
@@ -33,7 +37,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
+    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile <docker/singularity/conda/institute>
     ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
