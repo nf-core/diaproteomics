@@ -18,19 +18,40 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --input '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
 
     Mandatory arguments:
-      --input [file]                  Path to input data (must be surrounded with quotes)
-      -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
-                                      Available: conda, docker, singularity, test, awsbatch, <institute> and more
-
-    Options:
-      --genome [str]                  Name of iGenomes reference
-      --single_end [bool]             Specifies that the input is single-end reads
-
-    References                        If not specified in the configuration file or you wish to overwrite any of the references
-      --fasta [file]                  Path to fasta reference
+      --dia_mzmls                       Path to input data (must be surrounded with quotes)
+      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
+      -profile                          Configuration profile to use. Can use multiple (comma separated)
+                                        Available: standard, conda, docker, singularity, awsbatch, test
+    DIA Mass Spectrometry Search:
+      --spectral_lib                    Path to spectral library input file (pqp)
+      --irts                            Path to internal retention time standards (pqp)
+      --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
+      --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
+      --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
+      --dda_pepxmls                     Path to DDA pepXML input for library generation
+      --dda_mzmls                       Path to DDA mzML input for library generation
+      --skip_decoy_generation           Use a spectral library that already includes decoy sequences
+      --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
+      --min_transitions                 Minimum peptide length for filtering
+      --max_transitions                 Maximum peptide length for filtering
+      --mz_extraction_window            Mass tolerance for transition extraction (ppm)
+      --rt_extraction_window            RT window for transition extraction (seconds)
+      --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
+      --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
+      --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
+      --pyprophet_peakgroup_fdr         Threshold for FDR filtering
+      --pyprophet_peptide_fdr           Threshold for global Peptide FDR
+      --pyprophet_protein_fdr           Threshold for global Protein FDR
+      --realigment_target_fdr           Target FDR for realigned chromatograms
+      --realignment_max_fdr             Maximal FDR of realigned chromatograms
+      --realignment_score               Minimum scores of realigned chromatograms
+      --realignment_method              Method for realignment ('linear', 'lowess', 'lowess_cython')
+      --realignment_rt_difference       Maximal difference in RT across realigned chromatograms
+      --prec_charge                     Precursor charge (eg. "2:3")
+      --force_option                    Force the Analysis despite severe warnings
 
     Other options:
       --outdir [file]                 The output directory where the results will be saved
@@ -57,21 +78,6 @@ if (params.help) {
  * SET UP CONFIGURATION VARIABLES
  */
 
-// Check if genome exists in the config file
-if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
-}
-
-// TODO nf-core: Add any reference files that are needed
-// Configurable reference genomes
-//
-// NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// If you want to use the channel below in a process, define the following:
-//   input:
-//   file fasta from ch_fasta
-//
-params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
-if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 // Has the run name been specified by the user?
 // this has the bonus effect of catching both -name and --name
@@ -92,44 +98,70 @@ if (workflow.profile.contains('awsbatch')) {
 }
 
 // Stage config files
-ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
+// Validate inputs
+params.dia_mzmls = params.dia_mzmls ?: { log.error "No dia mzml data provided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
+params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
+params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
+params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
+
+Channel.fromPath( params.dia_mzmls )
+        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
+        .set { input_mzmls }
+
+Channel.fromPath( params.swath_windows)
+        .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
+        .set { input_swath_windows }
+
+Channel.fromPath( params.irts)
+        .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
+        .set { input_irts }
+
+
 /*
- * Create a channel for input read files
+ * Create a channel for input spectral library
  */
-if (params.input_paths) {
-    if (params.single_end) {
-        Channel
-            .from(params.input_paths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    } else {
-        Channel
-            .from(params.input_paths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true), file(row[1][1], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    }
+if( params.generate_spectral_lib) {
+
+    input_spectral_lib = Channel.empty()
+
+} else if( !params.skip_decoy_generation) {
+    Channel
+        .fromPath( params.spectral_lib )
+        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
+        .set { input_lib_nd }
+
+    input_lib = Channel.empty()
+    input_lib_1 = Channel.empty()
+
 } else {
     Channel
-        .fromFilePairs(params.input, size: params.single_end ? 1 : 2)
-        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.input}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
-        .into { ch_read_files_fastqc; ch_read_files_trimming }
+        .fromPath( params.spectral_lib )
+        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
+        .into { input_lib; input_lib_1 }
+
+    input_lib_nd = Channel.empty()
+
 }
+
+
+// Force option
+if (params.force_option){
+ force_option='-force'
+} else {
+ force_option=''
+}
+
 
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-// TODO nf-core: Report custom parameters here
-summary['Reads']            = params.input
-summary['Fasta Ref']        = params.fasta
-summary['Data Type']        = params.single_end ? 'Single-End' : 'Paired-End'
+summary['mzMLs']        = params.dia_mzmls
+summary['Spectral Library']    = params.spectral_lib
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -150,7 +182,6 @@ summary['Config Files'] = workflow.configFiles.join(', ')
 if (params.email || params.email_on_fail) {
     summary['E-mail Address']    = params.email
     summary['E-mail on failure'] = params.email_on_fail
-    summary['MultiQC maxsize']   = params.max_multiqc_email_size
 }
 log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
@@ -174,6 +205,7 @@ Channel.from(summary.collect{ [it.key, it.value] })
     """.stripIndent() }
     .set { ch_workflow_summary }
 
+
 /*
  * Parse software version numbers
  */
@@ -193,66 +225,218 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    fastqc --version > v_fastqc.txt
-    multiqc --version > v_multiqc.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
+
 /*
- * STEP 1 - FastQC
+ * STEP 0 - Spectral Library Generation using EasyPQP
  */
-process fastqc {
-    tag "$name"
-    label 'process_medium'
-    publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
-        saveAs: { filename ->
-                      filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"
-                }
+//
+// TODO:
+// 1) (option) mzid to idXML
+// 2) easypqp convert —pepxml … —spectra …
+// 3) easypqp library
+//
+
+
+/*
+ * STEP 0.5 - Decoy Generation for Spectral Library
+ */
+process generate_decoys_for_spectral_library {
+    publishDir "${params.outdir}/"
 
     input:
-    set val(name), file(reads) from ch_read_files_fastqc
+     file lib_file_nd from input_lib_nd
 
     output:
-    file "*_fastqc.{zip,html}" into ch_fastqc_results
+     file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
+
+    when:
+     !params.skip_decoy_generation
 
     script:
-    """
-    fastqc --quiet --threads $task.cpus $reads
-    """
+     """
+     OpenSwathDecoyGenerator -in ${lib_file_nd} \\
+                             -method ${params.decoy_method} \\
+                             -out "${lib_file_nd.baseName}_decoy.pqp" \\
+     """
 }
 
+
 /*
- * STEP 2 - MultiQC
+ * STEP 1 - OpenSwathWorkFlow
  */
-process multiqc {
-    publishDir "${params.outdir}/MultiQC", mode: params.publish_dir_mode
+process run_openswathworkflow {
+    publishDir "${params.outdir}/"
 
     input:
-    file (multiqc_config) from ch_multiqc_config
-    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
-    // TODO nf-core: Add in log files from your new processes for MultiQC to find!
-    file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
-    file ('software_versions/*') from ch_software_versions_yaml.collect()
-    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+     file mzml_file from input_mzmls
+     file swath_file from input_swath_windows.first()
+     file lib_file from input_lib_decoy.mix(input_lib).first()
+     file irt_file from input_irts.first()
 
     output:
-    file "*multiqc_report.html" into ch_multiqc_report
-    file "*_data"
-    file "multiqc_plots"
+     file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
+     file "${mzml_file.baseName}.osw" into osw_files
 
     script:
-    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
-    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
-    custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
-    // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
-    """
-    multiqc -f $rtitle $rfilename $custom_config_file .
-    """
+     """
+     OpenSwathWorkflow -in ${mzml_file} \\
+                       -tr ${lib_file} \\
+                       -swath_windows_file ${swath_file} \\
+                       -tr_irt ${irt_file} \\
+                       -min_rsq ${params.irt_min_rsq} \\
+                       -out_osw ${mzml_file.baseName}.osw \\
+                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
+                       -mz_extraction_window ${params.mz_extraction_window} \\
+                       -mz_extraction_window_unit 'ppm' \\
+                       -mz_extraction_window_ms1_unit 'ppm' \\
+                       -rt_extraction_window ${params.rt_extraction_window} \\
+                       -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
+                       -RTNormalization:estimateBestPeptides \\
+                       -RTNormalization:outlierMethod none \\
+                       -mz_correction_function quadratic_regression_delta_ppm \\
+                       -use_ms1_traces \\
+                       -Scoring:stop_report_after_feature 5 \\
+                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+                       -Scoring:Scores:use_ms1_mi \\
+                       -Scoring:Scores:use_mi_score \\
+                       -batchSize 1000 \\
+                       -Scoring:DIAScoring:dia_nr_isotopes 3 \\
+                       -enable_uis_scoring \\
+                       -Scoring:uis_threshold_sn -1 \\
+                       -threads ${task.cpus} \\
+                       ${force_option} \\                       
+     """
 }
 
+
 /*
- * STEP 3 - Output Description HTML
+ * STEP 2 - Pyprophet merging of OpenSwath results
+ */
+process merge_openswath_output {
+    publishDir "${params.outdir}/"
+
+    input:
+     file all_osws from osw_files.collect{it}
+     file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
+
+    output:
+     file "merged_osw_file.osw" into merged_osw_file
+
+    script:
+     """
+     pyprophet merge --template=${lib_file_1} \\
+                     --out=merged_osw_file.osw \\
+                     ${all_osws} \\
+     """
+}
+
+
+/*
+ * STEP 3 - Pyprophet FDR Scoring
+ */
+process run_fdr_scoring {
+    publishDir "${params.outdir}/"
+
+    input:
+     file merged_osw from merged_osw_file
+
+    output:
+     file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
+
+    when:
+     params.pyprophet_global_fdr_level==''
+
+    script:
+     """
+     pyprophet score --in=${merged_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${merged_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+     """
+}
+
+
+/*
+ * STEP 4 - Pyprophet global FDR Scoring
+ */
+process run_global_fdr_scoring {
+    publishDir "${params.outdir}/"
+
+    input:
+     file scored_osw from merged_osw_file
+
+    output:
+     file "${scored_osw.baseName}_global.osw" into merged_osw_scored_global
+
+    when:
+     params.pyprophet_global_fdr_level!=''
+
+    script:
+     """
+     pyprophet score --in=${scored_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${scored_osw.baseName}_scored.osw \\
+                     --threads=${task.cpus} \\
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
+                                                    --out=${scored_osw.baseName}_global.osw \\
+                                                    --context=global \\
+     """
+}
+
+
+/*
+ * STEP 5 - Pyprophet Export
+ */
+process export_pyprophet_results {
+    publishDir "${params.outdir}/"
+
+    input:
+     file global_osw from merged_osw_scored.mix(merged_osw_scored_global)
+
+    output:
+     file "*.tsv" into pyprophet_results
+
+    script:
+     """
+     pyprophet export --in=${global_osw} \\
+                      --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
+                      --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
+                      --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
+                      --out=legacy.tsv \\
+     """
+}
+
+
+/*
+ * STEP 6 - Align DIA Chromatograms using DIAlignR
+ */
+// process align_dia_runs {
+//    publishDir "${params.outdir}/"
+//
+//    input:
+//     file pyresults from pyprophet_results
+//
+//    output:
+//     file "aligned.tsv" into DIALignR_result
+//
+//    script:
+//     """
+//     DIAlignR.R
+//     library(dplyr)
+//     library(RSQLite)
+//     library(DIAlignR)
+//     alignTragetedRuns(dataPath='./', samplingTime = 1.372082, gapQuantile = 0.9)
+//     """
+//}
+
+
+/*
+ * Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode

@@ -1,4 +1,4 @@
-FROM nfcore/base:dev
+FROM nfcore/base:1.7
 LABEL authors="Leon Bichmann" \
       description="Docker image containing all software requirements for the nf-core/diaproteomics pipeline"
 
