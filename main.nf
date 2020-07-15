@@ -286,6 +286,7 @@ process run_openswathworkflow {
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
                        -swath_windows_file ${swath_file} \\
+                       -sort_swath_maps \\
                        -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
