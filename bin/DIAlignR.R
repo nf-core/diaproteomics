@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 library(dplyr)
 library(RSQLite)
 library(DIAlignR)

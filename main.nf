@@ -426,12 +426,12 @@ process index_chromatograms {
      file chrom_file_noindex from chromatogram_files
 
     output:
-     file "${chrom_file_noindex.baseName}.chrom.mzML" into chromatogram_files_indexed
+     file "${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML" into chromatogram_files_indexed
 
     script:
      """
      FileConverter -in ${chrom_file_noindex} \\
-                   -out ${chrom_file_noindex.baseName}.chrom.mzML \\
+                   -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
      """
 }
 
