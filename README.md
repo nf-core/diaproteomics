@@ -1,6 +1,6 @@
 # ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
 
-**Automated quantitative analysis of DIA proteomics mass spectrometry measurements**
+**Automated quantitative analysis of DIA proteomics mass spectrometry measurements**.
 
 [![GitHub Actions CI Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
@@ -14,7 +14,7 @@
 
 nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative processing of data independant (DIA) proteomics data.
 
-The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. 
+The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level.
 
 The pipeline container contains all dependencies to easily extend it with EasyPQP library generation and DIAlignR chromatogram alignment and quantification.
 

@@ -419,7 +419,7 @@ process export_pyprophet_results {
 /*
  * STEP 6 - Index Chromatogram mzMLs
  */
-process align_dia_runs {
+process index_chromatograms {
     publishDir "${params.outdir}/"
 
     input:
