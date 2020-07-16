@@ -45,11 +45,10 @@ def helpMessage() {
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
       --pyprophet_peptide_fdr           Threshold for global Peptide FDR
       --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --realigment_target_fdr           Target FDR for realigned chromatograms
-      --realignment_max_fdr             Maximal FDR of realigned chromatograms
-      --realignment_score               Minimum scores of realigned chromatograms
-      --realignment_method              Method for realignment ('linear', 'lowess', 'lowess_cython')
-      --realignment_rt_difference       Maximal difference in RT across realigned chromatograms
+      --DIAlignR_globalAlignFDR         DIAlignR global Aligment FDR threshold
+      --DIAlignR_AnalyteFDR             DIAlignR Analyte FDR threshold
+      --DIAlignR_UnAlignFDR             DIAlignR UnAligment FDR threshold
+      --DIAlignR_AlignFDR               DIAlignR Aligment FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -456,7 +455,7 @@ process align_dia_runs {
      mkdir mzml
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R
+     RScript DIAlignR.R ${params.DIAlignR_globalAlignFDR} ${params.DIAlignR_AnalyteFDR} ${params.DIAlignR_UnAlignFDR} ${params.DIAlignR_AlignFDR}
      """
 }
 

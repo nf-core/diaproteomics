@@ -4,4 +4,10 @@ library(dplyr)
 library(RSQLite)
 library(DIAlignR)
 
-alignTargetedRuns(dataPath='./', gapQuantile = 0.9, globalAlignmentFdr = 1, analyteFDR=1, unalignedFDR=1, alignedFDR=1)
+args <- commandArgs()
+p_globalAlignFDR <- args[6]
+p_analyteFDR<-args[7]
+p_unalignFDR<-args[8]
+p_alignFDR<-args[9]
+
+alignTargetedRuns(dataPath='./', globalAlignmentFdr = p_globalAlignFDR, analyteFDR=p_analyteFDR, unalignedFDR=p_unalignFDR, alignedFDR=p_alignFDR)
