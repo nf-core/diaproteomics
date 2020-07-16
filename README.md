@@ -6,7 +6,7 @@
 [![GitHub Actions Linting Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
 
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
 [![Docker](https://img.shields.io/docker/automated/nfcore/diaproteomics.svg)](https://hub.docker.com/r/nfcore/diaproteomics)
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23diaproteomics-4A154B?logo=slack)](https://nfcore.slack.com/channels/diaproteomics)
 

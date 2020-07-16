@@ -332,7 +332,7 @@ process merge_openswath_output {
     script:
      """
      pyprophet merge --template=${lib_file_1} \\
-                     --out=merged_osw_file.osw \\
+                     --out=osw_file_merged.osw \\
                      ${all_osws} \\
      """
 }
@@ -348,7 +348,7 @@ process run_fdr_scoring {
      file merged_osw from merged_osw_file
 
     output:
-     file "${merged_osw.baseName}_scored_merged.osw" into merged_osw_scored
+     file "${merged_osw.baseName}_scored_merged.osw" into (merged_osw_scored, merged_osw_scored_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -357,7 +357,7 @@ process run_fdr_scoring {
      """
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored.osw \\
+                     --out=${merged_osw.baseName}_scored_merged.osw \\
                      --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
      """
@@ -387,7 +387,7 @@ process run_global_fdr_scoring {
                      --threads=${task.cpus} \\
 
      pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global.osw \\
+                                                    --out=${scored_osw.baseName}_global_merged.osw \\
                                                     --context=global \\
      """
 }
@@ -430,8 +430,8 @@ process index_chromatograms {
 
     script:
      """
-     FileConverter --in ${chrom_file_noindex} \\
-                   --out ${chrom_file_noindex.baseName}.chrom.mzML \\
+     FileConverter -in ${chrom_file_noindex} \\
+                   -out ${chrom_file_noindex.baseName}.chrom.mzML \\
      """
 }
 
@@ -443,7 +443,7 @@ process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     file pyresults from pyprophet_results
+     file pyresults from merged_osw_scored_for_pyprophet
      file chrom_files_index from chromatogram_files_indexed.collect()
 
     output:
