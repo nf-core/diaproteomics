@@ -2,4 +2,4 @@ library(dplyr)
 library(RSQLite)
 library(DIAlignR)
 
-alignTragetedRuns(dataPath='./', samplingTime = 1.372082, gapQuantile = 0.9)
+alignTargetedRuns(dataPath='./', gapQuantile = 0.9)

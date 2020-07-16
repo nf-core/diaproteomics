@@ -271,6 +271,8 @@ process generate_decoys_for_spectral_library {
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
+    label 'process_medium'
+
     input:
      file mzml_file from input_mzmls
      file swath_file from input_swath_windows.first()
@@ -325,7 +327,7 @@ process merge_openswath_output {
      file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
 
     output:
-     file "merged_osw_file.osw" into merged_osw_file
+     file "osw_file_merged.osw" into merged_osw_file
 
     script:
      """
@@ -346,7 +348,7 @@ process run_fdr_scoring {
      file merged_osw from merged_osw_file
 
     output:
-     file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
+     file "${merged_osw.baseName}_scored_merged.osw" into merged_osw_scored
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -372,7 +374,7 @@ process run_global_fdr_scoring {
      file scored_osw from merged_osw_file
 
     output:
-     file "${scored_osw.baseName}_global.osw" into merged_osw_scored_global
+     file "${scored_osw.baseName}_global_merged.osw" into merged_osw_scored_global
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -415,26 +417,48 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 6 - Align DIA Chromatograms using DIAlignR
+ * STEP 6 - Index Chromatogram mzMLs
  */
-// process align_dia_runs {
-//    publishDir "${params.outdir}/"
-//
-//    input:
-//     file pyresults from pyprophet_results
-//
-//    output:
-//     file "aligned.tsv" into DIALignR_result
-//
-//    script:
-//     """
-//     DIAlignR.R
-//     library(dplyr)
-//     library(RSQLite)
-//     library(DIAlignR)
-//     alignTragetedRuns(dataPath='./', samplingTime = 1.372082, gapQuantile = 0.9)
-//     """
-//}
+process align_dia_runs {
+    publishDir "${params.outdir}/"
+
+    input:
+     file chrom_files_noindex from chromatogram_files
+
+    output:
+     file "${chrom_files_noindex.baseName}.chrom.mzML" into chromatogram_files_indexed
+
+    script:
+     """
+     FileConverter --in ${mzml_file} \\
+                   --out ${chrom_files_noindex.baseName}.chrom.mzML \\
+     """
+}
+
+
+/*
+ * STEP 7 - Align DIA Chromatograms using DIAlignR
+ */
+process align_dia_runs {
+    publishDir "${params.outdir}/"
+
+    input:
+     file pyresults from pyprophet_results
+     file chrom_files_index from chromatogram_files_indexed
+
+    output:
+     file "DIAlignR.csv" into DIALignR_result
+
+    script:
+     """
+     mkdir osw
+     mv ${pyresults} osw/${pyresults}
+     mkdir mzml
+     mv ${chrom_files_index} osw/${chrom_files_index}
+
+     DIAlignR.R
+     """
+}
 
 
 /*
