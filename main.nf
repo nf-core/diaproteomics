@@ -455,7 +455,7 @@ process align_dia_runs {
      mkdir mzml
      mv *.chrom.mzML mzml/
 
-     RScript DIAlignR.R ${params.DIAlignR_globalAlignFDR} ${params.DIAlignR_AnalyteFDR} ${params.DIAlignR_UnAlignFDR} ${params.DIAlignR_AlignFDR}
+     DIAlignR.R ${params.DIAlignR_globalAlignFDR} ${params.DIAlignR_AnalyteFDR} ${params.DIAlignR_UnAlignFDR} ${params.DIAlignR_AlignFDR}
      """
 }
 
