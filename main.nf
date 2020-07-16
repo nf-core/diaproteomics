@@ -423,15 +423,15 @@ process index_chromatograms {
     publishDir "${params.outdir}/"
 
     input:
-     file chrom_files_noindex from chromatogram_files
+     file chrom_file_noindex from chromatogram_files
 
     output:
-     file "${chrom_files_noindex.baseName}.chrom.mzML" into chromatogram_files_indexed
+     file "${chrom_file_noindex.baseName}.chrom.mzML" into chromatogram_files_indexed
 
     script:
      """
-     FileConverter --in ${mzml_file} \\
-                   --out ${chrom_files_noindex.baseName}.chrom.mzML \\
+     FileConverter --in ${chrom_file_noindex} \\
+                   --out ${chrom_file_noindex.baseName}.chrom.mzML \\
      """
 }
 
@@ -444,7 +444,7 @@ process align_dia_runs {
 
     input:
      file pyresults from pyprophet_results
-     file chrom_files_index from chromatogram_files_indexed
+     file chrom_files_index from chromatogram_files_indexed.collect()
 
     output:
      file "DIAlignR.csv" into DIALignR_result
@@ -452,9 +452,9 @@ process align_dia_runs {
     script:
      """
      mkdir osw
-     mv ${pyresults} osw/${pyresults}
+     mv ${pyresults} osw/
      mkdir mzml
-     mv ${chrom_files_index} osw/${chrom_files_index}
+     mv *.chrom.mzML mzml/
 
      DIAlignR.R
      """
