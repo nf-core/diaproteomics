@@ -45,11 +45,10 @@ def helpMessage() {
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
       --pyprophet_peptide_fdr           Threshold for global Peptide FDR
       --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --realigment_target_fdr           Target FDR for realigned chromatograms
-      --realignment_max_fdr             Maximal FDR of realigned chromatograms
-      --realignment_score               Minimum scores of realigned chromatograms
-      --realignment_method              Method for realignment ('linear', 'lowess', 'lowess_cython')
-      --realignment_rt_difference       Maximal difference in RT across realigned chromatograms
+      --DIAlignR_global_align_FDR         DIAlignR global Aligment FDR threshold
+      --DIAlignR_analyte_FDR             DIAlignR Analyte FDR threshold
+      --DIAlignR_unalign_FDR             DIAlignR UnAligment FDR threshold
+      --DIAlignR_align_FDR               DIAlignR Aligment FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -271,6 +270,8 @@ process generate_decoys_for_spectral_library {
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
+    label 'process_medium'
+
     input:
      file mzml_file from input_mzmls
      file swath_file from input_swath_windows.first()
@@ -286,6 +287,7 @@ process run_openswathworkflow {
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
                        -swath_windows_file ${swath_file} \\
+                       -sort_swath_maps \\
                        -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
@@ -324,12 +326,12 @@ process merge_openswath_output {
      file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
 
     output:
-     file "merged_osw_file.osw" into merged_osw_file
+     file "osw_file_merged.osw" into merged_osw_file
 
     script:
      """
      pyprophet merge --template=${lib_file_1} \\
-                     --out=merged_osw_file.osw \\
+                     --out=osw_file_merged.osw \\
                      ${all_osws} \\
      """
 }
@@ -345,7 +347,7 @@ process run_fdr_scoring {
      file merged_osw from merged_osw_file
 
     output:
-     file "${merged_osw.baseName}_scored.osw" into merged_osw_scored
+     file "${merged_osw.baseName}_scored_merged.osw" into (merged_osw_scored, merged_osw_scored_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -354,7 +356,7 @@ process run_fdr_scoring {
      """
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored.osw \\
+                     --out=${merged_osw.baseName}_scored_merged.osw \\
                      --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
      """
@@ -371,7 +373,7 @@ process run_global_fdr_scoring {
      file scored_osw from merged_osw_file
 
     output:
-     file "${scored_osw.baseName}_global.osw" into merged_osw_scored_global
+     file "${scored_osw.baseName}_global_merged.osw" into merged_osw_scored_global
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -384,7 +386,7 @@ process run_global_fdr_scoring {
                      --threads=${task.cpus} \\
 
      pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global.osw \\
+                                                    --out=${scored_osw.baseName}_global_merged.osw \\
                                                     --context=global \\
      """
 }
@@ -414,26 +416,48 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 6 - Align DIA Chromatograms using DIAlignR
+ * STEP 6 - Index Chromatogram mzMLs
  */
-// process align_dia_runs {
-//    publishDir "${params.outdir}/"
-//
-//    input:
-//     file pyresults from pyprophet_results
-//
-//    output:
-//     file "aligned.tsv" into DIALignR_result
-//
-//    script:
-//     """
-//     DIAlignR.R
-//     library(dplyr)
-//     library(RSQLite)
-//     library(DIAlignR)
-//     alignTragetedRuns(dataPath='./', samplingTime = 1.372082, gapQuantile = 0.9)
-//     """
-//}
+process index_chromatograms {
+    publishDir "${params.outdir}/"
+
+    input:
+     file chrom_file_noindex from chromatogram_files
+
+    output:
+     file "${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML" into chromatogram_files_indexed
+
+    script:
+     """
+     FileConverter -in ${chrom_file_noindex} \\
+                   -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+     """
+}
+
+
+/*
+ * STEP 7 - Align DIA Chromatograms using DIAlignR
+ */
+process align_dia_runs {
+    publishDir "${params.outdir}/"
+
+    input:
+     file pyresults from merged_osw_scored_for_pyprophet
+     file chrom_files_index from chromatogram_files_indexed.collect()
+
+    output:
+     file "DIAlignR.csv" into DIALignR_result
+
+    script:
+     """
+     mkdir osw
+     mv ${pyresults} osw/
+     mkdir mzml
+     mv *.chrom.mzML mzml/
+
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR}
+     """
+}
 
 
 /*
