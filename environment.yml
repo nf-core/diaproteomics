@@ -6,14 +6,14 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - conda-forge::python=3.6
+  - conda-forge::python=3.6.10
   - conda-forge::markdown=3.1.1
   - conda-forge::pymdown-extensions=6.0
   - conda-forge::pygments=2.5.2
   - anaconda::openjdk=8.0.152
-  - r-base
-  - openms-thirdparty=2.5.0
-  - pyprophet=2.1.4
-  - networkx
-  - bioconda:easypqp=0.1.7
-  - bioconductor-dialignr
+  - conda-forge::r-base=4.0.2
+  - bioconda::openms-thirdparty=2.5.0
+  - bioconda::pyprophet=2.1.4
+  - conda-forge::networkx=2.4
+  - bioconda::easypqp=0.1.7
+  - bioconductor-dialignr=1.0.5
