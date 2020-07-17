@@ -45,10 +45,10 @@ def helpMessage() {
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
       --pyprophet_peptide_fdr           Threshold for global Peptide FDR
       --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --DIAlignR_globalAlignFDR         DIAlignR global Aligment FDR threshold
-      --DIAlignR_AnalyteFDR             DIAlignR Analyte FDR threshold
-      --DIAlignR_UnAlignFDR             DIAlignR UnAligment FDR threshold
-      --DIAlignR_AlignFDR               DIAlignR Aligment FDR threshold
+      --DIAlignR_global_align_FDR         DIAlignR global Aligment FDR threshold
+      --DIAlignR_analyte_FDR             DIAlignR Analyte FDR threshold
+      --DIAlignR_unalign_FDR             DIAlignR UnAligment FDR threshold
+      --DIAlignR_align_FDR               DIAlignR Aligment FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -455,7 +455,7 @@ process align_dia_runs {
      mkdir mzml
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_globalAlignFDR} ${params.DIAlignR_AnalyteFDR} ${params.DIAlignR_UnAlignFDR} ${params.DIAlignR_AlignFDR}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR}
      """
 }
 
