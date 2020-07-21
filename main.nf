@@ -235,8 +235,8 @@ process get_software_versions {
 //
 // TODO:
 // 1) (option) mzid to idXML
-// 2) easypqp convert —pepxml … —spectra …
-// 3) easypqp library
+// 2) easypqp convert --unimod unimod.xml —-pepxml … —-spectra …
+// 3) easypqp library --out test.pqp --nofdr ...psmpkl ...peakpkl
 //
 
 
