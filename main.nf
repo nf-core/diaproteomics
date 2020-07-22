@@ -286,7 +286,7 @@ process generate_spectral_library {
      file unimod_file from input_unimod.first()
 
     output:
-     file "${dda_mzml_file.baseName}.pqp" into input_lib_dda_nd
+     file "${dda_mzml_file.baseName}_run_peaks.tsv" into input_lib_dda_nd
 
     when:
      params.generate_spectral_lib
@@ -297,7 +297,7 @@ process generate_spectral_library {
                      --pepxml ${idxml_file} \\
                      --spectra ${dda_mzml_file} \\
 
-     easypqp library --out ${dda_mzml_file.baseName}.pqp \\
+     easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
                      --nofdr \\
                      ${dda_mzml_file.baseName}.psmpkl \\
                      ${dda_mzml_file.baseName}.peakpkl
