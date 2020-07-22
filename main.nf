@@ -27,6 +27,8 @@ def helpMessage() {
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
       --spectral_lib                    Path to spectral library input file (pqp)
+      --mzid                            Path to mzid to generate spectral library (mzid)
+      --dda_mzml                        Path to mzml to generate spectral library (mzml)
       --irts                            Path to internal retention time standards (pqp)
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
@@ -124,7 +126,17 @@ Channel.fromPath( params.irts)
  */
 if( params.generate_spectral_lib) {
 
-    input_spectral_lib = Channel.empty()
+    Channel
+        .fromPath( params.mzid )
+        .ifEmpty { exit 1, "params.mzid was empty - no peptide identification input supplied" }
+        .into { input_mzid}
+
+    Channel
+        .fromPath( params.dda_mzml )
+        .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
+        .into { input_dda_mzml}
+
+    input_lib_nd = Channel.empty()
 
 } else if( !params.skip_decoy_generation) {
     Channel
@@ -134,6 +146,8 @@ if( params.generate_spectral_lib) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
+    input_mzid = Channel.empty()
+    input_dda_mzml = Channel.empty()
 
 } else {
     Channel
@@ -142,7 +156,8 @@ if( params.generate_spectral_lib) {
         .into { input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-
+    input_mzid = Channel.empty()
+    input_dda_mzml = Channel.empty()
 }
 
 
@@ -228,26 +243,67 @@ process get_software_versions {
     """
 }
 
-
 /*
- * STEP 0 - Spectral Library Generation using EasyPQP
+ * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
-//
-// TODO:
-// 1) (option) mzid to idXML
-// 2) easypqp convert --unimod unimod.xml —-pepxml … —-spectra …
-// 3) easypqp library --out test.pqp --nofdr ...psmpkl ...peakpkl
-//
+process convert_ids_from_mzid {
+    publishDir "${params.outdir}/"
+
+    input:
+     file mzid_file from input_mzid
+
+    output:
+     file "${mzid_file.baseName}.idXML" into input_idxml
+
+    when:
+     params.generate_spectral_lib
+
+    script:
+     """
+     IDFileConverter --in ${mzid_file} \\
+                     —-out "${mzid_file.baseName}.idXML" \\
+     """
+}
 
 
 /*
- * STEP 0.5 - Decoy Generation for Spectral Library
+ * STEP 1 - Spectral Library Generation using EasyPQP
+ */
+process generate_spectral_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     file idxml_file from input_idxml
+     file dda_mzml_file from input_dda_mzml
+
+    output:
+     file "${idxml_file.baseName}.pqp" into input_lib_dda_nd
+
+    when:
+     params.generate_spectral_lib
+
+    script:
+     """
+     easypqp convert --unimod unimod.xml \\
+                     —-pepxml ${idxml_file} \\
+                     —-spectra ${dda_mzml_file} \\
+
+     easypqp library —-out "${idxml_file.baseName}.pqp" \\
+                     —-nofdr \\
+                     "${idxml_file.baseName}.psmpkl" \\
+                     "${idxml_file.baseName}.peakpkl" \\
+     """
+}
+
+
+/*
+ * STEP 2 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib_nd
+     file lib_file_nd from input_lib_nd.mix(input_lib_dda_nd)
 
     output:
      file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
@@ -265,7 +321,7 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 1 - OpenSwathWorkFlow
+ * STEP 3 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
@@ -316,7 +372,7 @@ process run_openswathworkflow {
 
 
 /*
- * STEP 2 - Pyprophet merging of OpenSwath results
+ * STEP 4 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
     publishDir "${params.outdir}/"
@@ -338,7 +394,7 @@ process merge_openswath_output {
 
 
 /*
- * STEP 3 - Pyprophet FDR Scoring
+ * STEP 5 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -364,7 +420,7 @@ process run_fdr_scoring {
 
 
 /*
- * STEP 4 - Pyprophet global FDR Scoring
+ * STEP 6 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -393,7 +449,7 @@ process run_global_fdr_scoring {
 
 
 /*
- * STEP 5 - Pyprophet Export
+ * STEP 7 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
@@ -416,7 +472,7 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 6 - Index Chromatogram mzMLs
+ * STEP 8 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
     publishDir "${params.outdir}/"
@@ -436,7 +492,7 @@ process index_chromatograms {
 
 
 /*
- * STEP 7 - Align DIA Chromatograms using DIAlignR
+ * STEP 9 - Align DIA Chromatograms using DIAlignR
  */
 process align_dia_runs {
     publishDir "${params.outdir}/"
