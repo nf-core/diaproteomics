@@ -113,7 +113,7 @@ Channel.fromPath( params.dia_mzmls )
 
 Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_swath_windows }
+        .into { input_swath_windows; input_swath_windows_assay }
 
 Channel.fromPath( params.irts)
         .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
@@ -306,13 +306,38 @@ process generate_spectral_library {
 
 
 /*
+ * STEP 1.5 - Assay Generation for Spectral Library
+ */
+process generate_assay_of_spectral_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     file lib_file_na from input_lib_nd.mix(input_lib_dda_nd)
+     file swath_file from input_swath_windows_assay.first()
+
+    output:
+     file "${lib_file_na.baseName}_assay.pqp" into input_lib_assay
+
+    when:
+     !params.skip_decoy_generation
+
+    script:
+     """
+     OpenSwathAssayGenerator -in ${lib_file_na} \\
+                             -swath_windows_file ${swath_file} \\
+                             -out "${lib_file_na.baseName}_assay.pqp" \\
+     """
+}
+
+
+/*
  * STEP 2 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib_nd.mix(input_lib_dda_nd)
+     file lib_file_nd from input_lib_assay
 
     output:
      file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
