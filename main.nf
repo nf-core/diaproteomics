@@ -27,14 +27,13 @@ def helpMessage() {
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
       --spectral_lib                    Path to spectral library input file (pqp)
-      --mzid                            Path to mzid to generate spectral library (mzid)
-      --dda_mzml                        Path to mzml to generate spectral library (mzml)
       --irts                            Path to internal retention time standards (pqp)
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --dda_pepxmls                     Path to DDA pepXML input for library generation
-      --dda_mzmls                       Path to DDA mzML input for library generation
+      --mzid                            Path to mzid to generate spectral library (mzid)
+      --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --unimod                          Path to unimod.xml file describing modifications
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum peptide length for filtering
@@ -136,6 +135,13 @@ if( params.generate_spectral_lib) {
         .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
         .into { input_dda_mzml}
 
+    Channel
+        .fromPath( params.unimod )
+        .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
+        .into { input_unimod}
+
+    input_lib = Channel.empty()
+    input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
 
 } else if( !params.skip_decoy_generation) {
@@ -148,6 +154,7 @@ if( params.generate_spectral_lib) {
     input_lib_1 = Channel.empty()
     input_mzid = Channel.empty()
     input_dda_mzml = Channel.empty()
+    input_unimod = Channel.empty()
 
 } else {
     Channel
@@ -158,6 +165,7 @@ if( params.generate_spectral_lib) {
     input_lib_nd = Channel.empty()
     input_mzid = Channel.empty()
     input_dda_mzml = Channel.empty()
+    input_unimod = Channel.empty()
 }
 
 
@@ -260,8 +268,8 @@ process convert_ids_from_mzid {
 
     script:
      """
-     IDFileConverter --in ${mzid_file} \\
-                     —-out "${mzid_file.baseName}.idXML" \\
+     IDFileConverter -in ${mzid_file} \\
+                     -out ${mzid_file.baseName}.idXML
      """
 }
 
@@ -275,23 +283,24 @@ process generate_spectral_library {
     input:
      file idxml_file from input_idxml
      file dda_mzml_file from input_dda_mzml
+     file unimod_file from input_unimod.first()
 
     output:
-     file "${idxml_file.baseName}.pqp" into input_lib_dda_nd
+     file "${dda_mzml_file.baseName}.pqp" into input_lib_dda_nd
 
     when:
      params.generate_spectral_lib
 
     script:
      """
-     easypqp convert --unimod unimod.xml \\
-                     —-pepxml ${idxml_file} \\
-                     —-spectra ${dda_mzml_file} \\
+     easypqp convert --unimod ${unimod_file} \\
+                     --pepxml ${idxml_file} \\
+                     --spectra ${dda_mzml_file} \\
 
-     easypqp library —-out "${idxml_file.baseName}.pqp" \\
-                     —-nofdr \\
-                     "${idxml_file.baseName}.psmpkl" \\
-                     "${idxml_file.baseName}.peakpkl" \\
+     easypqp library --out ${dda_mzml_file.baseName}.pqp \\
+                     --nofdr \\
+                     ${dda_mzml_file.baseName}.psmpkl \\
+                     ${dda_mzml_file.baseName}.peakpkl
      """
 }
 
