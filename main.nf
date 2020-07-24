@@ -46,10 +46,14 @@ def helpMessage() {
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
       --pyprophet_peptide_fdr           Threshold for global Peptide FDR
       --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --DIAlignR_global_align_FDR         DIAlignR global Aligment FDR threshold
-      --DIAlignR_analyte_FDR             DIAlignR Analyte FDR threshold
-      --DIAlignR_unalign_FDR             DIAlignR UnAligment FDR threshold
-      --DIAlignR_align_FDR               DIAlignR Aligment FDR threshold
+      --pyprophet_pi0_start             Start for non-parametric pi0 estimation
+      --pyprophet_pi0_end               End for non-parametric pi0 estimation
+      --pyprophet_pi0_steps             Steps for non-parametric pi0 estimation
+      --DIAlignR_global_align_FDR       DIAlignR global Aligment FDR threshold
+      --DIAlignR_analyte_FDR            DIAlignR Analyte FDR threshold
+      --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
+      --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
+      --DIAlignR_query_FDR              DIAlignR Query FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -448,6 +452,7 @@ process run_fdr_scoring {
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${merged_osw.baseName}_scored_merged.osw \\
                      --classifier=${params.pyprophet_classifier} \\
+                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
      """
 }
@@ -545,7 +550,7 @@ process align_dia_runs {
      mkdir mzml
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
      """
 }
 
