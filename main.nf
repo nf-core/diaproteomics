@@ -31,9 +31,9 @@ def helpMessage() {
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --mzid                            Path to mzid to generate spectral library (mzid)
+      --dda_id                          Path to mzid, idXML or other fromats of DDA search results to use for spectral library generation
       --dda_mzml                        Path to mzml to generate spectral library (mzml)
-      --unimod                          Path to unimod.xml file describing modifications
+      --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum peptide length for filtering
@@ -130,9 +130,9 @@ Channel.fromPath( params.irts)
 if( params.generate_spectral_lib) {
 
     Channel
-        .fromPath( params.mzid )
-        .ifEmpty { exit 1, "params.mzid was empty - no peptide identification input supplied" }
-        .into { input_mzid}
+        .fromPath( params.dda_id )
+        .ifEmpty { exit 1, "params.dda_id was empty - no peptide identification input supplied" }
+        .into { input_dda_id}
 
     Channel
         .fromPath( params.dda_mzml )
@@ -156,7 +156,7 @@ if( params.generate_spectral_lib) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_mzid = Channel.empty()
+    input_dda_id = Channel.empty()
     input_dda_mzml = Channel.empty()
     input_unimod = Channel.empty()
 
@@ -167,7 +167,7 @@ if( params.generate_spectral_lib) {
         .into { input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-    input_mzid = Channel.empty()
+    input_dda_id = Channel.empty()
     input_dda_mzml = Channel.empty()
     input_unimod = Channel.empty()
 }
@@ -258,22 +258,22 @@ process get_software_versions {
 /*
  * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
-process convert_ids_from_mzid {
+process convert_ids_from_dda_id {
     publishDir "${params.outdir}/"
 
     input:
-     file mzid_file from input_mzid
+     file dda_id_file from input_dda_id
 
     output:
-     file "${mzid_file.baseName}.idXML" into input_idxml
+     file "${dda_id_file.baseName}.idXML" into input_idxml
 
     when:
      params.generate_spectral_lib
 
     script:
      """
-     IDFileConverter -in ${mzid_file} \\
-                     -out ${mzid_file.baseName}.idXML
+     IDFileConverter -in ${dda_id_file} \\
+                     -out ${dda_id_file.baseName}.idXML
      """
 }
 
