@@ -31,8 +31,9 @@ def helpMessage() {
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --dda_pepxmls                     Path to DDA pepXML input for library generation
-      --dda_mzmls                       Path to DDA mzML input for library generation
+      --dda_id                          Path to mzid, idXML or other fromats of DDA search results to use for spectral library generation
+      --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum peptide length for filtering
@@ -45,10 +46,14 @@ def helpMessage() {
       --pyprophet_peakgroup_fdr         Threshold for FDR filtering
       --pyprophet_peptide_fdr           Threshold for global Peptide FDR
       --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --DIAlignR_global_align_FDR         DIAlignR global Aligment FDR threshold
-      --DIAlignR_analyte_FDR             DIAlignR Analyte FDR threshold
-      --DIAlignR_unalign_FDR             DIAlignR UnAligment FDR threshold
-      --DIAlignR_align_FDR               DIAlignR Aligment FDR threshold
+      --pyprophet_pi0_start             Start for non-parametric pi0 estimation
+      --pyprophet_pi0_end               End for non-parametric pi0 estimation
+      --pyprophet_pi0_steps             Steps for non-parametric pi0 estimation
+      --DIAlignR_global_align_FDR       DIAlignR global Aligment FDR threshold
+      --DIAlignR_analyte_FDR            DIAlignR Analyte FDR threshold
+      --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
+      --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
+      --DIAlignR_query_FDR              DIAlignR Query FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
       --force_option                    Force the Analysis despite severe warnings
 
@@ -112,7 +117,7 @@ Channel.fromPath( params.dia_mzmls )
 
 Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_swath_windows }
+        .into { input_swath_windows; input_swath_windows_assay }
 
 Channel.fromPath( params.irts)
         .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
@@ -124,7 +129,24 @@ Channel.fromPath( params.irts)
  */
 if( params.generate_spectral_lib) {
 
-    input_spectral_lib = Channel.empty()
+    Channel
+        .fromPath( params.dda_id )
+        .ifEmpty { exit 1, "params.dda_id was empty - no peptide identification input supplied" }
+        .into { input_dda_id}
+
+    Channel
+        .fromPath( params.dda_mzml )
+        .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
+        .into { input_dda_mzml}
+
+    Channel
+        .fromPath( params.unimod )
+        .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
+        .into { input_unimod}
+
+    input_lib = Channel.empty()
+    input_lib_1 = Channel.empty()
+    input_lib_nd = Channel.empty()
 
 } else if( !params.skip_decoy_generation) {
     Channel
@@ -134,6 +156,9 @@ if( params.generate_spectral_lib) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
+    input_dda_id = Channel.empty()
+    input_dda_mzml = Channel.empty()
+    input_unimod = Channel.empty()
 
 } else {
     Channel
@@ -142,7 +167,9 @@ if( params.generate_spectral_lib) {
         .into { input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-
+    input_dda_id = Channel.empty()
+    input_dda_mzml = Channel.empty()
+    input_unimod = Channel.empty()
 }
 
 
@@ -228,26 +255,93 @@ process get_software_versions {
     """
 }
 
-
 /*
- * STEP 0 - Spectral Library Generation using EasyPQP
+ * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
-//
-// TODO:
-// 1) (option) mzid to idXML
-// 2) easypqp convert —pepxml … —spectra …
-// 3) easypqp library
-//
+process convert_ids_from_dda_id {
+    publishDir "${params.outdir}/"
+
+    input:
+     file dda_id_file from input_dda_id
+
+    output:
+     file "${dda_id_file.baseName}.idXML" into input_idxml
+
+    when:
+     params.generate_spectral_lib
+
+    script:
+     """
+     IDFileConverter -in ${dda_id_file} \\
+                     -out ${dda_id_file.baseName}.idXML
+     """
+}
 
 
 /*
- * STEP 0.5 - Decoy Generation for Spectral Library
+ * STEP 1 - Spectral Library Generation using EasyPQP
+ */
+process generate_spectral_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     file idxml_file from input_idxml
+     file dda_mzml_file from input_dda_mzml
+     file unimod_file from input_unimod.first()
+
+    output:
+     file "${dda_mzml_file.baseName}_run_peaks.tsv" into input_lib_dda_nd
+
+    when:
+     params.generate_spectral_lib
+
+    script:
+     """
+     easypqp convert --unimod ${unimod_file} \\
+                     --pepxml ${idxml_file} \\
+                     --spectra ${dda_mzml_file} \\
+
+     easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
+                     --nofdr \\
+                     ${dda_mzml_file.baseName}.psmpkl \\
+                     ${dda_mzml_file.baseName}.peakpkl
+     """
+}
+
+
+/*
+ * STEP 1.5 - Assay Generation for Spectral Library
+ */
+process generate_assay_of_spectral_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     file lib_file_na from input_lib_nd.mix(input_lib_dda_nd)
+     file swath_file from input_swath_windows_assay.first()
+
+    output:
+     file "${lib_file_na.baseName}_assay.pqp" into input_lib_assay
+
+    when:
+     !params.skip_decoy_generation
+
+    script:
+     """
+     OpenSwathAssayGenerator -in ${lib_file_na} \\
+                             -swath_windows_file ${swath_file} \\
+                             -out "${lib_file_na.baseName}_assay.pqp" \\
+     """
+}
+
+
+/*
+ * STEP 2 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib_nd
+     file lib_file_nd from input_lib_assay
 
     output:
      file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
@@ -265,7 +359,7 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 1 - OpenSwathWorkFlow
+ * STEP 3 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
@@ -316,7 +410,7 @@ process run_openswathworkflow {
 
 
 /*
- * STEP 2 - Pyprophet merging of OpenSwath results
+ * STEP 4 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
     publishDir "${params.outdir}/"
@@ -338,7 +432,7 @@ process merge_openswath_output {
 
 
 /*
- * STEP 3 - Pyprophet FDR Scoring
+ * STEP 5 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -358,13 +452,14 @@ process run_fdr_scoring {
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${merged_osw.baseName}_scored_merged.osw \\
                      --classifier=${params.pyprophet_classifier} \\
+                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
      """
 }
 
 
 /*
- * STEP 4 - Pyprophet global FDR Scoring
+ * STEP 6 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -393,7 +488,7 @@ process run_global_fdr_scoring {
 
 
 /*
- * STEP 5 - Pyprophet Export
+ * STEP 7 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
@@ -416,7 +511,7 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 6 - Index Chromatogram mzMLs
+ * STEP 8 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
     publishDir "${params.outdir}/"
@@ -436,7 +531,7 @@ process index_chromatograms {
 
 
 /*
- * STEP 7 - Align DIA Chromatograms using DIAlignR
+ * STEP 9 - Align DIA Chromatograms using DIAlignR
  */
 process align_dia_runs {
     publishDir "${params.outdir}/"
@@ -455,7 +550,7 @@ process align_dia_runs {
      mkdir mzml
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
      """
 }
 
