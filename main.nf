@@ -31,6 +31,7 @@ def helpMessage() {
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
+      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --dda_id                          Path to mzid, idXML or other fromats of DDA search results to use for spectral library generation
       --dda_mzml                        Path to mzml to generate spectral library (mzml)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
@@ -302,6 +303,7 @@ process generate_spectral_library {
                      --spectra ${dda_mzml_file} \\
 
      easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
+                     --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
                      --nofdr \\
                      ${dda_mzml_file.baseName}.psmpkl \\
                      ${dda_mzml_file.baseName}.peakpkl

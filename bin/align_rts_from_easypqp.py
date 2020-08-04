@@ -23,7 +23,7 @@ LOG.addHandler(console)
 LOG.setLevel(logging.INFO)
 
 
-def align_libs(reference, other, rsq_treshold):
+def align_libs(reference, other, rsq_threshold):
     # read first library, groupby modified sequence and charge and store RTs
     df = reference
     df_rt = df.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['NormalizedRetentionTime'].apply(
@@ -81,7 +81,7 @@ def compute_MST(libs):
     return T
 
 ### TODO: Finish
-def combine_libs_by_edges_of_MST(T):
+def combine_libs_by_edges_of_MST(T, rsq_threshold):
     source_file = nx.center(T)[0]
 
     #collect shortest paths from center to all nodes in MST
@@ -167,17 +167,21 @@ def main():
 
     args = model.parse_args()
 
-    libs=args.input_libraries()
+    print(args)
+    libs=args.input_libraries
     rsq_threshold=args.rsq_threshold
 
     MST=compute_MST(libs)
 
-    combined_lib=combine_libs_by_edges_of_MST(MST)
+    combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
 
     #output transformed dataframe II
-    if args.f:
+    if args.filter:
         combined_lib=combined_lib[combined_lib['PeptideSequence'].isin(args.filter)]
 
     combined_lib.to_csv(args.output, index=False, sep='\t')
 
+
+if __name__=="__main__":
+   main()
 

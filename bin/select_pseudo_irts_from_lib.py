@@ -40,7 +40,6 @@ def main():
     model.add_argument(
         '-i', '--input_libraries',
         type=str,
-        nargs='*',
         help='library file serving as reference'
     )
 
@@ -51,13 +50,13 @@ def main():
     )
 
     model.add_argument(
-        '-n', '--min_rt',
+        '-ri', '--min_rt',
         type=int,
         help='minimum rt of irts to select for alignment'
     )
 
     model.add_argument(
-        '-n', '--max_rt',
+        '-rn', '--max_rt',
         type=int,
         help='maximum rt of irts to select for alignment'
     )
@@ -69,12 +68,16 @@ def main():
     )
 
     args = model.parse_args()
+    print(args)
 
-    lib=args.input_libraries()
-    n_irts=args.n_irts()
-    min_rt=args.min_rt()
-    max_rt=args.max_rt()
+    lib=args.input_libraries
+    n_irts=args.n_irts
+    min_rt=args.min_rt
+    max_rt=args.max_rt
 
     df_sub=get_pseudo_irts(lib, n_irts, min_rt, max_rt)
     df_sub.to_csv(args.output, sep='\t')
 
+
+if __name__=="__main__":
+   main()
