@@ -33,6 +33,7 @@ def helpMessage() {
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
       --dda_id                          Path to mzid, idXML or other formats of DDA search results to use for spectral library generation
       --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
@@ -302,6 +303,7 @@ process generate_spectral_library {
                      --spectra ${dda_mzml_file} \\
 
      easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
+                     --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
                      --nofdr \\
                      ${dda_mzml_file.baseName}.psmpkl \\
                      ${dda_mzml_file.baseName}.peakpkl
