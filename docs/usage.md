@@ -17,6 +17,7 @@
   * [`--generate_spectral_lib`](#--generate_spectral_lib)
   * [`--dda_id`](#--dda_id)
   * [`--dda_mzml`](#--dda_mzml)
+  * [`--library_rt_fdr`](#--library_rt_fdr)
   * [`--unimod`](#--unimod)
   * [`--skip_decoy_generation`](#--skip_decoy_generation)
   * [`--decoy_method`](#--decoy_method)
@@ -177,6 +178,10 @@ Path to corresponding dda raw data to generate spectral library (mzML)
 --dda_mzml 'path/to/data/dda_peptide_identifications.mzML'
 ```
 
+### `--library_rt_fdr`
+
+PSM fdr threshold to align peptide ids with reference run (default = 0.01)
+
 ### `--unimod`
 
 Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics/unimod.xml)
@@ -191,45 +196,83 @@ Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
 
 ### `--min_transitions`
 
-Minimum peptide length for filtering
+Minimum number of transitions for assay
 
 ### `--max_transitions`
 
+Maximum number of transitions for assay
+
 ### `--mz_extraction_window`
+
+Mass tolerance for transition extraction (ppm)
 
 ### `--rt_extraction_window`
 
+RT window for transition extraction (seconds)
+
 ### `--pyprophet_classifier`
+
+Machine learning lassifier used for pyprophet target / decoy separation ('LDA','XGBoost')
 
 ### `--pyprophet_fdr_ms_level`
 
+MS Level of pyprophet FDR calculation: 'ms1', 'ms2' or both 'ms1ms2'
+
 ### `--pyprophet_global_fdr_level`
+
+Abstraction level of pyrophet FDR calculation ('peptide', 'protein')
 
 ### `--pyprophet_peakgroup_fdr`
 
+Threshold for pyprophet FDR filtering on peakgroup abstraction level
+
 ### `--pyprophet_peptide_fdr`
+
+Threshold for pyprophet FDR filtering on peptide abstraction level
 
 ### `--pyprophet_protein_fdr`
 
+Threshold for pyprophet FDR filtering on protein abstraction level
+
 ### `--pyprophet_pi0_start`
+
+Start for pyprophet non-parametric pi0 estimation
 
 ### `--pyprophet_pi0_end`
 
+End for pyprophet non-parametric pi0 estimation
+
 ### `--pyprophet_pi0_steps`
+
+Steps for pyprophet non-parametric pi0 estimation
 
 ### `--DIAlignR_global_align_FDR`
 
+DIAlignR global Aligment FDR threshold
+
 ### `--DIAlignR_analyte_FDR`
+
+DIAlignR Analyte FDR threshold
 
 ### `--DIAlignR_unalign_FDR`
 
+DIAlignR UnAligment FDR threshold
+
 ### `--DIAlignR_align_FDR`
+
+DIAlignR Aligment FDR threshold
 
 ### `--DIAlignR_query_FDR`
 
+DIAlignR Query FDR threshold
+
 ### `--prec_charge`
 
+Precursor charge eg. "2:3"
+
 ### `--force_option`
+
+Force the analysis of the OpenSwathWorkflow despite severe warnings
 
 ### `-profile`
 

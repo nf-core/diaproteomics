@@ -38,7 +38,7 @@ def helpMessage() {
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum number of transitions for assay
-      --max_transitions                 Maximum peptide length for filtering
+      --max_transitions                 Maximum number of transitions for assay
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
@@ -56,7 +56,7 @@ def helpMessage() {
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
-      --force_option                    Force the Analysis despite severe warnings
+      --force_option                    Force the analysis despite severe warnings
 
     Other options:
       --outdir [file]                 The output directory where the results will be saved
