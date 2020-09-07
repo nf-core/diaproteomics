@@ -366,8 +366,6 @@ process generate_decoys_for_spectral_library {
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
-    label 'process_medium'
-
     input:
      file mzml_file from input_mzmls
      file swath_file from input_swath_windows.first()
