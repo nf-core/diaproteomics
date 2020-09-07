@@ -8,13 +8,37 @@
   * [Updating the pipeline](#updating-the-pipeline)
   * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
+  * [`--dia_mzmls`](#--dia_mzmls)
+  * [`--swath_windows`](#--swath_windows)
+  * [`--spectral_lib`](#--spectral_lib)
+  * [`--irts`](#--irts)
+  * [`--irt_min_rsq`](#--irt_min_rsq)
+  * [`--irt_alignment_method`](#--irt_alignment_method)
+  * [`--generate_spectral_lib`](#--generate_spectral_lib)
+  * [`--dda_id`](#--dda_id)
+  * [`--dda_mzml`](#--dda_mzml)
+  * [`--library_rt_fdr`](#--library_rt_fdr)
+  * [`--unimod`](#--unimod)
+  * [`--skip_decoy_generation`](#--skip_decoy_generation)
+  * [`--decoy_method`](#--decoy_method)
+  * [`--min_transitions`](#--min_transitions)
+  * [`--max_transitions`](#--max_transitions)
+  * [`--mz_extraction_window`](#--mz_extraction_window)
+  * [`--rt_extraction_window`](#--rt_extraction_window)
+  * [`--pyprophet_classifier`](#--pyprophet_classifier)
+  * [`--pyprophet_fdr_ms_level`](#--pyprophet_fdr_ms_level)
+  * [`--pyprophet_global_fdr_level`](#--pyprophet_global_fdr_level)
+  * [`--pyprophet_peakgroup_fdr`](#--pyprophet_peakgroup_fdr)
+  * [`--pyprophet_peptide_fdr`](#--pyprophet_peptide_fdr)
+  * [`--pyprophet_protein_fdr`](#--pyprophet_protein_fdr)
+  * [`--pyprophet_pi0_start`](#--pyprophet_pi0_start)
+  * [`--pyprophet_pi0_end`](#--pyprophet_pi0_end)
+  * [`--pyprophet_pi0_steps`](#--pyprophet_pi0_steps)
+  * [`--DIAlignR_global_align_FDR`](#--DIAlignR_global_align_FDR)
+  * [`--DIAlignR_analyte_FDR`](#--DIAlignR_analyte_FDR)
+  * [`--prec_charge`](#--prec_charge) 
+  * [`--force_option`](#--force_option)
   * [`-profile`](#-profile)
-  * [`--input`](#--input)
-  * [`--single_end`](#--single_end)
-* [Reference genomes](#reference-genomes)
-  * [`--genome` (using iGenomes)](#--genome-using-igenomes)
-  * [`--fasta`](#--fasta)
-  * [`--igenomes_ignore`](#--igenomes_ignore)
 * [Job resources](#job-resources)
   * [Automatic resubmission](#automatic-resubmission)
   * [Custom resource requests](#custom-resource-requests)
@@ -89,6 +113,167 @@ This version number will be logged in reports when you run the pipeline, so that
 
 ## Main arguments
 
+### `--dia_mzmls`
+
+Use this to specify the location of your input dia raw files (mzML). For example:
+
+```bash
+--dia_mzmls 'path/to/data/sample_*.mzML'
+```
+
+Please note the following requirements:
+
+1. The path must be enclosed in quotes
+2. The path must have at least one `*` wildcard character
+
+### `--swath_windows`
+
+Path to swath_windows.txt file (tsv), containing swath window mz ranges
+
+```bash
+--swath_windows 'path/to/data/swath_windows.txt'
+```
+
+### `--spectral_lib`
+
+Path to spectral library input file (pqp, TraML or tsv). The library should not contain decoys and can be unfiltered, as these are later steps within the pipeline.
+
+```bash
+--spectral_lib 'path/to/data/spectral_library.pqp'
+```
+
+### `--irts`
+
+Path to internal retention time standards (pqp, TraML or tsv)
+
+```bash
+--irts 'path/to/data/irts.TraML'
+```
+
+### `--irt_min_rsq`
+
+Minimal rsq error for irt RT alignment (default=0.95)
+
+### `--irt_alignment_method`
+
+Method for irt RT alignment for example 'linear' or 'lowess'. 
+
+### `--generate_spectral_lib`
+
+Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data.
+
+### `--dda_id`
+
+Path to mzid, idXML or other formats of DDA search results to use for spectral library generation
+
+```bash
+--dda_id 'path/to/data/dda_peptide_identifications.pepXML'
+```
+
+### `--dda_mzml`
+
+Path to corresponding dda raw data to generate spectral library (mzML)
+
+```bash
+--dda_mzml 'path/to/data/dda_peptide_identifications.mzML'
+```
+
+### `--library_rt_fdr`
+
+PSM fdr threshold to align peptide ids with reference run (default = 0.01)
+
+### `--unimod`
+
+Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics/unimod.xml)
+
+### `--skip_decoy_generation`
+
+Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation.
+
+### `--decoy_method`
+
+Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
+
+### `--min_transitions`
+
+Minimum number of transitions for assay
+
+### `--max_transitions`
+
+Maximum number of transitions for assay
+
+### `--mz_extraction_window`
+
+Mass tolerance for transition extraction (ppm)
+
+### `--rt_extraction_window`
+
+RT window for transition extraction (seconds)
+
+### `--pyprophet_classifier`
+
+Machine learning lassifier used for pyprophet target / decoy separation ('LDA','XGBoost')
+
+### `--pyprophet_fdr_ms_level`
+
+MS Level of pyprophet FDR calculation: 'ms1', 'ms2' or both 'ms1ms2'
+
+### `--pyprophet_global_fdr_level`
+
+Abstraction level of pyrophet FDR calculation ('peptide', 'protein')
+
+### `--pyprophet_peakgroup_fdr`
+
+Threshold for pyprophet FDR filtering on peakgroup abstraction level
+
+### `--pyprophet_peptide_fdr`
+
+Threshold for pyprophet FDR filtering on peptide abstraction level
+
+### `--pyprophet_protein_fdr`
+
+Threshold for pyprophet FDR filtering on protein abstraction level
+
+### `--pyprophet_pi0_start`
+
+Start for pyprophet non-parametric pi0 estimation
+
+### `--pyprophet_pi0_end`
+
+End for pyprophet non-parametric pi0 estimation
+
+### `--pyprophet_pi0_steps`
+
+Steps for pyprophet non-parametric pi0 estimation
+
+### `--DIAlignR_global_align_FDR`
+
+DIAlignR global Aligment FDR threshold
+
+### `--DIAlignR_analyte_FDR`
+
+DIAlignR Analyte FDR threshold
+
+### `--DIAlignR_unalign_FDR`
+
+DIAlignR UnAligment FDR threshold
+
+### `--DIAlignR_align_FDR`
+
+DIAlignR Aligment FDR threshold
+
+### `--DIAlignR_query_FDR`
+
+DIAlignR Query FDR threshold
+
+### `--prec_charge`
+
+Precursor charge eg. "2:3"
+
+### `--force_option`
+
+Force the analysis of the OpenSwathWorkflow despite severe warnings
+
 ### `-profile`
 
 Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments.
@@ -118,85 +303,6 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
   * A profile with a complete configuration for automated testing
   * Includes links to test data so needs no other parameters
 
-<!-- TODO nf-core: Document required command line parameters -->
-
-### `--input`
-
-Use this to specify the location of your input FastQ files. For example:
-
-```bash
---input 'path/to/data/sample_*_{1,2}.fastq'
-```
-
-Please note the following requirements:
-
-1. The path must be enclosed in quotes
-2. The path must have at least one `*` wildcard character
-3. When using the pipeline with paired end data, the path must use `{1,2}` notation to specify read pairs.
-
-If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
-
-### `--single_end`
-
-By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--input`. For example:
-
-```bash
---single_end --input '*.fastq'
-```
-
-It is not possible to run a mixture of single-end and paired-end files in one run.
-
-## Reference genomes
-
-The pipeline config files come bundled with paths to the illumina iGenomes reference index files. If running with docker or AWS, the configuration is set up to use the [AWS-iGenomes](https://ewels.github.io/AWS-iGenomes/) resource.
-
-### `--genome` (using iGenomes)
-
-There are 31 different species supported in the iGenomes references. To run the pipeline, you must specify which to use with the `--genome` flag.
-
-You can find the keys to specify the genomes in the [iGenomes config file](../conf/igenomes.config). Common genomes that are supported are:
-
-* Human
-  * `--genome GRCh37`
-* Mouse
-  * `--genome GRCm38`
-* _Drosophila_
-  * `--genome BDGP6`
-* _S. cerevisiae_
-  * `--genome 'R64-1-1'`
-
-> There are numerous others - check the config file for more.
-
-Note that you can use the same configuration setup to save sets of reference files for your own use, even if they are not part of the iGenomes resource. See the [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for instructions on where to save such a file.
-
-The syntax for this reference configuration is as follows:
-
-<!-- TODO nf-core: Update reference genome example according to what is needed -->
-
-```nextflow
-params {
-  genomes {
-    'GRCh37' {
-      fasta   = '<path to the genome fasta file>' // Used if no star index given
-    }
-    // Any number of additional genomes, key is used with --genome
-  }
-}
-```
-
-<!-- TODO nf-core: Describe reference path flags -->
-
-### `--fasta`
-
-If you prefer, you can specify the full path to your reference genome when you run the pipeline:
-
-```bash
---fasta '[path to Fasta reference]'
-```
-
-### `--igenomes_ignore`
-
-Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`.
 
 ## Job resources
 

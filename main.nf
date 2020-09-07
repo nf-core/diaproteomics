@@ -31,14 +31,14 @@ def helpMessage() {
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
-      --dda_id                          Path to mzid, idXML or other fromats of DDA search results to use for spectral library generation
+      --dda_id                          Path to mzid, idXML or other formats of DDA search results to use for spectral library generation
       --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
-      --min_transitions                 Minimum peptide length for filtering
-      --max_transitions                 Maximum peptide length for filtering
+      --min_transitions                 Minimum number of transitions for assay
+      --max_transitions                 Maximum number of transitions for assay
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
@@ -56,7 +56,7 @@ def helpMessage() {
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
       --prec_charge                     Precursor charge (eg. "2:3")
-      --force_option                    Force the Analysis despite severe warnings
+      --force_option                    Force the analysis despite severe warnings
 
     Other options:
       --outdir [file]                 The output directory where the results will be saved
