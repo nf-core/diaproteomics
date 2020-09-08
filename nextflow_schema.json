@@ -17,19 +17,14 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
-                    "description": "Input FastQ files.",
-                    "help_text": "Use this to specify the location of your input FastQ files. For example:\n\n```bash\n--input 'path/to/data/sample_*_{1,2}.fastq'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n3. When using the pipeline with paired end data, the path must use `{1,2}` notation to specify read pairs.\n\nIf left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`"
-                },
-                "single_end": {
-                    "type": "boolean",
-                    "description": "Specifies that the input is single-end reads.",
-                    "fa_icon": "fas fa-align-center",
-                    "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--input`. For example:\n\n```bash\n--single_end --input '*.fastq'\n```\n\nIt is not possible to run a mixture of single-end and paired-end files in one run."
+                    "description": "Input DIA mzML files",
+                    "help_text": "Use this to specify the location of your input DIA mzML files. For example:\n\n```bash\n--input ''path/to/data/sample_*.mzML'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n\nIf left unspecified, a default pattern is used:  'data/sample_*.mzML'",
+                    "default": "data/sample_*.mzML"
                 },
                 "outdir": {
                     "type": "string",
                     "description": "The output directory where the results will be saved.",
-                    "default": "./results",
+                    "default": ".&#x2F;results",
                     "fa_icon": "fas fa-folder-open"
                 },
                 "email": {
@@ -41,28 +36,241 @@
                 }
             }
         },
+        "spectral_library_generation": {
+            "title": "Spectral Library Generation",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "generate_spectral_lib": {
+                    "type": "boolean",
+                    "fa_icon": "fab fa-think-peaks",
+                    "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                },
+                "library_rt_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "fa_icon": "fab fa-think-peaks",
+                    "description": "PSM fdr threshold to align peptide ids with reference run."
+                },
+                "skip_decoy_generation": {
+                    "type": "string",
+                    "fa_icon": "fab fa-think-peaks",
+                    "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
+                },
+                "min_transitions": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "Minimum number of transitions for assay"
+                },
+                "max_transitions": {
+                    "type": "integer",
+                    "default": 6,
+                    "description": "Maximum number of transitions for assay"
+                },
+                "prec_charge": {
+                    "type": "string",
+                    "default": "2:3",
+                    "description": "Precursor charge"
+                },
+                "decoy_method": {
+                    "type": "string",
+                    "default": "shuffle",
+                    "description": "Method for generating decoys",
+                    "enum": [
+                        "shuffle",
+                        "pseudo-reverse",
+                        "reverse",
+                        "shift"
+                    ]
+                }
+            }
+        },
+        "openswathworkflow_options": {
+            "title": "OpenSwathWorkflow Options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "irt_min_rsq": {
+                    "type": "number",
+                    "default": 0.95,
+                    "description": "Minimal random mean squared error for irt RT alignment"
+                },
+                "irt_alignment_method": {
+                    "type": "string",
+                    "default": "linear",
+                    "description": "Method for irt RT alignment for example",
+                    "enum": [
+                        "linear",
+                        "lowess"
+                    ]
+                },
+                "mz_extraction_window": {
+                    "type": "integer",
+                    "default": 30,
+                    "description": "Mass tolerance for transition extraction (ppm)"
+                },
+                "rt_extraction_window": {
+                    "type": "integer",
+                    "default": 600,
+                    "description": "RT window for transition extraction (seconds)"
+                },
+                "number_mods": {
+                    "type": "integer",
+                    "default": 3
+                },
+                "variable_mods": {
+                    "type": "string",
+                    "default": "Oxidation (M)"
+                },
+                "force_option": {
+                    "type": "boolean",
+                    "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
+                },
+                "swath_windows": {
+                    "type": "string",
+                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges"
+                },
+                "irts": {
+                    "type": "string",
+                    "description": "Path to internal retention time standards (pqp, TraML or tsv)"
+                }
+            }
+        },
+        "pyprophet_fdr_scoring": {
+            "title": "Pyprophet FDR Scoring",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "pyprophet_classifier": {
+                    "type": "string",
+                    "default": "LDA",
+                    "description": "Machine learning lassifier used for pyprophet target / decoy separation",
+                    "enum": [
+                        "LDA",
+                        "XGBoost"
+                    ]
+                },
+                "pyprophet_fdr_ms_level": {
+                    "type": "string",
+                    "default": "ms2",
+                    "description": "MS Level of pyprophet FDR calculation",
+                    "enum": [
+                        "ms1",
+                        "ms2",
+                        "ms1ms2"
+                    ]
+                },
+                "pyprophet_global_fdr_level": {
+                    "type": "string",
+                    "description": "Abstraction level of pyrophet FDR calculation",
+                    "enum": [
+                        "peptide",
+                        "protein"
+                    ]
+                },
+                "pyprophet_peakgroup_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "Threshold for pyprophet FDR filtering on peakgroup abstraction level"
+                },
+                "pyprophet_peptide_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "Threshold for pyprophet FDR filtering on peptide abstraction level"
+                },
+                "pyprophet_protein_fdr": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "Threshold for pyprophet FDR filtering on protein abstraction level"
+                },
+                "pyprophet_pi0_start": {
+                    "type": "number",
+                    "default": 0.1,
+                    "description": "Start for pyprophet non-parametric pi0 estimation"
+                },
+                "pyprophet_pi0_end": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "End for pyprophet non-parametric pi0 estimation"
+                },
+                "pyprophet_pi0_steps": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Steps for pyprophet non-parametric pi0 estimation"
+                }
+            }
+        },
+        "dialignr_chromatogram_realignment": {
+            "title": "DIAlignR Chromatogram Realignment",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "realignment_target_fdr": {
+                    "type": "number",
+                    "default": 0.05,
+                    "hidden": true
+                },
+                "realignment_max_fdr": {
+                    "type": "number",
+                    "default": 0.1,
+                    "hidden": true
+                },
+                "realignment_score": {
+                    "type": "number",
+                    "default": 0.001,
+                    "hidden": true
+                },
+                "realignment_method": {
+                    "type": "string",
+                    "default": "lowess_cython",
+                    "hidden": true
+                },
+                "realignment_rt_difference": {
+                    "type": "integer",
+                    "default": 60,
+                    "hidden": true
+                },
+                "DIAlignR_global_align_FDR": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "DIAlignR global Aligment FDR threshold"
+                },
+                "DIAlignR_analyte_FDR": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "DIAlignR Analyte FDR threshold"
+                },
+                "DIAlignR_unalign_FDR": {
+                    "type": "number",
+                    "default": 0.01,
+                    "description": "DIAlignR UnAligment FDR threshold"
+                },
+                "DIAlignR_align_FDR": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "DIAlignR Aligment FDR threshold"
+                },
+                "DIAlignR_query_FDR": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "DIAlignR Query FDR threshold"
+                }
+            }
+        },
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for the reference genome indices used to align reads.",
             "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`.\n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "fasta": {
-                    "type": "string",
-                    "fa_icon": "fas fa-font",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "If you have no genome reference available, the pipeline can build one using a FASTA file. This requires additional time and resources, so it's better to use a pre-build index if possible."
-                },
                 "igenomes_base": {
                     "type": "string",
                     "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes/",
+                    "default": "s3:&#x2F;&#x2F;ngi-igenomes&#x2F;igenomes&#x2F;",
                     "fa_icon": "fas fa-cloud-download-alt",
                     "hidden": true
                 },
@@ -150,7 +358,7 @@
                 "tracedir": {
                     "type": "string",
                     "description": "Directory to keep pipeline Nextflow logs and reports.",
-                    "default": "${params.outdir}/pipeline_info",
+                    "default": "${params.outdir}&#x2F;pipeline_info",
                     "fa_icon": "fas fa-cogs",
                     "hidden": true
                 }
@@ -207,7 +415,7 @@
                 "custom_config_base": {
                     "type": "string",
                     "description": "Base directory for Institutional configs.",
-                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "default": "https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;nf-core&#x2F;configs&#x2F;master",
                     "hidden": true,
                     "help_text": "If you're running offline, nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell nextflow where to find them with the `custom_config_base` option. For example:\n\n```bash\n## Download and unzip the config files\ncd /path/to/my/configs\nwget https://github.com/nf-core/configs/archive/master.zip\nunzip master.zip\n\n## Run the pipeline\ncd /path/to/my/data\nnextflow run /path/to/pipeline/ --custom_config_base /path/to/my/configs/configs-master/\n```\n\n> Note that the nf-core/tools helper package has a `download` command to download all required pipeline files + singularity containers + institutional configs in one go for you, to make this process easier.",
                     "fa_icon": "fas fa-users-cog"
@@ -244,6 +452,18 @@
             "$ref": "#/definitions/input_output_options"
         },
         {
+            "$ref": "#/definitions/spectral_library_generation"
+        },
+        {
+            "$ref": "#/definitions/openswathworkflow_options"
+        },
+        {
+            "$ref": "#/definitions/pyprophet_fdr_scoring"
+        },
+        {
+            "$ref": "#/definitions/dialignr_chromatogram_realignment"
+        },
+        {
             "$ref": "#/definitions/reference_genome_options"
         },
         {
@@ -255,6 +475,21 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-
-    ]
+    ],
+    "properties": {
+        "num_hits": {
+            "type": "integer",
+            "default": 1,
+            "hidden": true
+        },
+        "spectrum_batch_size": {
+            "type": "integer",
+            "default": 500,
+            "hidden": true
+        },
+        "dia_mzmls": {
+            "type": "string",
+            "hidden": true
+        }
+    }
 }

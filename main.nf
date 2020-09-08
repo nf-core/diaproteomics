@@ -106,12 +106,12 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 // Validate inputs
-params.dia_mzmls = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
+dia_mzmls = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
-Channel.fromPath( params.dia_mzmls )
+Channel.fromPath( dia_mzmls )
         .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.input}\nNB: Path needs to be enclosed in quotes!" }
         .set { input_mzmls }
 
@@ -186,7 +186,7 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['mzMLs']        = params.dia_mzmls
+summary['mzMLs']        = dia_mzmls
 summary['Spectral Library']    = params.spectral_lib
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
