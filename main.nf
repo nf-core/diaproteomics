@@ -106,13 +106,13 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 // Validate inputs
-params.dia_mzmls = params.dia_mzmls ?: { log.error "No dia mzml data provided. Make sure you have used the '--dia_mzmls' option."; exit 1 }()
+params.dia_mzmls = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 Channel.fromPath( params.dia_mzmls )
-        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.dia_mzmls}\nNB: Path needs to be enclosed in quotes!" }
+        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.input}\nNB: Path needs to be enclosed in quotes!" }
         .set { input_mzmls }
 
 Channel.fromPath( params.swath_windows)
