@@ -8,7 +8,7 @@
   * [Updating the pipeline](#updating-the-pipeline)
   * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
-  * [`--dia_mzmls`](#--dia_mzmls)
+  * [`--input`](#--input)
   * [`--swath_windows`](#--swath_windows)
   * [`--spectral_lib`](#--spectral_lib)
   * [`--irts`](#--irts)
@@ -111,12 +111,12 @@ This version number will be logged in reports when you run the pipeline, so that
 
 ## Main arguments
 
-### `--dia_mzmls`
+### `--input`
 
 Use this to specify the location of your input dia raw files (mzML). For example:
 
 ```bash
---dia_mzmls 'path/to/data/sample_*.mzML'
+--input 'path/to/data/sample_*.mzML'
 ```
 
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended.
