@@ -32,8 +32,6 @@ The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA 
 
 4. Start running your own analysis!
 
-    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
-
     ```bash
     nextflow run nf-core/diaproteomics -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
     ```
@@ -43,8 +41,6 @@ See [usage docs](docs/usage.md) for all of the available options when running th
 ## Documentation
 
 The nf-core/diaproteomics pipeline comes with documentation about the pipeline which you can read at [https://nf-core/diaproteomics/docs](https://nf-core/diaproteomics/docs) or find in the [`docs/` directory](docs).
-
-<!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
 ## Credits
 
@@ -57,9 +53,6 @@ If you would like to contribute to this pipeline, please see the [contributing g
 For further information or help, don't hesitate to get in touch on the [Slack `#diaproteomics` channel](https://nfcore.slack.com/channels/diaproteomics) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
-<!-- If you use  nf-core/diaproteomics for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` publication as follows:
 
