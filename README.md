@@ -1,12 +1,12 @@
 # ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
 
-**Automated quantitative analysis of DIA proteomics mass spectrometry measurements**.
+**Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**.
 
 [![GitHub Actions CI Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
 
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
 [![Docker](https://img.shields.io/docker/automated/nfcore/diaproteomics.svg)](https://hub.docker.com/r/nfcore/diaproteomics)
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23diaproteomics-4A154B?logo=slack)](https://nfcore.slack.com/channels/diaproteomics)
 
@@ -35,7 +35,7 @@ The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA 
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```bash
-    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile <docker/singularity/conda/institute>
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
     ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.

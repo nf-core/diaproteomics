@@ -232,7 +232,6 @@ Channel.from(summary.collect{ [it.key, it.value] })
     """.stripIndent() }
     .set { ch_workflow_summary }
 
-
 /*
  * Parse software version numbers
  */

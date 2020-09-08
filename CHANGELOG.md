@@ -21,4 +21,3 @@ Initial workflow used TRIC alignment
 ## v1.0dev - [06.11.19]
 
 Initial release of nf-core/diaproteomics, created with the [nf-core](https://nf-co.re/) template.
-
