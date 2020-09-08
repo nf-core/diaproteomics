@@ -36,7 +36,7 @@
   * [`--pyprophet_pi0_steps`](#--pyprophet_pi0_steps)
   * [`--DIAlignR_global_align_FDR`](#--DIAlignR_global_align_FDR)
   * [`--DIAlignR_analyte_FDR`](#--DIAlignR_analyte_FDR)
-  * [`--prec_charge`](#--prec_charge) 
+  * [`--prec_charge`](#--prec_charge)
   * [`--force_option`](#--force_option)
   * [`-profile`](#-profile)
 * [Job resources](#job-resources)
@@ -156,7 +156,7 @@ Minimal rsq error for irt RT alignment (default=0.95)
 
 ### `--irt_alignment_method`
 
-Method for irt RT alignment for example 'linear' or 'lowess'. 
+Method for irt RT alignment for example 'linear' or 'lowess'.
 
 ### `--generate_spectral_lib`
 
@@ -184,7 +184,7 @@ PSM fdr threshold to align peptide ids with reference run (default = 0.01)
 
 ### `--unimod`
 
-Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics/unimod.xml)
+Path to unimod.xml file describing modifications ("https://github.com/nf-core/test-datasets/tree/diaproteomics/unimod.xml")
 
 ### `--skip_decoy_generation`
 
@@ -302,7 +302,6 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 * `test`
   * A profile with a complete configuration for automated testing
   * Includes links to test data so needs no other parameters
-
 
 ## Job resources
 
