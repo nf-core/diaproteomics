@@ -18,10 +18,10 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --dia_mzmls '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
+    nextflow run nf-core/diaproteomics --input '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
 
     Mandatory arguments:
-      --dia_mzmls                       Path to input data (must be surrounded with quotes)
+      --input                           Path to input DIA mzML data (must be surrounded with quotes)
       --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
