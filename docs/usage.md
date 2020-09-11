@@ -57,7 +57,6 @@ First, go to the [nf-core/diaproteomics releases page](https://github.com/nf-cor
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
 
-
 ## Main arguments
 
 ### `-profile`
