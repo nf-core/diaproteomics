@@ -19,7 +19,7 @@
                     "fa_icon": "fas fa-dna",
                     "description": "Input DIA mzML files",
                     "help_text": "Use this to specify the location of your input DIA mzML files. For example:\n\n```bash\n--input ''path/to/data/sample_*.mzML'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n\nIf left unspecified, a default pattern is used:  'data/sample_*.mzML'",
-                    "default": "data/sample_*.mzML"
+                    "default": "data&#x2F;sample_*.mzML"
                 },
                 "outdir": {
                     "type": "string",
@@ -83,6 +83,12 @@
                         "reverse",
                         "shift"
                     ]
+                },
+                "unimod": {
+                    "type": "string",
+                    "help_text": "Example file:\nhttps://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
+                    "description": "Path to unimod file needs to be provided",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml"
                 }
             }
         },
@@ -485,10 +491,6 @@
         "spectrum_batch_size": {
             "type": "integer",
             "default": 500,
-            "hidden": true
-        },
-        "dia_mzmls": {
-            "type": "string",
             "hidden": true
         }
     }

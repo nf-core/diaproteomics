@@ -1,6 +1,6 @@
 # ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
 
-**Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**.
+**Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**
 
 [![GitHub Actions CI Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/diaproteomics/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/diaproteomics/actions)
