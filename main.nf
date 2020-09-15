@@ -106,14 +106,18 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 // Validate inputs
-input_dia_files = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
+sample_sheet = file(params.input)
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
-Channel.fromPath( input_dia_files )
-        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.input}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_branch }
+// DIA MS input
+Channel.from( sample_sheet )
+       .splitCsv(header: true, sep:'\t')
+       .map { col -> tuple("${col.ID}", "${col.Sample}", "${col.Condition}", file("${col.ReplicateFileName}", checkifExists: true))}
+       .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
+       .set {input_branch}
+
 
 // Check file extension
 def hasExtension(it, extension) {
@@ -125,6 +129,8 @@ input_branch.branch {
         mzml: hasExtension(it[3], 'mzML')
         other: true
 }.set{input_ms_files}
+
+input_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
 
 
 Channel.fromPath( params.swath_windows)
@@ -199,7 +205,6 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['mzMLs']        = input_dia_files
 summary['Spectral Library']    = params.spectral_lib
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
@@ -388,13 +393,13 @@ process convert_raw_input_files {
 
 
 /*
- * STEP 3.5 - OpenSwathWorkFlow
+ * STEP 4 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     file mzml_file from converted_input_mzmls.mix(input_ms_files.mzml)
+     set val(id), val(Sample), val(Condition), file(mzml_file) from converted_input_mzmls.mix(input_ms_files.mzml)
      file swath_file from input_swath_windows.first()
      file lib_file from input_lib_decoy.mix(input_lib).first()
      file irt_file from input_irts.first()
@@ -446,7 +451,7 @@ process run_openswathworkflow {
 
 
 /*
- * STEP 4 - Pyprophet merging of OpenSwath results
+ * STEP 5 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
     publishDir "${params.outdir}/"
@@ -468,7 +473,7 @@ process merge_openswath_output {
 
 
 /*
- * STEP 5 - Pyprophet FDR Scoring
+ * STEP 6 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -495,7 +500,7 @@ process run_fdr_scoring {
 
 
 /*
- * STEP 6 - Pyprophet global FDR Scoring
+ * STEP 7 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -524,7 +529,7 @@ process run_global_fdr_scoring {
 
 
 /*
- * STEP 7 - Pyprophet Export
+ * STEP 8 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
@@ -547,7 +552,7 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 8 - Index Chromatogram mzMLs
+ * STEP 9 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
     publishDir "${params.outdir}/"
@@ -567,7 +572,7 @@ process index_chromatograms {
 
 
 /*
- * STEP 9 - Align DIA Chromatograms using DIAlignR
+ * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
 process align_dia_runs {
     publishDir "${params.outdir}/"
