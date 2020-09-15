@@ -106,14 +106,26 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 // Validate inputs
-dia_mzmls = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
+input_dia_files = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
-Channel.fromPath( dia_mzmls )
+Channel.fromPath( input_dia_files )
         .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.input}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_mzmls }
+        .set { input_branch }
+
+// Check file extension
+def hasExtension(it, extension) {
+    it.toString().toLowerCase().endsWith(extension.toLowerCase())
+}
+
+input_branch.branch {
+        raw: hasExtension(it[3], 'raw')
+        mzml: hasExtension(it[3], 'mzML')
+        other: true
+}.set{input_ms_files}
+
 
 Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
@@ -186,7 +198,7 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['mzMLs']        = dia_mzmls
+summary['mzMLs']        = input_dia_files
 summary['Spectral Library']    = params.spectral_lib
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
@@ -358,13 +370,30 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 3 - OpenSwathWorkFlow
+ * STEP 3 - Raw File Conversion
+ */
+process convert_raw_input_files {
+    input:
+     file raw_file from input_ms_files.raw
+
+    output:
+     file "${raw_file.baseName}.mzML" into converted_input_mzmls
+
+    script:
+     """
+     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+     """
+}
+
+
+/*
+ * STEP 3.5 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     file mzml_file from input_mzmls
+     file mzml_file from converted_input_mzmls.mix(input_ms_files.mzml)
      file swath_file from input_swath_windows.first()
      file lib_file from input_lib_decoy.mix(input_lib).first()
      file irt_file from input_irts.first()
