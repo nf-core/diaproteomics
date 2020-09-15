@@ -20,7 +20,7 @@ def helpMessage() {
     nextflow run nf-core/diaproteomics --input '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
 
     Mandatory arguments:
-      --input                           Path to input DIA mzML data (must be surrounded with quotes)
+      --input                           Path to input DIA raw/mzML data (must be surrounded with quotes)
       --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
@@ -144,21 +144,22 @@ if( params.generate_spectral_lib) {
     Channel
         .fromPath( params.dda_id )
         .ifEmpty { exit 1, "params.dda_id was empty - no peptide identification input supplied" }
-        .into { input_dda_id}
+        .set { input_dda_id}
 
     Channel
         .fromPath( params.dda_mzml )
         .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
-        .into { input_dda_mzml}
+        .set { input_dda_mzml}
 
     Channel
         .fromPath( params.unimod )
         .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
-        .into { input_unimod}
+        .set { input_unimod}
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
+    params.spectral_lib = Channel.empty()
 
 } else if( !params.skip_decoy_generation) {
     Channel
@@ -423,6 +424,15 @@ process run_openswathworkflow {
                        -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\
                        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+                       -Scoring:TransitionGroupPicker:peak_integration 'original' \\
+                       -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
                        -Scoring:Scores:use_ms1_mi \\
                        -Scoring:Scores:use_mi_score \\
                        -batchSize 1000 \\
