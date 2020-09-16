@@ -380,10 +380,10 @@ process generate_decoys_for_spectral_library {
  */
 process convert_raw_input_files {
     input:
-     file raw_file from input_ms_files.raw
+     set val(id), val(Sample), val(Condition), file(mzml_file) from input_ms_files.raw
 
     output:
-     file "${raw_file.baseName}.mzML" into converted_input_mzmls
+     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_input_mzmls
 
     script:
      """
@@ -405,8 +405,8 @@ process run_openswathworkflow {
      file irt_file from input_irts.first()
 
     output:
-     file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
-     file "${mzml_file.baseName}.osw" into osw_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
 
     script:
      """
@@ -457,11 +457,11 @@ process merge_openswath_output {
     publishDir "${params.outdir}/"
 
     input:
-     file all_osws from osw_files.collect{it}
+     set val(id), val(Sample), val(Condition), file(all_osws) from osw_files.groupTuple(by:1)
      file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
 
     output:
-     file "osw_file_merged.osw" into merged_osw_file
+     set val(id), val(Sample), val(Condition), file("osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
 
     script:
      """
@@ -479,10 +479,10 @@ process run_fdr_scoring {
     publishDir "${params.outdir}/"
 
     input:
-     file merged_osw from merged_osw_file
+     set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
 
     output:
-     file "${merged_osw.baseName}_scored_merged.osw" into (merged_osw_scored, merged_osw_scored_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into (merged_osw_scored, merged_osw_scored_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -506,10 +506,10 @@ process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
 
     input:
-     file scored_osw from merged_osw_file
+     set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     file "${scored_osw.baseName}_global_merged.osw" into merged_osw_scored_global
+     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into (merged_osw_scored_global, merged_osw_scored_global_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -535,10 +535,10 @@ process export_pyprophet_results {
     publishDir "${params.outdir}/"
 
     input:
-     file global_osw from merged_osw_scored.mix(merged_osw_scored_global)
+     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_for_pyprophet.mix(merged_osw_scored_global_for_pyprophet)
 
     output:
-     file "*.tsv" into pyprophet_results
+     set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
 
     script:
      """
@@ -558,10 +558,10 @@ process index_chromatograms {
     publishDir "${params.outdir}/"
 
     input:
-     file chrom_file_noindex from chromatogram_files
+     set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     file "${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML" into chromatogram_files_indexed
+     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML") into chromatogram_files_indexed
 
     script:
      """
@@ -578,11 +578,10 @@ process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     file pyresults from merged_osw_scored_for_pyprophet
-     file chrom_files_index from chromatogram_files_indexed.collect()
+     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(Condition_dummy), file(chrom_files_index) from merged_osw_scored.mix(merged_osw_scored_global).join(chromatogram_files_indexed.groupTuple(by:1), by:1)
 
     output:
-     file "DIAlignR.csv" into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("DIAlignR.csv") into DIALignR_result
 
     script:
      """
