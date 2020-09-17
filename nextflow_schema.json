@@ -17,9 +17,26 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
-                    "description": "Input sample sheet",
+                    "description": "Input sample sheet (raw / mzML)",
                     "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as SampleID and Condition. For example:\n\n| ID   | Sample      | Condition  |   ReplicateFileName                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
                     "default": "false"
+                },
+                "input_spectral_library": {
+                    "type": "string",
+                    "fa_icon": "fas fa-book",
+                    "description": "Input sample sheet of spectral libraries (tsv, pqp, TraML)",
+                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as SampleID and Condition. For example:\n\n| ID   | Sample      |   LibraryFileName                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_library.tsv    |\n| 2    | Benign |   data/Benign_library.tsv    |"
+                },
+                "irts": {
+                    "type": "string",
+                    "description": "Path to internal retention time standard sample sheet (tsv, pqp, TraML)",
+                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Sample      |   irtLibraryFileName                       |\n|------------:|------------------------------------------:|\n| Malignant |   data/Melanom_irt_library.tsv    |\n| Benign |   data/Benign_irt_library.tsv    |",
+                    "fa_icon": "fas fa-book"
+                },
+                "swath_windows": {
+                    "type": "string",
+                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges",
+                    "fa_icon": "fab fa-windows"
                 },
                 "outdir": {
                     "type": "string",
@@ -42,21 +59,20 @@
             "description": "",
             "default": "",
             "properties": {
-                "generate_spectral_lib": {
+                "generate_spectral_library": {
                     "type": "boolean",
-                    "fa_icon": "fab fa-think-peaks",
                     "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                },
+                "input_sheet_dda": {
+                    "type": "string",
+                    "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  SampleID metainformation. For example:\n\n| ID   | Sample      | RawFileName  |   IdFileName                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_standard.mzML     |   data/Melanom_DDA_standard.pepXML    |\n| 2    | Benign |      data/Benign_DDA_standard.mzML     |   data/Benign_DDA_standard.pepXML    |\n"
                 },
                 "library_rt_fdr": {
                     "type": "number",
                     "default": 0.01,
                     "fa_icon": "fab fa-think-peaks",
                     "description": "PSM fdr threshold to align peptide ids with reference run."
-                },
-                "skip_decoy_generation": {
-                    "type": "string",
-                    "fa_icon": "fab fa-think-peaks",
-                    "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
                 },
                 "min_transitions": {
                     "type": "integer",
@@ -84,11 +100,16 @@
                         "shift"
                     ]
                 },
+                "skip_decoy_generation": {
+                    "type": "string",
+                    "fa_icon": "fab fa-think-peaks",
+                    "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
+                },
                 "unimod": {
                     "type": "string",
                     "help_text": "Example file:\nhttps://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
                     "description": "Path to unimod file needs to be provided",
-                    "default": "https/&#x2F;raw.githubusercontent.co/nf-cor/test-dataset/diaproteomic/unimod.xml"
+                    "default": "https://raw.githubusercontent.co/nf-cor/test-dataset/diaproteomic/unimod.xml"
                 }
             }
         },
@@ -133,14 +154,6 @@
                 "force_option": {
                     "type": "boolean",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
-                },
-                "swath_windows": {
-                    "type": "string",
-                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges"
-                },
-                "irts": {
-                    "type": "string",
-                    "description": "Path to internal retention time standards (pqp, TraML or tsv)"
                 }
             }
         },
@@ -276,7 +289,7 @@
                 "igenomes_base": {
                     "type": "string",
                     "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3/&#x2F;ngi-igenome/igenome/",
+                    "default": "s3//ngi-igenome/igenome/",
                     "fa_icon": "fas fa-cloud-download-alt",
                     "hidden": true
                 },
@@ -407,7 +420,7 @@
                 "custom_config_base": {
                     "type": "string",
                     "description": "Base directory for Institutional configs.",
-                    "default": "https/&#x2F;raw.githubusercontent.co/nf-cor/config/master",
+                    "default": "https://raw.githubusercontent.co/nf-cor/config/master",
                     "hidden": true,
                     "help_text": "If you're running offline, nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell nextflow where to find them with the `custom_config_base` option. For example:\n\n```bash\n## Download and unzip the config files\ncd /path/to/my/configs\nwget https://github.com/nf-core/configs/archive/master.zip\nunzip master.zip\n\n## Run the pipeline\ncd /path/to/my/data\nnextflow run /path/to/pipeline/ --custom_config_base /path/to/my/configs/configs-master/\n```\n\n> Note that the nf-core/tools helper package has a `download` command to download all required pipeline files + singularity containers + institutional configs in one go for you, to make this process easier.",
                     "fa_icon": "fas fa-users-cog"
@@ -478,9 +491,6 @@
             "type": "integer",
             "default": 500,
             "hidden": true
-        },
-        "spectral_lib": {
-            "type": "string"
         }
     }
 }

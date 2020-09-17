@@ -162,7 +162,7 @@ if( params.generate_spectral_library) {
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
-    params.spectral_lib = Channel.empty()
+    params.input_spectral_library = "generate spectral library from DDA data"
 
 } else if( !params.skip_decoy_generation) {
 
@@ -220,7 +220,7 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['Spectral Library']    = params.spectral_lib
+summary['Spectral Library']    = params.input_spectral_library
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
