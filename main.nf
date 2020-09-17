@@ -17,21 +17,20 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --input '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
+    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' --swath_windows 'swath_windows.txt' -profile standard,docker
 
     Mandatory arguments:
-      --input                           Path to input DIA raw/mzML data (must be surrounded with quotes)
+      --input                           Path to input DIA raw/mzML data sheet (must be surrounded with quotes)
       --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
-      --spectral_lib                    Path to spectral library input file (pqp)
-      --irts                            Path to internal retention time standards (pqp)
+      --input_spectral_library          Path to spectral library input sheet
+      --irts                            Path to internal retention time standards input_sheet
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --dda_id                          Path to mzid, idXML or other formats of DDA search results to use for spectral library generation
-      --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --generate_spectral_library       Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
+      --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
@@ -108,7 +107,6 @@ ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 // Validate inputs
 sample_sheet = file(params.input)
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
-params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
@@ -145,17 +143,16 @@ Channel.fromPath( params.irts)
 /*
  * Create a channel for input spectral library
  */
-if( params.generate_spectral_lib) {
+if( params.generate_spectral_library) {
 
-    Channel
-        .fromPath( params.dda_id )
-        .ifEmpty { exit 1, "params.dda_id was empty - no peptide identification input supplied" }
-        .set { input_dda_id}
+    // Spectral library input
+    dda_sheet = file(params.input_sheet_dda)
 
-    Channel
-        .fromPath( params.dda_mzml )
-        .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
-        .set { input_dda_mzml}
+    Channel.from( dda_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.RawFileName}", checkifExists: true), file("${col.IdFileName}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
+        .set {input_dda}
 
     Channel
         .fromPath( params.unimod )
@@ -168,28 +165,46 @@ if( params.generate_spectral_lib) {
     params.spectral_lib = Channel.empty()
 
 } else if( !params.skip_decoy_generation) {
-    Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .set { input_lib_nd }
+
+    // Spectral library input
+    library_sheet = file(params.input_spectral_library)
+
+    Channel.from( library_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.LibraryFileName}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
+        .set {input_lib_nd}
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_dda_id = Channel.empty()
-    input_dda_mzml = Channel.empty()
+    input_dda = Channel.empty()
     input_unimod = Channel.empty()
 
 } else {
-    Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .into { input_lib; input_lib_1 }
+
+    // Spectral library input
+    library_sheet = file(params.input_spectral_library)
+
+    Channel.from( library_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.LibraryFileName}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
+        .into {input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-    input_dda_id = Channel.empty()
-    input_dda_mzml = Channel.empty()
+    input_dda = Channel.empty()
     input_unimod = Channel.empty()
 }
+
+
+// iRT library input
+irt_sheet = file(params.irts)
+
+Channel.from( irt_sheet )
+    .splitCsv(header: true, sep:'\t')
+    .map { col -> tuple("${col.Sample}", file("${col.irtLibraryFileName}", checkifExists: true))}
+    .flatMap{it -> [tuple(it[0],it[1])]}
+    .set {input_irts}
 
 
 // Force option
@@ -278,13 +293,13 @@ process convert_ids_from_dda_id {
     publishDir "${params.outdir}/"
 
     input:
-     file dda_id_file from input_dda_id
+     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda
 
     output:
-     file "${dda_id_file.baseName}.idXML" into input_idxml
+     set val(id), val(Sample), file(dda_mzml), file("${dda_id_file.baseName}.idXML") into input_dda_converted
 
     when:
-     params.generate_spectral_lib
+     params.generate_spectral_library
 
     script:
      """
@@ -301,15 +316,14 @@ process generate_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file idxml_file from input_idxml
-     file dda_mzml_file from input_dda_mzml
+     set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
      file unimod_file from input_unimod.first()
 
     output:
-     file "${dda_mzml_file.baseName}_run_peaks.tsv" into input_lib_dda_nd
+     set val(id), val(Sample), file("${dda_mzml_file.baseName}_run_peaks.tsv") into input_lib_dda_nd
 
     when:
-     params.generate_spectral_lib
+     params.generate_spectral_library
 
     script:
      """
@@ -333,11 +347,11 @@ process generate_assay_of_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_na from input_lib_nd.mix(input_lib_dda_nd)
+     set val(id), val(Sample), file(lib_file_na) from input_lib_nd.mix(input_lib_dda_nd)
      file swath_file from input_swath_windows_assay.first()
 
     output:
-     file "${lib_file_na.baseName}_assay.pqp" into input_lib_assay
+     set val(id), val(Sample), file("${lib_file_na.baseName}_assay.pqp") into input_lib_assay
 
     when:
      !params.skip_decoy_generation
@@ -358,10 +372,10 @@ process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib_assay
+     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay
 
     output:
-     file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
+     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into (input_lib_decoy, input_lib_decoy_1)
 
     when:
      !params.skip_decoy_generation
@@ -399,10 +413,8 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), val(Condition), file(mzml_file) from converted_input_mzmls.mix(input_ms_files.mzml)
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts, by:0)
      file swath_file from input_swath_windows.first()
-     file lib_file from input_lib_decoy.mix(input_lib).first()
-     file irt_file from input_irts.first()
 
     output:
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
@@ -457,15 +469,14 @@ process merge_openswath_output {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), val(Condition), file(all_osws) from osw_files.groupTuple(by:1)
-     file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
+     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_decoy_1.mix(input_lib_1),by:1)
 
     output:
      set val(id), val(Sample), val(Condition), file("osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
 
     script:
      """
-     pyprophet merge --template=${lib_file_1} \\
+     pyprophet merge --template=${lib_file_template} \\
                      --out=osw_file_merged.osw \\
                      ${all_osws} \\
      """
@@ -519,6 +530,8 @@ process run_global_fdr_scoring {
      pyprophet score --in=${scored_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${scored_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
 
      pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\

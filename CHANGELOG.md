@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 Integrated sample sheet eg. experimental design
+Sample sheets can be supplied for dia and dda raw data, id and irt libraries
 more parameters
 RawFile parsing
 
