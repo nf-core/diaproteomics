@@ -28,8 +28,12 @@ def helpMessage() {
       --input_spectral_library          Path to spectral library input sheet
       --irts                            Path to internal retention time standards input_sheet
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
+      --irt_n_bins                      Number of RT bins for iRT alignment
+      --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_library       Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
+      --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
+      --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
       --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
@@ -135,10 +139,6 @@ Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
         .into { input_swath_windows; input_swath_windows_assay }
 
-Channel.fromPath( params.irts)
-        .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_irts }
-
 
 /*
  * Create a channel for input spectral library
@@ -197,21 +197,28 @@ if( params.generate_spectral_library) {
 }
 
 
-// iRT library input
-irt_sheet = file(params.irts)
+if( !params.generate_pseudo_irts){
+   // iRT library input
+   irt_sheet = file(params.irts)
 
-Channel.from( irt_sheet )
-    .splitCsv(header: true, sep:'\t')
-    .map { col -> tuple("${col.Sample}", file("${col.irtLibraryFileName}", checkifExists: true))}
-    .flatMap{it -> [tuple(it[0],it[1])]}
-    .set {input_irts}
+   Channel.from( irt_sheet )
+       .splitCsv(header: true, sep:'\t')
+       .map { col -> tuple("${col.Sample}", file("${col.irtLibraryFileName}", checkifExists: true))}
+       .flatMap{it -> [tuple(it[0],it[1])]}
+       .set {input_irts}
+
+} else {
+
+    input_irts = Channel.empty()
+
+}
 
 
 // Force option
 if (params.force_option){
- force_option='-force'
-} else {
- force_option=''
+    force_option='-force'
+   } else {
+    force_option=''
 }
 
 
@@ -351,7 +358,7 @@ process generate_assay_of_spectral_library {
      file swath_file from input_swath_windows_assay.first()
 
     output:
-     set val(id), val(Sample), file("${lib_file_na.baseName}_assay.pqp") into input_lib_assay
+     set val(id), val(Sample), file("${lib_file_na.baseName}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt)
 
     when:
      !params.skip_decoy_generation
@@ -360,7 +367,32 @@ process generate_assay_of_spectral_library {
      """
      OpenSwathAssayGenerator -in ${lib_file_na} \\
                              -swath_windows_file ${swath_file} \\
-                             -out "${lib_file_na.baseName}_assay.pqp" \\
+                             -out ${lib_file_na.baseName}_assay.tsv \\
+     """
+}
+
+
+/*
+ * STEP 1.75 - Pseudo iRT Library Generation
+ */
+process generate_pseudo_irt_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt
+
+    output:
+     set val(Sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
+
+    when:
+     params.generate_pseudo_irts
+
+    script:
+     """
+     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+
+     TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp
      """
 }
 
@@ -382,9 +414,12 @@ process generate_decoys_for_spectral_library {
 
     script:
      """
-     OpenSwathDecoyGenerator -in ${lib_file_nd} \\
+     TargetedFileConverter -in ${lib_file_nd} \\
+                           -out ${lib_file_nd.baseName}.pqp \\
+
+     OpenSwathDecoyGenerator -in ${lib_file_nd.baseName}.pqp \\
                              -method ${params.decoy_method} \\
-                             -out "${lib_file_nd.baseName}_decoy.pqp" \\
+                             -out ${lib_file_nd.baseName}_decoy.pqp \\
      """
 }
 
@@ -413,7 +448,7 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts, by:0)
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
      file swath_file from input_swath_windows.first()
 
     output:
@@ -437,6 +472,8 @@ process run_openswathworkflow {
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\
+                       -RTNormalization:NrRTBins ${params.irt_n_bins} \\
+                       -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
                        -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\

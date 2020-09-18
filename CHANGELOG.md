@@ -11,6 +11,7 @@ Integrated sample sheet eg. experimental design
 Sample sheets can be supplied for dia and dda raw data, id and irt libraries
 more parameters
 RawFile parsing
+Pseudo iRT generation
 
 ## v1.0dev - [08.09.20]
 
