@@ -113,6 +113,33 @@
                 }
             }
         },
+        "pseudo_irt_generation": {
+            "title": "Pseudo iRT Generation",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "generate_pseudo_irts": {
+                    "type": "boolean",
+                    "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                },
+                "n_irts": {
+                    "type": "integer",
+                    "default": 250,
+                    "description": "Number of pseudo irts selected from dda identifications based on the best q-value"
+                },
+                "irt_n_bins": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Number of bins defined for the RT Normalization"
+                },
+                "irt_min_bins_covered": {
+                    "type": "integer",
+                    "default": 8,
+                    "description": "Number of bins that have to be covered for the RT Normalization"
+                }
+            }
+        },
         "openswathworkflow_options": {
             "title": "OpenSwathWorkflow Options",
             "type": "object",
@@ -458,6 +485,9 @@
         },
         {
             "$ref": "#/definitions/spectral_library_generation"
+        },
+        {
+            "$ref": "#/definitions/pseudo_irt_generation"
         },
         {
             "$ref": "#/definitions/openswathworkflow_options"
