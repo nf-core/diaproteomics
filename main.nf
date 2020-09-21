@@ -31,7 +31,9 @@ def helpMessage() {
       --irt_n_bins                      Number of RT bins for iRT alignment
       --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_library       Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
+      --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
+      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
       --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
       --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
@@ -293,6 +295,7 @@ process get_software_versions {
     """
 }
 
+
 /*
  * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
@@ -303,7 +306,7 @@ process convert_ids_from_dda_id {
      set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda
 
     output:
-     set val(id), val(Sample), file(dda_mzml), file("${dda_id_file.baseName}.idXML") into input_dda_converted
+     set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
 
     when:
      params.generate_spectral_library
@@ -311,7 +314,7 @@ process convert_ids_from_dda_id {
     script:
      """
      IDFileConverter -in ${dda_id_file} \\
-                     -out ${dda_id_file.baseName}.idXML
+                     -out ${id}_${Sample}_peptide_ids.idXML
      """
 }
 
@@ -327,7 +330,7 @@ process generate_spectral_library {
      file unimod_file from input_unimod.first()
 
     output:
-     set val(id), val(Sample), file("${dda_mzml_file.baseName}_run_peaks.tsv") into input_lib_dda_nd
+     set val(id), val(Sample), file("${id}_${Sample}_library.tsv") into input_lib_dda_nd
 
     when:
      params.generate_spectral_library
@@ -342,13 +345,15 @@ process generate_spectral_library {
                      --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
                      --nofdr \\
                      ${dda_mzml_file.baseName}.psmpkl \\
-                     ${dda_mzml_file.baseName}.peakpkl
+                     ${dda_mzml_file.baseName}.peakpkl \\
+
+     mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${Sample}_library.tsv
      """
 }
 
 
 /*
- * STEP 1.5 - Assay Generation for Spectral Library
+ * STEP 1.25 - Assay Generation for Spectral Library
  */
 process generate_assay_of_spectral_library {
     publishDir "${params.outdir}/"
@@ -358,16 +363,47 @@ process generate_assay_of_spectral_library {
      file swath_file from input_swath_windows_assay.first()
 
     output:
-     set val(id), val(Sample), file("${lib_file_na.baseName}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt)
+     set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
 
     when:
      !params.skip_decoy_generation
 
     script:
      """
-     OpenSwathAssayGenerator -in ${lib_file_na} \\
+     TargetedFileConverter -in ${lib_file_na} \\
+                           -out ${lib_file_na.baseName}.tsv
+
+     OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
                              -swath_windows_file ${swath_file} \\
-                             -out ${lib_file_na.baseName}_assay.tsv \\
+                             -out ${id}_${Sample}_assay.tsv \\
+     """
+}
+
+
+if(params.merge_libraries) {
+   input_lib_assay = Channel.empty()
+   input_lib_assay_for_irt = Channel.empty()
+}
+
+
+/*
+ * STEP 1.5 - Merge and align spectral Libraries
+ */
+process merge_and_align_spectral_libraries {
+    publishDir "${params.outdir}/"
+
+    input:
+     set val(id), val(Sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
+
+    output:
+     set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
+
+    when:
+     params.merge_libraries
+
+    script:
+     """
+     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --output ${Sample}_library_merged.tsv
      """
 }
 
@@ -379,7 +415,7 @@ process generate_pseudo_irt_library {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt
+     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
 
     output:
      set val(Sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
@@ -404,7 +440,7 @@ process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay
+     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
 
     output:
      set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into (input_lib_decoy, input_lib_decoy_1)
@@ -509,12 +545,12 @@ process merge_openswath_output {
      set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_decoy_1.mix(input_lib_1),by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
+     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
 
     script:
      """
      pyprophet merge --template=${lib_file_template} \\
-                     --out=osw_file_merged.osw \\
+                     --out=${Sample}_osw_file_merged.osw \\
                      ${all_osws} \\
      """
 }
@@ -631,16 +667,18 @@ process align_dia_runs {
      set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(Condition_dummy), file(chrom_files_index) from merged_osw_scored.mix(merged_osw_scored_global).join(chromatogram_files_indexed.groupTuple(by:1), by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("DIAlignR.csv") into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into DIALignR_result
 
     script:
      """
      mkdir osw
-     mv ${pyresults} osw/
-     mkdir mzml
+     mv ${pyresults} osw/ 
+     mkdir mzml 
      mv *.chrom.mzML mzml/
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
+
+     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
      """
 }
 

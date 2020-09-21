@@ -56,7 +56,7 @@ def align_libs(reference, other, rsq_threshold):
     return df_II
 
 
-def compute_MST(libs):
+def compute_MST(libs,min_overlap):
     file_combs = combinations(libs, 2)
     G=nx.Graph()
 
@@ -72,7 +72,7 @@ def compute_MST(libs):
         if file_comb[1] not in G.nodes():
             G.add_node(file_comb[1])
 
-        if len(overlap)>=100:
+        if len(overlap)>=min_overlap:
             G.add_edges_from([(file_comb[0],file_comb[1],{'weight':float(10000)/len(overlap)})])
 
         # generate minimum spanning tree
@@ -154,8 +154,14 @@ def main():
     )
 
     model.add_argument(
-        '-t', '--rsq_threshold',
+        '-u', '--min_overlap',
         type=int,
+        help='min number of peptides having to overlap between libraries'
+    )
+
+    model.add_argument(
+        '-t', '--rsq_threshold',
+        type=float,
         help='rsq threshold for alignment'
     )
 
@@ -167,13 +173,17 @@ def main():
 
     args = model.parse_args()
 
-    print(args)
     libs=args.input_libraries
     rsq_threshold=args.rsq_threshold
+    min_overlap=args.min_overlap
 
-    MST=compute_MST(libs)
+    if len(libs)>1:
+       MST=compute_MST(libs, min_overlap)
 
-    combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
+       combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
+
+    else:
+       combined_lib=pd.read_csv(libs[0], sep='\t')
 
     #output transformed dataframe II
     if args.filter:
