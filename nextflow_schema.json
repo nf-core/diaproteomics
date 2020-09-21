@@ -113,6 +113,23 @@
                 }
             }
         },
+        "library_merging": {
+            "title": "Library merging",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "merge_libraries": {
+                    "type": "boolean",
+                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
+                },
+                "min_overlap_for_merging": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries"
+                }
+            }
+        },
         "pseudo_irt_generation": {
             "title": "Pseudo iRT Generation",
             "type": "object",
@@ -485,6 +502,9 @@
         },
         {
             "$ref": "#/definitions/spectral_library_generation"
+        },
+        {
+            "$ref": "#/definitions/library_merging"
         },
         {
             "$ref": "#/definitions/pseudo_irt_generation"
