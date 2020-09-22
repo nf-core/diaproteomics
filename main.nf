@@ -118,7 +118,7 @@ params.outdir = params.outdir ?: { log.warn "No output directory provided. Will 
 // DIA MS input
 Channel.from( sample_sheet )
        .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.ID}", "${col.Sample}", "${col.Condition}", file("${col.ReplicateFileName}", checkifExists: true))}
+       .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", "${col.Fraction}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
        .set {input_branch}
 
@@ -152,7 +152,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( dda_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.RawFileName}", checkifExists: true), file("${col.IdFileName}", checkifExists: true))}
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
         .set {input_dda}
 
@@ -173,7 +173,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.LibraryFileName}", checkifExists: true))}
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .set {input_lib_nd}
 
@@ -189,7 +189,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.ID}", "${col.Sample}", file("${col.LibraryFileName}", checkifExists: true))}
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .into {input_lib; input_lib_1 }
 
@@ -205,7 +205,7 @@ if( !params.generate_pseudo_irts){
 
    Channel.from( irt_sheet )
        .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Sample}", file("${col.irtLibraryFileName}", checkifExists: true))}
+       .map { col -> tuple("${col.Sample}", file("${col.irt_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1])]}
        .set {input_irts}
 
