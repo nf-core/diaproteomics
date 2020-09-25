@@ -16,6 +16,8 @@ nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative
 
 The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. Optionally, EasyPQP can be used for library generation and DIAlignR for chromatogram alignment and quantification.
 
+![overview](assets/DIAproteomics_scheme.png)
+
 ## Quick Start
 
 1. Install [`nextflow`](https://nf-co.re/usage/installation)

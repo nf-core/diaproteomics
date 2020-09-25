@@ -17,21 +17,26 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --input '*.mzML' --spectral_lib '*.pqp' --irts '*.pqp' --swath_windows '*.txt' -profile standard,docker
+    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' --swath_windows 'swath_windows.txt' -profile standard,docker
 
     Mandatory arguments:
-      --input                           Path to input DIA mzML data (must be surrounded with quotes)
+      --input                           Path to input DIA raw/mzML data sheet (must be surrounded with quotes)
       --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
-      --spectral_lib                    Path to spectral library input file (pqp)
-      --irts                            Path to internal retention time standards (pqp)
+      --input_spectral_library          Path to spectral library input sheet
+      --irts                            Path to internal retention time standards input_sheet
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
+      --irt_n_bins                      Number of RT bins for iRT alignment
+      --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_lib           Set flag if spectral lib should be generated from provided DDA data (pepXML and mzML)
-      --dda_id                          Path to mzid, idXML or other formats of DDA search results to use for spectral library generation
-      --dda_mzml                        Path to mzml to generate spectral library (mzml)
+      --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
+      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
+      --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
+      --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
+      --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
@@ -106,78 +111,116 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 // Validate inputs
-dia_mzmls = params.input ?: { log.error "No dia mzml data provided. Make sure you have used the '--input' option."; exit 1 }()
+sample_sheet = file(params.input)
 params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
-params.irts = params.irts ?: { log.error "No internal retention time standards provided. Make sure you have used the '--irts' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
-Channel.fromPath( dia_mzmls )
-        .ifEmpty { exit 1, "Cannot find any mzmls matching: ${params.input}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_mzmls }
+// DIA MS input
+Channel.from( sample_sheet )
+       .splitCsv(header: true, sep:'\t')
+       .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", "${col.Fraction}", file("${col.Spectra_Filepath}", checkifExists: true))}
+       .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
+       .set {input_branch}
+
+
+// Check file extension
+def hasExtension(it, extension) {
+    it.toString().toLowerCase().endsWith(extension.toLowerCase())
+}
+
+input_branch.branch {
+        raw: hasExtension(it[3], 'raw')
+        mzml: hasExtension(it[3], 'mzML')
+        other: true
+}.set{input_ms_files}
+
+input_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
+
 
 Channel.fromPath( params.swath_windows)
         .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
         .into { input_swath_windows; input_swath_windows_assay }
 
-Channel.fromPath( params.irts)
-        .ifEmpty { exit 1, "Cannot find any irts matching: ${params.irts}\nNB: Path needs to be enclosed in quotes!" }
-        .set { input_irts }
-
 
 /*
  * Create a channel for input spectral library
  */
-if( params.generate_spectral_lib) {
+if( params.generate_spectral_library) {
 
-    Channel
-        .fromPath( params.dda_id )
-        .ifEmpty { exit 1, "params.dda_id was empty - no peptide identification input supplied" }
-        .into { input_dda_id}
+    // Spectral library input
+    dda_sheet = file(params.input_sheet_dda)
 
-    Channel
-        .fromPath( params.dda_mzml )
-        .ifEmpty { exit 1, "params.dda_mzml was empty - no dda raw input supplied" }
-        .into { input_dda_mzml}
+    Channel.from( dda_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
+        .set {input_dda}
 
     Channel
         .fromPath( params.unimod )
         .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
-        .into { input_unimod}
+        .set { input_unimod}
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
+    params.input_spectral_library = "generate spectral library from DDA data"
 
 } else if( !params.skip_decoy_generation) {
-    Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .set { input_lib_nd }
+
+    // Spectral library input
+    library_sheet = file(params.input_spectral_library)
+
+    Channel.from( library_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
+        .set {input_lib_nd}
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_dda_id = Channel.empty()
-    input_dda_mzml = Channel.empty()
+    input_dda = Channel.empty()
     input_unimod = Channel.empty()
 
 } else {
-    Channel
-        .fromPath( params.spectral_lib )
-        .ifEmpty { exit 1, "params.spectral_lib was empty - no input spectral library supplied" }
-        .into { input_lib; input_lib_1 }
+
+    // Spectral library input
+    library_sheet = file(params.input_spectral_library)
+
+    Channel.from( library_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
+        .into {input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-    input_dda_id = Channel.empty()
-    input_dda_mzml = Channel.empty()
+    input_dda = Channel.empty()
     input_unimod = Channel.empty()
+}
+
+
+if( !params.generate_pseudo_irts){
+   // iRT library input
+   irt_sheet = file(params.irts)
+
+   Channel.from( irt_sheet )
+       .splitCsv(header: true, sep:'\t')
+       .map { col -> tuple("${col.Sample}", file("${col.irt_Filepath}", checkifExists: true))}
+       .flatMap{it -> [tuple(it[0],it[1])]}
+       .set {input_irts}
+
+} else {
+
+    input_irts = Channel.empty()
+
 }
 
 
 // Force option
 if (params.force_option){
- force_option='-force'
-} else {
- force_option=''
+    force_option='-force'
+   } else {
+    force_option=''
 }
 
 
@@ -186,8 +229,7 @@ log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
-summary['mzMLs']        = dia_mzmls
-summary['Spectral Library']    = params.spectral_lib
+summary['Spectral Library']    = params.input_spectral_library
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -253,6 +295,7 @@ process get_software_versions {
     """
 }
 
+
 /*
  * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
@@ -260,18 +303,18 @@ process convert_ids_from_dda_id {
     publishDir "${params.outdir}/"
 
     input:
-     file dda_id_file from input_dda_id
+     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda
 
     output:
-     file "${dda_id_file.baseName}.idXML" into input_idxml
+     set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
 
     when:
-     params.generate_spectral_lib
+     params.generate_spectral_library
 
     script:
      """
      IDFileConverter -in ${dda_id_file} \\
-                     -out ${dda_id_file.baseName}.idXML
+                     -out ${id}_${Sample}_peptide_ids.idXML
      """
 }
 
@@ -283,15 +326,14 @@ process generate_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file idxml_file from input_idxml
-     file dda_mzml_file from input_dda_mzml
+     set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
      file unimod_file from input_unimod.first()
 
     output:
-     file "${dda_mzml_file.baseName}_run_peaks.tsv" into input_lib_dda_nd
+     set val(id), val(Sample), file("${id}_${Sample}_library.tsv") into input_lib_dda_nd
 
     when:
-     params.generate_spectral_lib
+     params.generate_spectral_library
 
     script:
      """
@@ -303,32 +345,90 @@ process generate_spectral_library {
                      --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
                      --nofdr \\
                      ${dda_mzml_file.baseName}.psmpkl \\
-                     ${dda_mzml_file.baseName}.peakpkl
+                     ${dda_mzml_file.baseName}.peakpkl \\
+
+     mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${Sample}_library.tsv
      """
 }
 
 
 /*
- * STEP 1.5 - Assay Generation for Spectral Library
+ * STEP 1.25 - Assay Generation for Spectral Library
  */
 process generate_assay_of_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_na from input_lib_nd.mix(input_lib_dda_nd)
+     set val(id), val(Sample), file(lib_file_na) from input_lib_nd.mix(input_lib_dda_nd)
      file swath_file from input_swath_windows_assay.first()
 
     output:
-     file "${lib_file_na.baseName}_assay.pqp" into input_lib_assay
+     set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
 
     when:
      !params.skip_decoy_generation
 
     script:
      """
-     OpenSwathAssayGenerator -in ${lib_file_na} \\
+     TargetedFileConverter -in ${lib_file_na} \\
+                           -out ${lib_file_na.baseName}.tsv
+
+     OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
                              -swath_windows_file ${swath_file} \\
-                             -out "${lib_file_na.baseName}_assay.pqp" \\
+                             -out ${id}_${Sample}_assay.tsv \\
+     """
+}
+
+
+if(params.merge_libraries) {
+   input_lib_assay = Channel.empty()
+   input_lib_assay_for_irt = Channel.empty()
+}
+
+
+/*
+ * STEP 1.5 - Merge and align spectral Libraries
+ */
+process merge_and_align_spectral_libraries {
+    publishDir "${params.outdir}/"
+
+    input:
+     set val(id), val(Sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
+
+    output:
+     set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
+
+    when:
+     params.merge_libraries
+
+    script:
+     """
+     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --output ${Sample}_library_merged.tsv
+     """
+}
+
+
+/*
+ * STEP 1.75 - Pseudo iRT Library Generation
+ */
+process generate_pseudo_irt_library {
+    publishDir "${params.outdir}/"
+
+    input:
+     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
+
+    output:
+     set val(Sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
+
+    when:
+     params.generate_pseudo_irts
+
+    script:
+     """
+     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+
+     TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp
      """
 }
 
@@ -340,38 +440,56 @@ process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     file lib_file_nd from input_lib_assay
+     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
 
     output:
-     file "${lib_file_nd.baseName}_decoy.pqp" into (input_lib_decoy, input_lib_decoy_1)
+     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into (input_lib_decoy, input_lib_decoy_1)
 
     when:
      !params.skip_decoy_generation
 
     script:
      """
-     OpenSwathDecoyGenerator -in ${lib_file_nd} \\
+     TargetedFileConverter -in ${lib_file_nd} \\
+                           -out ${lib_file_nd.baseName}.pqp \\
+
+     OpenSwathDecoyGenerator -in ${lib_file_nd.baseName}.pqp \\
                              -method ${params.decoy_method} \\
-                             -out "${lib_file_nd.baseName}_decoy.pqp" \\
+                             -out ${lib_file_nd.baseName}_decoy.pqp \\
      """
 }
 
 
 /*
- * STEP 3 - OpenSwathWorkFlow
+ * STEP 3 - Raw File Conversion
+ */
+process convert_raw_input_files {
+    input:
+     set val(id), val(Sample), val(Condition), file(mzml_file) from input_ms_files.raw
+
+    output:
+     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_input_mzmls
+
+    script:
+     """
+     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+     """
+}
+
+
+/*
+ * STEP 4 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     file mzml_file from input_mzmls
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
      file swath_file from input_swath_windows.first()
-     file lib_file from input_lib_decoy.mix(input_lib).first()
-     file irt_file from input_irts.first()
 
     output:
-     file "${mzml_file.baseName}_chrom.mzML" into chromatogram_files
-     file "${mzml_file.baseName}.osw" into osw_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
 
     script:
      """
@@ -390,10 +508,21 @@ process run_openswathworkflow {
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\
+                       -RTNormalization:NrRTBins ${params.irt_n_bins} \\
+                       -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
                        -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\
                        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+                       -Scoring:TransitionGroupPicker:peak_integration 'original' \\
+                       -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
                        -Scoring:Scores:use_ms1_mi \\
                        -Scoring:Scores:use_mi_score \\
                        -batchSize 1000 \\
@@ -407,38 +536,37 @@ process run_openswathworkflow {
 
 
 /*
- * STEP 4 - Pyprophet merging of OpenSwath results
+ * STEP 5 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
     publishDir "${params.outdir}/"
 
     input:
-     file all_osws from osw_files.collect{it}
-     file lib_file_1 from input_lib_decoy_1.mix(input_lib_1).first()
+     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_decoy_1.mix(input_lib_1),by:1)
 
     output:
-     file "osw_file_merged.osw" into merged_osw_file
+     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
 
     script:
      """
-     pyprophet merge --template=${lib_file_1} \\
-                     --out=osw_file_merged.osw \\
+     pyprophet merge --template=${lib_file_template} \\
+                     --out=${Sample}_osw_file_merged.osw \\
                      ${all_osws} \\
      """
 }
 
 
 /*
- * STEP 5 - Pyprophet FDR Scoring
+ * STEP 6 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
 
     input:
-     file merged_osw from merged_osw_file
+     set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
 
     output:
-     file "${merged_osw.baseName}_scored_merged.osw" into (merged_osw_scored, merged_osw_scored_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into (merged_osw_scored, merged_osw_scored_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -456,16 +584,16 @@ process run_fdr_scoring {
 
 
 /*
- * STEP 6 - Pyprophet global FDR Scoring
+ * STEP 7 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
 
     input:
-     file scored_osw from merged_osw_file
+     set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     file "${scored_osw.baseName}_global_merged.osw" into merged_osw_scored_global
+     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into (merged_osw_scored_global, merged_osw_scored_global_for_pyprophet)
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -475,6 +603,8 @@ process run_global_fdr_scoring {
      pyprophet score --in=${scored_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
                      --out=${scored_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
 
      pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
@@ -485,16 +615,16 @@ process run_global_fdr_scoring {
 
 
 /*
- * STEP 7 - Pyprophet Export
+ * STEP 8 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
 
     input:
-     file global_osw from merged_osw_scored.mix(merged_osw_scored_global)
+     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_for_pyprophet.mix(merged_osw_scored_global_for_pyprophet)
 
     output:
-     file "*.tsv" into pyprophet_results
+     set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
 
     script:
      """
@@ -508,16 +638,16 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 8 - Index Chromatogram mzMLs
+ * STEP 9 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
     publishDir "${params.outdir}/"
 
     input:
-     file chrom_file_noindex from chromatogram_files
+     set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     file "${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML" into chromatogram_files_indexed
+     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML") into chromatogram_files_indexed
 
     script:
      """
@@ -528,26 +658,27 @@ process index_chromatograms {
 
 
 /*
- * STEP 9 - Align DIA Chromatograms using DIAlignR
+ * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
 process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     file pyresults from merged_osw_scored_for_pyprophet
-     file chrom_files_index from chromatogram_files_indexed.collect()
+     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(Condition_dummy), file(chrom_files_index) from merged_osw_scored.mix(merged_osw_scored_global).join(chromatogram_files_indexed.groupTuple(by:1), by:1)
 
     output:
-     file "DIAlignR.csv" into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into DIALignR_result
 
     script:
      """
      mkdir osw
-     mv ${pyresults} osw/
-     mkdir mzml
+     mv ${pyresults} osw/ 
+     mkdir mzml 
      mv *.chrom.mzML mzml/
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
+
+     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
      """
 }
 

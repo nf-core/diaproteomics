@@ -17,9 +17,26 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
-                    "description": "Input DIA mzML files",
-                    "help_text": "Use this to specify the location of your input DIA mzML files. For example:\n\n```bash\n--input ''path/to/data/sample_*.mzML'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n\nIf left unspecified, a default pattern is used:  'data/sample_*.mzML'",
-                    "default": "data/sample_*.mzML"
+                    "description": "Input sample sheet (raw / mzML)",
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as SampleID and Fraction. For example:\n\n| Fraction_Group   | Sample      | Fraction  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
+                    "default": "false"
+                },
+                "input_spectral_library": {
+                    "type": "string",
+                    "fa_icon": "fas fa-book",
+                    "description": "Input sample sheet of spectral libraries (tsv, pqp, TraML)",
+                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as SampleID and Condition. For example:\n\n| Fraction_Group   | Sample      |   Library_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_library.tsv    |\n| 2    | Benign |   data/Benign_library.tsv    |"
+                },
+                "irts": {
+                    "type": "string",
+                    "description": "Path to internal retention time standard sample sheet (tsv, pqp, TraML)",
+                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Fraction_Group      |   irt_Filepath                       |\n|------------:|------------------------------------------:|\n| Malignant |   data/Melanom_irt_library.tsv    |\n| Benign |   data/Benign_irt_library.tsv    |",
+                    "fa_icon": "fas fa-book"
+                },
+                "swath_windows": {
+                    "type": "string",
+                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges",
+                    "fa_icon": "fab fa-windows"
                 },
                 "outdir": {
                     "type": "string",
@@ -42,21 +59,20 @@
             "description": "",
             "default": "",
             "properties": {
-                "generate_spectral_lib": {
+                "generate_spectral_library": {
                     "type": "boolean",
-                    "fa_icon": "fab fa-think-peaks",
                     "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                },
+                "input_sheet_dda": {
+                    "type": "string",
+                    "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  SampleID metainformation. For example:\n\n| Fraction_Group   | Sample      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_standard.mzML     |   data/Melanom_DDA_standard.pepXML    |\n| 2    | Benign |      data/Benign_DDA_standard.mzML     |   data/Benign_DDA_standard.pepXML    |\n"
                 },
                 "library_rt_fdr": {
                     "type": "number",
                     "default": 0.01,
                     "fa_icon": "fab fa-think-peaks",
                     "description": "PSM fdr threshold to align peptide ids with reference run."
-                },
-                "skip_decoy_generation": {
-                    "type": "string",
-                    "fa_icon": "fab fa-think-peaks",
-                    "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
                 },
                 "min_transitions": {
                     "type": "integer",
@@ -84,11 +100,60 @@
                         "shift"
                     ]
                 },
+                "skip_decoy_generation": {
+                    "type": "string",
+                    "fa_icon": "fab fa-think-peaks",
+                    "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
+                },
                 "unimod": {
                     "type": "string",
                     "help_text": "Example file:\nhttps://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
                     "description": "Path to unimod file needs to be provided",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml"
+                }
+            }
+        },
+        "library_merging": {
+            "title": "Library merging",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "merge_libraries": {
+                    "type": "boolean",
+                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
+                },
+                "min_overlap_for_merging": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries"
+                }
+            }
+        },
+        "pseudo_irt_generation": {
+            "title": "Pseudo iRT Generation",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "generate_pseudo_irts": {
+                    "type": "boolean",
+                    "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                },
+                "n_irts": {
+                    "type": "integer",
+                    "default": 250,
+                    "description": "Number of pseudo irts selected from dda identifications based on the best q-value"
+                },
+                "irt_n_bins": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Number of bins defined for the RT Normalization"
+                },
+                "irt_min_bins_covered": {
+                    "type": "integer",
+                    "default": 8,
+                    "description": "Number of bins that have to be covered for the RT Normalization"
                 }
             }
         },
@@ -133,14 +198,6 @@
                 "force_option": {
                     "type": "boolean",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
-                },
-                "swath_windows": {
-                    "type": "string",
-                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges"
-                },
-                "irts": {
-                    "type": "string",
-                    "description": "Path to internal retention time standards (pqp, TraML or tsv)"
                 }
             }
         },
@@ -340,26 +397,12 @@
                     "hidden": true,
                     "help_text": "Set to receive plain-text e-mails instead of HTML formatted."
                 },
-                "max_multiqc_email_size": {
-                    "type": "string",
-                    "description": "File size limit when attaching MultiQC reports to summary emails.",
-                    "default": "25.MB",
-                    "fa_icon": "fas fa-file-upload",
-                    "hidden": true,
-                    "help_text": "If file generated by pipeline exceeds the threshold, it will not be attached."
-                },
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
                     "hidden": true,
                     "help_text": "Set to disable colourful command line output and live life in monochrome."
-                },
-                "multiqc_config": {
-                    "type": "string",
-                    "description": "Custom config file to supply to MultiQC.",
-                    "fa_icon": "fas fa-cog",
-                    "hidden": true
                 },
                 "tracedir": {
                     "type": "string",
@@ -459,6 +502,12 @@
         },
         {
             "$ref": "#/definitions/spectral_library_generation"
+        },
+        {
+            "$ref": "#/definitions/library_merging"
+        },
+        {
+            "$ref": "#/definitions/pseudo_irt_generation"
         },
         {
             "$ref": "#/definitions/openswathworkflow_options"
