@@ -465,7 +465,7 @@ process generate_decoys_for_spectral_library {
  */
 process convert_raw_input_files {
     input:
-     set val(id), val(Sample), val(Condition), file(mzml_file) from input_ms_files.raw
+     set val(id), val(Sample), val(Condition), file(raw_file) from input_ms_files.raw
 
     output:
      set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_input_mzmls
