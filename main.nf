@@ -501,8 +501,8 @@ process run_openswathworkflow {
                        -sort_swath_maps \\
                        -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
-                       -out_osw ${mzml_file.baseName}.osw \\
-                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
+                       -out_osw ${id}_${Sample}.osw \\
+                       -out_chrom ${id}_${Sample}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -mz_extraction_window_unit 'ppm' \\
                        -mz_extraction_window_ms1_unit 'ppm' \\
