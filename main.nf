@@ -166,7 +166,7 @@ if( params.generate_spectral_library) {
     input_lib_nd = Channel.empty()
     params.input_spectral_library = "generate spectral library from DDA data"
 
-} else if( !params.skip_decoy_generation) {
+} else if( params.skip_decoy_generation) {
 
     // Spectral library input
     library_sheet = file(params.input_spectral_library)
@@ -359,7 +359,7 @@ process generate_assay_of_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(lib_file_na) from input_lib_nd.mix(input_lib_dda_nd)
+     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_nd.mix(input_lib_dda_nd))
      file swath_file from input_swath_windows_assay.first()
 
     output:
@@ -374,6 +374,8 @@ process generate_assay_of_spectral_library {
                            -out ${lib_file_na.baseName}.tsv
 
      OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
+                             -min_transitions ${params.min_transitions} \\
+                             -max_transitions ${params.max_transitions} \\
                              -swath_windows_file ${swath_file} \\
                              -out ${id}_${Sample}_assay.tsv \\
      """
@@ -484,12 +486,12 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy, by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
      file swath_file from input_swath_windows.first()
 
     output:
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
+     set val(id), val(Sample), val(Condition), file("${id}_${Sample}_chrom.mzML") into chromatogram_files
+     set val(id), val(Sample), val(Condition), file("${id}_${Sample}.osw") into osw_files
 
     script:
      """
