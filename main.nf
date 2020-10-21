@@ -119,9 +119,7 @@ Channel.from( sample_sheet )
        .splitCsv(header: true, sep:'\t')
        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", "${col.Fraction}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
-       .into {input_branch;test}
-
-test.println()
+       .set {input_branch}
 
 // Check file extension
 def hasExtension(it, extension) {
@@ -523,9 +521,9 @@ process run_openswathworkflow {
                            -out ${irt_file.baseName}.pqp \\
 
      OpenSwathWorkflow -in ${mzml_file} \\
-                       -tr ${lib_file.baseName}.pqp \\
-                       -tr_irt ${irt_file} \\
+                       -tr ${lib_file} \\
                        -sort_swath_maps \\
+                       -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
@@ -534,23 +532,31 @@ process run_openswathworkflow {
                        -mz_extraction_window_ms1_unit 'ppm' \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
+                       -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\
                        -RTNormalization:NrRTBins ${params.irt_n_bins} \\
                        -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
-                       -RTNormalization:lowess:span 0.3333333 \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
                        -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\
+                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+                       -Scoring:TransitionGroupPicker:peak_integration 'original' \\
+                       -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
+                       -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
+                       -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
                        -Scoring:Scores:use_ms1_mi \\
                        -Scoring:Scores:use_mi_score \\
-                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
                        -batchSize 1000 \\
                        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\                       
-
+                       ${force_option} \\  
      """
 }
 
