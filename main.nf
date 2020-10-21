@@ -614,6 +614,16 @@ process run_fdr_scoring {
      params.pyprophet_global_fdr_level==''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
+     """
+     pyprophet score --in=${merged_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${merged_osw.baseName}_scored_merged.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
+                     --threads=${task.cpus} \\
+     """
+    } else {
      """
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -621,6 +631,7 @@ process run_fdr_scoring {
                      --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
      """
+    }
 }
 
 
@@ -640,6 +651,7 @@ process run_global_fdr_scoring {
      params.pyprophet_global_fdr_level!=''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
      """
      pyprophet score --in=${scored_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -652,6 +664,19 @@ process run_global_fdr_scoring {
                                                     --out=${scored_osw.baseName}_global_merged.osw \\
                                                     --context=global \\
      """
+    } else {
+     """
+     pyprophet score --in=${scored_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${scored_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
+                                                    --out=${scored_osw.baseName}_global_merged.osw \\
+                                                    --context=global \\
+     """
+    }
 }
 
 
