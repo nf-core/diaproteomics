@@ -20,11 +20,11 @@ def helpMessage() {
     nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' --swath_windows 'swath_windows.txt' -profile standard,docker
 
     Mandatory arguments:
-      --input                           Path to input DIA raw/mzML data sheet (must be surrounded with quotes)
-      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
+      --input                           Path to input DIA raw/mzML/mzXML data sheet (must be surrounded with quotes)
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
+      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
       --input_spectral_library          Path to spectral library input sheet
       --irts                            Path to internal retention time standards input_sheet
       --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
@@ -33,6 +33,7 @@ def helpMessage() {
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
       --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
       --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
@@ -109,10 +110,8 @@ if (workflow.profile.contains('awsbatch')) {
 // Stage config files
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
-
-// Validate inputs
+//params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 sample_sheet = file(params.input)
-params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
@@ -122,7 +121,6 @@ Channel.from( sample_sheet )
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
        .set {input_branch}
 
-
 // Check file extension
 def hasExtension(it, extension) {
     it.toString().toLowerCase().endsWith(extension.toLowerCase())
@@ -131,16 +129,35 @@ def hasExtension(it, extension) {
 input_branch.branch {
         raw: hasExtension(it[3], 'raw')
         mzml: hasExtension(it[3], 'mzML')
+        mzxml: hasExtension(it[3], 'mzXML')
         other: true
 }.set{input_ms_files}
 
 input_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
 
 
-Channel.fromPath( params.swath_windows)
-        .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .into { input_swath_windows; input_swath_windows_assay }
+// Validate inputs
+sample_sheet = file(params.input)
 
+if (params.swath_windows != ''){
+
+swath_windows = file(params.swath_windows)
+print(swath_windows)
+// input_swath_windows = "-swath_windows_file ${swath_windows}"
+// input_swath_windows_assay = "-swath_windows_file ${swath_windows}"
+
+} else {
+
+input_swath_windows = ''
+input_swath_windows_assay = ''
+
+}
+
+if( params.align_libraries) {
+    align_libraries = 'true'
+} else {
+    align_libraries = 'false'
+}
 
 /*
  * Create a channel for input spectral library
@@ -164,6 +181,7 @@ if( params.generate_spectral_library) {
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
+    input_lib_nd_1 = Channel.empty()
     params.input_spectral_library = "generate spectral library from DDA data"
 
 } else if( params.skip_decoy_generation) {
@@ -194,6 +212,7 @@ if( params.generate_spectral_library) {
         .into {input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
+    input_lib_nd_1 = Channel.empty()
     input_dda = Channel.empty()
     input_unimod = Channel.empty()
 }
@@ -359,8 +378,8 @@ process generate_assay_of_spectral_library {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_nd.mix(input_lib_dda_nd))
-     file swath_file from input_swath_windows_assay.first()
+     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
+     //file swath_file from input_swath_windows_assay.first()
 
     output:
      set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
@@ -376,7 +395,6 @@ process generate_assay_of_spectral_library {
      OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
                              -min_transitions ${params.min_transitions} \\
                              -max_transitions ${params.max_transitions} \\
-                             -swath_windows_file ${swath_file} \\
                              -out ${id}_${Sample}_assay.tsv \\
      """
 }
@@ -405,7 +423,7 @@ process merge_and_align_spectral_libraries {
 
     script:
      """
-     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --output ${Sample}_library_merged.tsv
+     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
      """
 }
 
@@ -486,23 +504,29 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy, by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
-     file swath_file from input_swath_windows.first()
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml.mix(input_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
+     //file swath_file from input_swath_windows.first()
 
     output:
-     set val(id), val(Sample), val(Condition), file("${id}_${Sample}_chrom.mzML") into chromatogram_files
-     set val(id), val(Sample), val(Condition), file("${id}_${Sample}.osw") into osw_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
+     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
+     set val(id), val(Sample), file(lib_file) into input_lib_used
 
     script:
      """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.pqp \\
+
+     TargetedFileConverter -in ${irt_file} \\
+                           -out ${irt_file.baseName}.pqp \\
+
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
-                       -swath_windows_file ${swath_file} \\
                        -sort_swath_maps \\
                        -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
-                       -out_osw ${id}_${Sample}.osw \\
-                       -out_chrom ${id}_${Sample}_chrom.mzML \\
+                       -out_osw ${mzml_file.baseName}.osw \\
+                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -mz_extraction_window_unit 'ppm' \\
                        -mz_extraction_window_ms1_unit 'ppm' \\
@@ -532,7 +556,28 @@ process run_openswathworkflow {
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\                       
+                       ${force_option} \\  
+     """
+}
+
+
+/*
+ * STEP 4.5 - Pyprophet sampling of OpenSwath results
+ */
+process sample_openswath_output {
+    publishDir "${params.outdir}/"
+
+    input:
+     set val(id), val(Sample), val(Condition), file(whole_osw_file) from osw_files
+
+    output:
+     set val(id), val(Sample), val(Condition), file("${whole_osw_file.baseName}_sub.osw") into osw_files_sub
+
+    script:
+     """
+     pyprophet subsample --in=${whole_osw_file} \\
+                         --out=${whole_osw_file.baseName}_sub.osw \\
+                         --subsample_ratio=1 \\
      """
 }
 
@@ -544,7 +589,7 @@ process merge_openswath_output {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_decoy_1.mix(input_lib_1),by:1)
+     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files_sub.groupTuple(by:1).join(input_lib_used, by:1) //input_lib_decoy_1.mix(input_lib_1.mix(input_lib_nd_1)),by:1)
 
     output:
      set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
@@ -553,6 +598,7 @@ process merge_openswath_output {
      """
      pyprophet merge --template=${lib_file_template} \\
                      --out=${Sample}_osw_file_merged.osw \\
+                     --no-same_run \\
                      ${all_osws} \\
      """
 }
@@ -574,6 +620,7 @@ process run_fdr_scoring {
      params.pyprophet_global_fdr_level==''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
      """
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -582,6 +629,15 @@ process run_fdr_scoring {
                      --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
      """
+    } else {
+     """
+     pyprophet score --in=${merged_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${merged_osw.baseName}_scored_merged.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+     """
+    }
 }
 
 
@@ -601,6 +657,7 @@ process run_global_fdr_scoring {
      params.pyprophet_global_fdr_level!=''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
      """
      pyprophet score --in=${scored_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -613,6 +670,19 @@ process run_global_fdr_scoring {
                                                     --out=${scored_osw.baseName}_global_merged.osw \\
                                                     --context=global \\
      """
+    } else {
+     """
+     pyprophet score --in=${scored_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${scored_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
+                                                    --out=${scored_osw.baseName}_global_merged.osw \\
+                                                    --context=global \\
+     """
+    }
 }
 
 
