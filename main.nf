@@ -131,9 +131,9 @@ input_branch.branch {
         mzml: hasExtension(it[3], 'mzML')
         mzxml: hasExtension(it[3], 'mzXML')
         other: true
-}.set{input_ms_files}
+}.set{input_dia_ms_files}
 
-input_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
+input_dia_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
 
 
 // Validate inputs
@@ -173,6 +173,13 @@ if( params.generate_spectral_library) {
         .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
         .set {input_dda}
 
+    input_dda.branch {
+        raw: hasExtension(it[2], 'raw')
+        mzml: hasExtension(it[2], 'mzML')
+        mzxml: hasExtension(it[2], 'mzXML')
+        other: true
+    }.set{input_dda_ms_files}
+
     Channel
         .fromPath( params.unimod )
         .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
@@ -197,7 +204,7 @@ if( params.generate_spectral_library) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_dda = Channel.empty()
+    input_dda_ms_files = Channel.empty()
     input_unimod = Channel.empty()
 
 } else {
@@ -213,7 +220,7 @@ if( params.generate_spectral_library) {
 
     input_lib_nd = Channel.empty()
     input_lib_nd_1 = Channel.empty()
-    input_dda = Channel.empty()
+    input_dda_ms_files = Channel.empty()
     input_unimod = Channel.empty()
 }
 
@@ -316,13 +323,30 @@ process get_software_versions {
 
 
 /*
+ * STEP -1 - Raw File Conversion
+ */
+process convert_raw_dda_input_files {
+    input:
+     set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
+
+    output:
+     set val(id), val(Sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
+
+    script:
+     """
+     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+     """
+}
+
+
+/*
  * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
  */
 process convert_ids_from_dda_id {
     publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda
+     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
 
     output:
      set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
@@ -483,12 +507,12 @@ process generate_decoys_for_spectral_library {
 /*
  * STEP 3 - Raw File Conversion
  */
-process convert_raw_input_files {
+process convert_raw_dia_input_files {
     input:
-     set val(id), val(Sample), val(Condition), file(raw_file) from input_ms_files.raw
+     set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
 
     output:
-     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_input_mzmls
+     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
 
     script:
      """
@@ -504,7 +528,7 @@ process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml.mix(input_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
      //file swath_file from input_swath_windows.first()
 
     output:
