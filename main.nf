@@ -753,6 +753,16 @@ process index_chromatograms {
 }
 
 
+// Combine osw files and chromatograms by experimental design condition
+merged_osw_scored
+ .mix(merged_osw_scored_global)
+ .transpose()
+ .join(chromatogram_files_indexed, by:[1,2])
+ .groupTuple(by:[0,1])
+ .flatMap{it -> [tuple(it[0],it[1],it[2],it[3].unique()[0],it[4],it[5])]}
+ .set{osw_and_chromatograms_combined_by_condition}
+
+
 /*
  * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
@@ -760,10 +770,10 @@ process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(Condition_dummy), file(chrom_files_index) from merged_osw_scored.mix(merged_osw_scored_global).join(chromatogram_files_indexed.groupTuple(by:1), by:1)
+     set val(Sample), val(Condition), val(id), file(pyresults), val(id_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_peptide_quantities.csv") into DIALignR_result
 
     script:
      """
@@ -774,7 +784,7 @@ process align_dia_runs {
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
 
-     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
+     mv DIAlignR.csv ${Sample}_${Condition}_peptide_quantities.csv
      """
 }
 
