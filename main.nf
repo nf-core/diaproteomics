@@ -109,6 +109,10 @@ if (workflow.profile.contains('awsbatch')) {
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 sample_sheet = file(params.input)
+Channel
+ .from( sample_sheet )
+ .set { input_exp_design}
+
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
@@ -117,6 +121,7 @@ Channel.from( sample_sheet )
        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", "${col.Fraction}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
        .set {input_branch}
+
 
 // Check file extension
 def hasExtension(it, extension) {
@@ -514,7 +519,7 @@ process run_openswathworkflow {
     output:
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
-     set val(id), val(Sample), file(lib_file) into input_lib_used
+     set val(id), val(Sample), file(lib_file) into (input_lib_used, input_lib_used_I)
 
     script:
      """
@@ -730,7 +735,7 @@ process align_dia_runs {
      set val(Sample), val(Condition), val(id), file(pyresults), val(id_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_peptide_quantities.csv") into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
 
     script:
      """
@@ -745,6 +750,48 @@ process align_dia_runs {
      """
 }
 
+
+/*
+ * STEP 11 - Reformat output for MSstats
+ */
+process MSstats {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
+    file exp_design from input_exp_design.first()
+    set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
+
+   output:
+    file "${Sample}_${Condition}_reformatted.tsv" into msstats_file
+
+   script:
+    """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.tsv
+
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}_reformatted.tsv"
+    """
+}
+
+
+/*
+ * STEP 12 - Generate plots describing output
+ */
+process generate_output_plots {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
+
+   output:
+    file "*.pdf" into output_plots
+
+   script:
+    """
+    generic_plot_script.R ${Sample}
+    """
+}
 
 /*
  * Output Description HTML
