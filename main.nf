@@ -754,7 +754,7 @@ process align_dia_runs {
 /*
  * STEP 11 - Reformat output for MSstats
  */
-process MSstats {
+process prepare_for_msstats {
    publishDir "${params.outdir}/"
 
    input:
@@ -763,20 +763,41 @@ process MSstats {
     set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
 
    output:
-    file "${Sample}_${Condition}_reformatted.tsv" into msstats_file
+    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_reformatted.csv") into msstats_file
 
    script:
     """
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}_reformatted.tsv"
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}_reformatted.csv"
     """
 }
 
 
 /*
- * STEP 12 - Generate plots describing output
+ * STEP 12 - Run MSstats
+ */
+process run_msstats {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
+
+   output:
+    file "*.pdf"
+    file "*.csv"
+    file "*.log"
+
+   script:
+    """
+     msstats.R ${csv} > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+    """
+}
+
+
+/*
+ * STEP 13 - Generate plots describing output
  */
 process generate_output_plots {
    publishDir "${params.outdir}/"
