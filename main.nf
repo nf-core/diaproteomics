@@ -601,7 +601,7 @@ process run_fdr_scoring {
      set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
 
     output:
-     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into (merged_osw_scored, merged_osw_scored_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into merged_osw_scored_for_pyprophet
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -638,7 +638,7 @@ process run_global_fdr_scoring {
      set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into (merged_osw_scored_global, merged_osw_scored_global_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -684,6 +684,7 @@ process export_pyprophet_results {
 
     output:
      set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
+     set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
 
     script:
      """
@@ -716,14 +717,12 @@ process index_chromatograms {
 
 
 // Combine osw files and chromatograms by experimental design condition
-merged_osw_scored
- .mix(merged_osw_scored_global)
+osw_for_dialignr
  .transpose()
- .join(chromatogram_files_indexed, by:[1,2])
- .groupTuple(by:[0,1])
- .flatMap{it -> [tuple(it[0],it[1],it[2],it[3].unique()[0],it[4],it[5])]}
+ .join(chromatogram_files_indexed, by:1)
+ .groupTuple(by:0)
+ .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
  .set{osw_and_chromatograms_combined_by_condition}
-
 
 /*
  * STEP 10 - Align DIA Chromatograms using DIAlignR
@@ -732,10 +731,10 @@ process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(Condition), val(id), file(pyresults), val(id_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
+     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
+     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
 
     script:
      """
@@ -746,7 +745,7 @@ process align_dia_runs {
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
 
-     mv DIAlignR.csv ${Sample}_${Condition}_peptide_quantities.csv
+     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
      """
 }
 

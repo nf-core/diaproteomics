@@ -12,6 +12,7 @@ if (length(df_list)<1) {
 if (length(df_list)<=2) {
   # contrasts
   args[3] = "pairwise"
+  args[4] = ""
 }
 if (length(df_list)<=3) {
   # default control condition
@@ -24,11 +25,12 @@ if (length(df_list)<=4) {
 
 df <- read.csv(paste0("./",df_list[1]), sep=',')
 print(df_list[1])
-
-for (df_name in df_list[2:2]) {
-  print(df_name)
-  df_add <- read.csv(paste0("./",df_name), sep=',')
-  df <- rbind(df, df_add)
+if (length(df_list)>1){
+  for (df_name in df_list[2:2]) {
+    print(df_name)
+    df_add <- read.csv(paste0("./",df_name), sep=',')
+    df <- rbind(df, df_add)
+  }
 }
 
 csv_input <- df
@@ -54,7 +56,7 @@ quant <- OpenMStoMSstatsFormat(data,
 
 # process data
 print('process data')
-processed.quant <- dataProcess(quant, censoredInt = 'NA')
+processed.quant <- dataProcess(quant, censoredInt = 'NA', featureSubset='highQuality')
 
 lvls <- levels(as.factor(data$Condition))
 if (length(lvls) == 1)
@@ -124,7 +126,7 @@ if (length(lvls) == 1)
   
   test.MSstats$Volcano = test.MSstats$ComparisonResult[!is.na(test.MSstats$ComparisonResult$pvalue),]
   groupComparisonPlots(data=test.MSstats$Volcano, type="VolcanoPlot",
-                       width=12, height=12,dot.size = 2)
+                       width=12, height=12,dot.size = 2,ProteinName=FALSE)
 
   # Otherwise it fails since the behaviour is undefined
   if (nrow(contrast_mat) > 1)
