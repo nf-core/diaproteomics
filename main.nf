@@ -59,6 +59,7 @@ def helpMessage() {
       --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
+      --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
 
     Other options:
@@ -764,6 +765,9 @@ process prepare_for_msstats {
    output:
     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_reformatted.csv") into msstats_file
 
+   when:
+    params.generate_plots & (params.pyprophet_global_fdr_level!='protein')
+
    script:
     """
      TargetedFileConverter -in ${lib_file} \\
@@ -788,6 +792,9 @@ process run_msstats {
     file "*.csv"
     file "*.log"
 
+   when:
+    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
+
    script:
     """
      msstats.R ${csv} > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
@@ -806,6 +813,9 @@ process generate_output_plots {
 
    output:
     file "*.pdf" into output_plots
+
+   when:
+    params.generate_plots
 
    script:
     """
