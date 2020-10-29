@@ -766,7 +766,7 @@ process prepare_for_msstats {
     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_reformatted.csv") into msstats_file
 
    when:
-    params.generate_plots & (params.pyprophet_global_fdr_level!='protein')
+    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
 
    script:
     """
