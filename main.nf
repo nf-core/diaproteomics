@@ -161,7 +161,15 @@ if( params.generate_spectral_library) {
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
-        .set {input_dda}
+        .into {input_dda;input_check;input_check_samples}
+
+    check_n = input_check.toList().size().val
+    check_n_sample = input_check_samples.map{it[1]}.unique().toList().size().val
+    if ((check_n > 1) & (check_n != check_n_sample) & (!params.merge_libraries)) {
+        print('You specified multiple DDA files to generate spectral libraries, but library merging is not set \n')
+        print('Set --merge_libraries and possibly --align_libraries to align them in the same RT space \n')
+        exit 1
+    }
 
     input_dda.branch {
         raw: hasExtension(it[2], 'raw')
