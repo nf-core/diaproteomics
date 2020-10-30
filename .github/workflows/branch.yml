@@ -4,7 +4,7 @@ name: nf-core branch protection
 on:
   pull_request:
     branches: 
-    -master
+    - master
 
 jobs:
   test:
