@@ -67,5 +67,5 @@ for (df_name in df_list)
   pivot[is.na(pivot)] <- 0
 
   pdf(gsub(df_name,pattern = '.csv', replacement = '.pdf'))
-  heatmap.2(data.matrix(pivot), xlab = "MS runs", ylab = "Peptides", labRow = FALSE, cexCol=0.3, srtCol=45, trace="none", key.title = 'Intensity range', col = colorRampPalette(c("darkblue","white","darkred"))(100), margins=c(5,8))
+  heatmap.2(data.matrix(pivot), xlab = "MS runs", ylab = "Peptides", labRow = FALSE, cexCol=0.15, srtCol=45, trace="none", key.title = 'Intensity range', col = colorRampPalette(c("darkblue","white","darkred"))(100), margins=c(5,8))
   dev.off()

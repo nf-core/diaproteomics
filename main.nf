@@ -611,6 +611,7 @@ process run_fdr_scoring {
 
     output:
      set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into merged_osw_scored_for_pyprophet
+     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_score_plots
 
     when:
      params.pyprophet_global_fdr_level==''
@@ -648,6 +649,7 @@ process run_global_fdr_scoring {
 
     output:
      set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
+     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
 
     when:
      params.pyprophet_global_fdr_level!=''
@@ -818,6 +820,7 @@ process generate_output_plots {
 
    input:
     set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
+    set val(Sample_p), val(id_p), val(Condition_p), file(plots) from target_decoy_score_plots.mix(target_decoy_global_score_plots).groupTuple(by:1)
 
    output:
     file "*.pdf" into output_plots
