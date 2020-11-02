@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+
+
+"""
+reformat_output_for_msstats.py: 
+Reformat the peptide quantity output of the DIAlignR chromatogram alignment to pass it onto msstats
+"""
+
+__author__      = "Leon Bichmann"
+
 import argparse
 import pandas as pd
 

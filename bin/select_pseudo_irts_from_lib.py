@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+
+
+"""
+select_pseudo_irts_from_lib.py: 
+This script selects and exports a specified number of high-intensity peptides spanning 
+the entire RT range to serve as iRT standards for the RT alignment between library and DIA MS run.
+"""
+
+__author__      = "Leon Bichmann"
+
+
 from __future__ import print_function
 import sys
 import scipy
@@ -10,9 +21,12 @@ import glob
 import argparse
 
 
+# Select iRT standards based on the library intensity spanning the RT range
 def get_pseudo_irts(lib, n_irts, min_rt, max_rt):
+
     # select irts based on dda Intensity
     df_pre = pd.read_csv(lib, sep='\t')
+    # sum up individual transition intensities
     df_sum = df_pre.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['LibraryIntensity'].apply(sum).reset_index()
     df_merged = df_pre.merge(df_sum, on=['ModifiedPeptideSequence', 'PrecursorCharge'])[['ModifiedPeptideSequence', 'NormalizedRetentionTime', 'LibraryIntensity_y']]
 

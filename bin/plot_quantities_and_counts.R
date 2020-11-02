@@ -14,7 +14,6 @@ Sample <- args[6]
 
 # plot library RT deviation
 df_list = list.files(path = "./", pattern = "*.mzML.tsv")
-print(Sample)
 df <- read.csv(paste0("./",df_list[1]), sep='\t')
 
 for (df_name in df_list[2:2])
@@ -55,7 +54,6 @@ dev.off()
 df_list = list.files(path = "./", pattern = "*quantities.csv")
 
 for (df_name in df_list)
-  print(df_name)
   df <- read.csv(paste0("./",df_name), sep=',')
 
   df$intensity <- log10(df$intensity)

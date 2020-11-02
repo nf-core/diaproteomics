@@ -321,7 +321,7 @@ process get_software_versions {
 
 
 /*
- * STEP -1 - Raw File Conversion
+ * STEP 0 - Raw File Conversion
  */
 process convert_raw_dda_input_files {
     input:
@@ -338,7 +338,7 @@ process convert_raw_dda_input_files {
 
 
 /*
- * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
+ * STEP 1 - Convert IDs for Spectral Library Generation using EasyPQP
  */
 process convert_ids_from_dda_id {
 
@@ -360,7 +360,7 @@ process convert_ids_from_dda_id {
 
 
 /*
- * STEP 1 - Spectral Library Generation using EasyPQP
+ * STEP 2 - Spectral Library Generation using EasyPQP
  */
 process generate_spectral_library {
 
@@ -392,7 +392,7 @@ process generate_spectral_library {
 
 
 /*
- * STEP 1.25 - Assay Generation for Spectral Library
+ * STEP 3 - Assay Generation for Spectral Library
  */
 process generate_assay_of_spectral_library {
 
@@ -425,7 +425,7 @@ if(params.merge_libraries) {
 
 
 /*
- * STEP 1.5 - Merge and align spectral Libraries
+ * STEP 4 - Merge and align spectral Libraries
  */
 process merge_and_align_spectral_libraries {
     publishDir "${params.outdir}/"
@@ -447,7 +447,7 @@ process merge_and_align_spectral_libraries {
 
 
 /*
- * STEP 1.75 - Pseudo iRT Library Generation
+ * STEP 5 - Pseudo iRT Library Generation
  */
 process generate_pseudo_irt_library {
     publishDir "${params.outdir}/"
@@ -472,7 +472,7 @@ process generate_pseudo_irt_library {
 
 
 /*
- * STEP 2 - Decoy Generation for Spectral Library
+ * STEP 6 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
@@ -499,7 +499,7 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 3 - Raw File Conversion
+ * STEP 7 - Raw File Conversion
  */
 process convert_raw_dia_input_files {
 
@@ -517,7 +517,7 @@ process convert_raw_dia_input_files {
 
 
 /*
- * STEP 4 - OpenSwathWorkFlow
+ * STEP 8 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
@@ -580,12 +580,12 @@ process run_openswathworkflow {
 
 
 /*
- * STEP 5 - Pyprophet merging of OpenSwath results
+ * STEP 9 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
 
     input:
-     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1) //input_lib_decoy_1.mix(input_lib_1.mix(input_lib_nd_1)),by:1)
+     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
      set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
@@ -601,7 +601,7 @@ process merge_openswath_output {
 
 
 /*
- * STEP 6 - Pyprophet FDR Scoring
+ * STEP 10 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -639,7 +639,7 @@ process run_fdr_scoring {
 
 
 /*
- * STEP 7 - Pyprophet global FDR Scoring
+ * STEP 11 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -685,7 +685,7 @@ process run_global_fdr_scoring {
 
 
 /*
- * STEP 8 - Pyprophet Export
+ * STEP 12 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
@@ -709,7 +709,7 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 9 - Index Chromatogram mzMLs
+ * STEP 13 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
 
@@ -727,11 +727,13 @@ process index_chromatograms {
 }
 
 
-// Combine osw files and chromatograms by experimental design condition
+// Combine channels of osw files and osw chromatograms
 osw_for_dialignr
  .transpose()
  .join(chromatogram_files_indexed, by:1)
  .groupTuple(by:0)
+ // Channel contains now the following elements:
+ // ([id, [Samples], [Conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
  .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
  .set{osw_and_chromatograms_combined_by_condition}
 
@@ -762,7 +764,7 @@ process align_dia_runs {
 
 
 /*
- * STEP 11 - Reformat output for MSstats
+ * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process prepare_for_msstats {
    publishDir "${params.outdir}/"
@@ -798,9 +800,9 @@ process run_msstats {
     set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
 
    output:
-    file "*.pdf"
-    file "*.csv"
-    file "*.log"
+    file "*.pdf" // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
+    file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
+    file "*.log" // logfile of msstats run
 
    when:
     params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
@@ -813,7 +815,12 @@ process run_msstats {
 
 
 /*
- * STEP 13 - Generate plots describing output
+ * STEP 13 - Generate plots describing output:
+ * 1) BarChartProtein/Peptide Counts
+ * 2) Pie Chart: Peptide Charge distribution
+ * 3) Density Scatter: Library vs run RT deviations for all identifications
+ * 4) Heatmap: Peptide quantities across MS runs
+ * 5) Pyprophet score plots
  */
 process generate_output_plots {
    publishDir "${params.outdir}/"
@@ -830,7 +837,7 @@ process generate_output_plots {
 
    script:
     """
-    generic_plot_script.R ${Sample}
+    plot_quantities_and_counts.R ${Sample}
     """
 }
 
