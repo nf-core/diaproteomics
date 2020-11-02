@@ -1,15 +1,4 @@
 #!/usr/bin/env python
-
-
-"""
-select_pseudo_irts_from_lib.py: 
-This script selects and exports a specified number of high-intensity peptides spanning 
-the entire RT range to serve as iRT standards for the RT alignment between library and DIA MS run.
-"""
-
-__author__      = "Leon Bichmann"
-
-
 from __future__ import print_function
 import sys
 import scipy
@@ -19,6 +8,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 import argparse
+
+
+"""
+select_pseudo_irts_from_lib.py: 
+This script selects and exports a specified number of high-intensity peptides spanning 
+the entire RT range to serve as iRT standards for the RT alignment between library and DIA MS run.
+"""
+
+__author__      = "Leon Bichmann"
 
 
 # Select iRT standards based on the library intensity spanning the RT range

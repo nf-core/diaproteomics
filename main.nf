@@ -131,8 +131,8 @@ def hasExtension(it, extension) {
 
 input_branch.branch {
         raw: hasExtension(it[3], 'raw')
-        mzml: hasExtension(it[3], 'mzML')
-        mzxml: hasExtension(it[3], 'mzXML')
+        mzml: hasExtension(it[3], 'mzml')
+        mzxml: hasExtension(it[3], 'mzxml')
         other: true
 }.set{input_dia_ms_files}
 

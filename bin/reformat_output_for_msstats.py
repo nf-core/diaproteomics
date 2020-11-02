@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import argparse
+import pandas as pd
 
 
 """
@@ -8,8 +10,6 @@ Reformat the peptide quantity output of the DIAlignR chromatogram alignment to p
 
 __author__      = "Leon Bichmann"
 
-import argparse
-import pandas as pd
 
 def main():
     model = argparse.ArgumentParser(description='Reformat dialignR output for MSstats')

@@ -1,16 +1,4 @@
 #!/usr/bin/env python
-
-
-"""
-align_rts_from_easypqp.py: 
-This script takes multiple spectral libraries as input and can concacenate them into a single merged library.
-If specified a linear RT alignment is carried out between the libraries, in order to bring them in the same RT space.
-"""
-
-__author__      = "Leon Bichmann"
-
-
-
 from __future__ import print_function
 import sys
 import scipy
@@ -25,6 +13,16 @@ from itertools import combinations, product
 from scipy.interpolate import interp1d
 import argparse
 import logging
+
+
+"""
+align_rts_from_easypqp.py: 
+This script takes multiple spectral libraries as input and can concacenate them into a single merged library.
+If specified a linear RT alignment is carried out between the libraries, in order to bring them in the same RT space.
+"""
+
+__author__      = "Leon Bichmann"
+
 
 #logging setup
 console = logging.StreamHandler(sys.stdout)
@@ -90,7 +88,7 @@ def compute_MST(libs,min_overlap):
             G.add_node(file_comb[1])
 
         if len(overlap)>=min_overlap:
-            G.add_edges_from([(file_comb[0],file_comb[1],{'weight':float(10000)/len(overlap)})]) // the graph edge lengths are antiproportional to the peptide share
+            G.add_edges_from([(file_comb[0],file_comb[1],{'weight':float(10000)/len(overlap)})]) # the graph edge lengths are antiproportional to the peptide share
 
         # generate minimum spanning tree
         T = nx.minimum_spanning_tree(G)
