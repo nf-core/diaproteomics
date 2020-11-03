@@ -52,3 +52,7 @@ jobs:
         # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker
+
+      - name: Run pipeline with additional params (skip library generation)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_2,docker

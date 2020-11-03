@@ -175,7 +175,7 @@ if( params.generate_spectral_library) {
         raw: hasExtension(it[2], 'raw')
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
-        other: true
+        other: true 
     }.set{input_dda_ms_files}
 
     Channel
@@ -202,7 +202,13 @@ if( params.generate_spectral_library) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_dda_ms_files = Channel.empty()
+    input_dda = Channel.empty()
+    input_dda.branch {
+        raw: hasExtension(it[2], 'raw')
+        mzml: hasExtension(it[2], 'mzML')
+        mzxml: hasExtension(it[2], 'mzXML')
+        other: true
+    }.set{input_dda_ms_files}
     input_unimod = Channel.empty()
 
 } else {
@@ -218,7 +224,13 @@ if( params.generate_spectral_library) {
 
     input_lib_nd = Channel.empty()
     input_lib_nd_1 = Channel.empty()
-    input_dda_ms_files = Channel.empty()
+    input_dda = Channel.empty()
+    input_dda.branch {
+        raw: hasExtension(it[2], 'raw')
+        mzml: hasExtension(it[2], 'mzML')
+        mzxml: hasExtension(it[2], 'mzXML')
+        other: true
+    }.set{input_dda_ms_files}
     input_unimod = Channel.empty()
 }
 
@@ -329,6 +341,9 @@ process convert_raw_dda_input_files {
 
     output:
      set val(id), val(Sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
+
+    when:
+     params.generate_spectral_library
 
     script:
      """
