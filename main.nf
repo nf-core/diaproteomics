@@ -443,7 +443,7 @@ if(params.merge_libraries) {
  * STEP 4 - Merge and align spectral Libraries
  */
 process merge_and_align_spectral_libraries {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/spectral_library_files"
 
     input:
      set val(id), val(Sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
@@ -465,7 +465,7 @@ process merge_and_align_spectral_libraries {
  * STEP 5 - Pseudo iRT Library Generation
  */
 process generate_pseudo_irt_library {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/spectral_library_files"
 
     input:
      set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
@@ -490,7 +490,7 @@ process generate_pseudo_irt_library {
  * STEP 6 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/spectral_library_files"
 
     input:
      set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
@@ -535,7 +535,7 @@ process convert_raw_dia_input_files {
  * STEP 8 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/openswathworkflow_output"
 
     input:
      set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
@@ -619,7 +619,7 @@ process merge_openswath_output {
  * STEP 10 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/pyprophet_output"
 
     input:
      set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
@@ -657,7 +657,7 @@ process run_fdr_scoring {
  * STEP 11 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/pyprophet_output"
 
     input:
      set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
@@ -703,7 +703,7 @@ process run_global_fdr_scoring {
  * STEP 12 - Pyprophet Export
  */
 process export_pyprophet_results {
-    publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/pyprophet_output"
 
     input:
      set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_for_pyprophet.mix(merged_osw_scored_global_for_pyprophet)
@@ -782,7 +782,6 @@ process align_dia_runs {
  * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process prepare_for_msstats {
-   publishDir "${params.outdir}/"
 
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
