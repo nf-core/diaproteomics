@@ -531,5 +531,11 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-    ]
+    ],
+    "properties": {
+        "max_multiqc_email_size": {
+            "type": "string",
+            "default": "25 MB"
+        }
+    }
 }
