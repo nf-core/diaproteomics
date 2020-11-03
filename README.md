@@ -1,4 +1,4 @@
-# ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
+# ![nf-core/diaproteomics]
 
 **Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**
 
@@ -14,7 +14,7 @@
 
 nfcore/diaproteomics is a bioinformatics analysis pipeline used for quantitative processing of data independant (DIA) proteomics data.
 
-The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. Optionally, EasyPQP can be used for library generation and DIAlignR for chromatogram alignment and quantification.
+The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA RAW files (mzML) serve as inputs and library search is performed based on a given input spectral library. Optionally, EasyPQP can be used for library generation from matched DDA raw data and respective search results. If specified internal retention time standarts (irts) will be used to align library and DIA measurements into the same retention time space. FDR rescoring is applied using Pyprophet based on a competitive target-decoy approach on peakgroup or global peptide and protein level. In a last step DIAlignR for chromatogram alignment and quantification is carried out and a csv of peptide quantities, MSstats based protein statistics and several visualisations are exported.
 
 ![overview](assets/DIAproteomics_scheme.png)
 
@@ -35,7 +35,13 @@ The workflow is based on the OpenSwathWorkflow for SWATH-MS proteomic data. DIA 
 4. Start running your own analysis!
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv'
+    ```
+
+    OR optionally:
+
+    ```bash
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --generate_spectral_library --input_sheet_dda 'dda_sheet.tsv' --generate_pseudo_irts --merge_libraries --align_libraries
     ```
 
 See [usage docs](https://nf-co.re/diaproteomics/usage) for all of the available options when running the pipeline.
