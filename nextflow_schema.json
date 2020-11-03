@@ -63,6 +63,7 @@
             "properties": {
                 "generate_spectral_library": {
                     "type": "boolean",
+                    "default": "false",
                     "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "input_sheet_dda": {
@@ -118,10 +119,12 @@
             "properties": {
                 "merge_libraries": {
                     "type": "boolean",
+                    "default": "false",
                     "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
                 },
                 "align_libraries": {
                     "type": "boolean",
+                    "default": "false",
                     "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
                 },
                 "min_overlap_for_merging": {
@@ -139,6 +142,7 @@
             "properties": {
                 "generate_pseudo_irts": {
                     "type": "boolean",
+                    "default": "false",
                     "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "n_irts": {
@@ -198,6 +202,7 @@
                 },
                 "force_option": {
                     "type": "boolean",
+                    "default": "false",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
                 }
             }
