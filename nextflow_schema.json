@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
+    "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/diaproteomics/master/nextflow_schema.json",
     "title": "nf-core/diaproteomics pipeline parameters",
     "description": "Automated quantitative analysis of DIA proteomics mass spectrometry measurements.",
@@ -372,7 +372,7 @@
                         "link",
                         "copy",
                         "copyNoFollow",
-                        "mov"
+                        "move"
                     ]
                 },
                 "name": {
