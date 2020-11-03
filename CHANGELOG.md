@@ -3,6 +3,15 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0dev - [30.10.20]
+
+### `Added`
+
+Added full size test profile
+RawFile parsing for DDA input
+MSstats and general output plots
+Error message when using multiple spectral libraries but no merging
+
 ## v1.0dev - [15.09.20]
 
 ### `Added`

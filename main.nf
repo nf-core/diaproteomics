@@ -17,11 +17,10 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' --swath_windows 'swath_windows.txt' -profile standard,docker
+    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' -profile standard,docker
 
     Mandatory arguments:
-      --input                           Path to input DIA raw/mzML data sheet (must be surrounded with quotes)
-      --swath_windows                   Path to swath_windows.txt file, containing swath window mz ranges
+      --input                           Path to input DIA raw/mzML/mzXML data sheet (must be surrounded with quotes)
       -profile                          Configuration profile to use. Can use multiple (comma separated)
                                         Available: standard, conda, docker, singularity, awsbatch, test
     DIA Mass Spectrometry Search:
@@ -33,6 +32,7 @@ def helpMessage() {
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
       --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
       --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
@@ -59,7 +59,7 @@ def helpMessage() {
       --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
-      --prec_charge                     Precursor charge (eg. "2:3")
+      --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
 
     Other options:
@@ -109,10 +109,11 @@ if (workflow.profile.contains('awsbatch')) {
 // Stage config files
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
-
-// Validate inputs
 sample_sheet = file(params.input)
-params.swath_windows = params.swath_windows ?: { log.error "No swath windows provided. Make sure you have used the '--swath_windows' option."; exit 1 }()
+Channel
+ .from( sample_sheet )
+ .set { input_exp_design}
+
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
@@ -130,17 +131,23 @@ def hasExtension(it, extension) {
 
 input_branch.branch {
         raw: hasExtension(it[3], 'raw')
-        mzml: hasExtension(it[3], 'mzML')
+        mzml: hasExtension(it[3], 'mzml')
+        mzxml: hasExtension(it[3], 'mzxml')
         other: true
-}.set{input_ms_files}
+}.set{input_dia_ms_files}
 
-input_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
+input_dia_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
 
 
-Channel.fromPath( params.swath_windows)
-        .ifEmpty { exit 1, "Cannot find any swath_windows matching: ${params.swath_windows}\nNB: Path needs to be enclosed in quotes!" }
-        .into { input_swath_windows; input_swath_windows_assay }
+// Validate inputs
+sample_sheet = file(params.input)
 
+
+if( params.align_libraries) {
+    align_libraries = 'true'
+} else {
+    align_libraries = 'false'
+}
 
 /*
  * Create a channel for input spectral library
@@ -154,7 +161,22 @@ if( params.generate_spectral_library) {
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
-        .set {input_dda}
+        .into {input_dda;input_check;input_check_samples}
+
+    check_n = input_check.toList().size().val
+    check_n_sample = input_check_samples.map{it[1]}.unique().toList().size().val
+    if ((check_n > 1) & (check_n != check_n_sample) & (!params.merge_libraries)) {
+        print('You specified multiple DDA files to generate spectral libraries, but library merging is not set \n')
+        print('Set --merge_libraries and possibly --align_libraries to align them in the same RT space \n')
+        exit 1
+    }
+
+    input_dda.branch {
+        raw: hasExtension(it[2], 'raw')
+        mzml: hasExtension(it[2], 'mzML')
+        mzxml: hasExtension(it[2], 'mzXML')
+        other: true
+    }.set{input_dda_ms_files}
 
     Channel
         .fromPath( params.unimod )
@@ -164,9 +186,10 @@ if( params.generate_spectral_library) {
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
     input_lib_nd = Channel.empty()
+    input_lib_nd_1 = Channel.empty()
     params.input_spectral_library = "generate spectral library from DDA data"
 
-} else if( !params.skip_decoy_generation) {
+} else if( params.skip_decoy_generation) {
 
     // Spectral library input
     library_sheet = file(params.input_spectral_library)
@@ -179,7 +202,7 @@ if( params.generate_spectral_library) {
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
-    input_dda = Channel.empty()
+    input_dda_ms_files = Channel.empty()
     input_unimod = Channel.empty()
 
 } else {
@@ -194,7 +217,8 @@ if( params.generate_spectral_library) {
         .into {input_lib; input_lib_1 }
 
     input_lib_nd = Channel.empty()
-    input_dda = Channel.empty()
+    input_lib_nd_1 = Channel.empty()
+    input_dda_ms_files = Channel.empty()
     input_unimod = Channel.empty()
 }
 
@@ -297,13 +321,29 @@ process get_software_versions {
 
 
 /*
- * STEP 0 - Convert IDs for Spectral Library Generation using EasyPQP
+ * STEP 0 - Raw File Conversion
+ */
+process convert_raw_dda_input_files {
+    input:
+     set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
+
+    output:
+     set val(id), val(Sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
+
+    script:
+     """
+     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+     """
+}
+
+
+/*
+ * STEP 1 - Convert IDs for Spectral Library Generation using EasyPQP
  */
 process convert_ids_from_dda_id {
-    publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda
+     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
 
     output:
      set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
@@ -320,10 +360,9 @@ process convert_ids_from_dda_id {
 
 
 /*
- * STEP 1 - Spectral Library Generation using EasyPQP
+ * STEP 2 - Spectral Library Generation using EasyPQP
  */
 process generate_spectral_library {
-    publishDir "${params.outdir}/"
 
     input:
      set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
@@ -353,14 +392,12 @@ process generate_spectral_library {
 
 
 /*
- * STEP 1.25 - Assay Generation for Spectral Library
+ * STEP 3 - Assay Generation for Spectral Library
  */
 process generate_assay_of_spectral_library {
-    publishDir "${params.outdir}/"
 
     input:
-     set val(id), val(Sample), file(lib_file_na) from input_lib_nd.mix(input_lib_dda_nd)
-     file swath_file from input_swath_windows_assay.first()
+     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
 
     output:
      set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
@@ -374,7 +411,8 @@ process generate_assay_of_spectral_library {
                            -out ${lib_file_na.baseName}.tsv
 
      OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
-                             -swath_windows_file ${swath_file} \\
+                             -min_transitions ${params.min_transitions} \\
+                             -max_transitions ${params.max_transitions} \\
                              -out ${id}_${Sample}_assay.tsv \\
      """
 }
@@ -387,7 +425,7 @@ if(params.merge_libraries) {
 
 
 /*
- * STEP 1.5 - Merge and align spectral Libraries
+ * STEP 4 - Merge and align spectral Libraries
  */
 process merge_and_align_spectral_libraries {
     publishDir "${params.outdir}/"
@@ -403,13 +441,13 @@ process merge_and_align_spectral_libraries {
 
     script:
      """
-     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --output ${Sample}_library_merged.tsv
+     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
      """
 }
 
 
 /*
- * STEP 1.75 - Pseudo iRT Library Generation
+ * STEP 5 - Pseudo iRT Library Generation
  */
 process generate_pseudo_irt_library {
     publishDir "${params.outdir}/"
@@ -434,7 +472,7 @@ process generate_pseudo_irt_library {
 
 
 /*
- * STEP 2 - Decoy Generation for Spectral Library
+ * STEP 6 - Decoy Generation for Spectral Library
  */
 process generate_decoys_for_spectral_library {
     publishDir "${params.outdir}/"
@@ -461,14 +499,15 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 3 - Raw File Conversion
+ * STEP 7 - Raw File Conversion
  */
-process convert_raw_input_files {
+process convert_raw_dia_input_files {
+
     input:
-     set val(id), val(Sample), val(Condition), file(raw_file) from input_ms_files.raw
+     set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
 
     output:
-     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_input_mzmls
+     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
 
     script:
      """
@@ -478,24 +517,29 @@ process convert_raw_input_files {
 
 
 /*
- * STEP 4 - OpenSwathWorkFlow
+ * STEP 8 - OpenSwathWorkFlow
  */
 process run_openswathworkflow {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_input_mzmls.mix(input_ms_files.mzml).combine(input_lib_decoy.mix(input_lib), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
-     file swath_file from input_swath_windows.first()
+     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
 
     output:
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
+     set val(id), val(Sample), file(lib_file) into (input_lib_used, input_lib_used_I)
 
     script:
      """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.pqp \\
+
+     TargetedFileConverter -in ${irt_file} \\
+                           -out ${irt_file.baseName}.pqp \\
+
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file} \\
-                       -swath_windows_file ${swath_file} \\
                        -sort_swath_maps \\
                        -tr_irt ${irt_file} \\
                        -min_rsq ${params.irt_min_rsq} \\
@@ -530,19 +574,18 @@ process run_openswathworkflow {
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\                       
+                       ${force_option} \\  
      """
 }
 
 
 /*
- * STEP 5 - Pyprophet merging of OpenSwath results
+ * STEP 9 - Pyprophet merging of OpenSwath results
  */
 process merge_openswath_output {
-    publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_decoy_1.mix(input_lib_1),by:1)
+     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
      set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
@@ -551,13 +594,14 @@ process merge_openswath_output {
      """
      pyprophet merge --template=${lib_file_template} \\
                      --out=${Sample}_osw_file_merged.osw \\
+                     --no-same_run \\
                      ${all_osws} \\
      """
 }
 
 
 /*
- * STEP 6 - Pyprophet FDR Scoring
+ * STEP 10 - Pyprophet FDR Scoring
  */
 process run_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -566,12 +610,14 @@ process run_fdr_scoring {
      set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
 
     output:
-     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into (merged_osw_scored, merged_osw_scored_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into merged_osw_scored_for_pyprophet
+     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_score_plots
 
     when:
      params.pyprophet_global_fdr_level==''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
      """
      pyprophet score --in=${merged_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -580,11 +626,20 @@ process run_fdr_scoring {
                      --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
      """
+    } else {
+     """
+     pyprophet score --in=${merged_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${merged_osw.baseName}_scored_merged.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+     """
+    }
 }
 
 
 /*
- * STEP 7 - Pyprophet global FDR Scoring
+ * STEP 11 - Pyprophet global FDR Scoring
  */
 process run_global_fdr_scoring {
     publishDir "${params.outdir}/"
@@ -593,12 +648,14 @@ process run_global_fdr_scoring {
      set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into (merged_osw_scored_global, merged_osw_scored_global_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
+     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
 
     when:
      params.pyprophet_global_fdr_level!=''
 
     script:
+    if (params.pyprophet_classifier=='LDA'){
      """
      pyprophet score --in=${scored_osw} \\
                      --level=${params.pyprophet_fdr_ms_level} \\
@@ -611,11 +668,24 @@ process run_global_fdr_scoring {
                                                     --out=${scored_osw.baseName}_global_merged.osw \\
                                                     --context=global \\
      """
+    } else {
+     """
+     pyprophet score --in=${scored_osw} \\
+                     --level=${params.pyprophet_fdr_ms_level} \\
+                     --out=${scored_osw.baseName}_scored.osw \\
+                     --classifier=${params.pyprophet_classifier} \\
+                     --threads=${task.cpus} \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
+                                                    --out=${scored_osw.baseName}_global_merged.osw \\
+                                                    --context=global \\
+     """
+    }
 }
 
 
 /*
- * STEP 8 - Pyprophet Export
+ * STEP 12 - Pyprophet Export
  */
 process export_pyprophet_results {
     publishDir "${params.outdir}/"
@@ -625,6 +695,7 @@ process export_pyprophet_results {
 
     output:
      set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
+     set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
 
     script:
      """
@@ -638,10 +709,9 @@ process export_pyprophet_results {
 
 
 /*
- * STEP 9 - Index Chromatogram mzMLs
+ * STEP 13 - Index Chromatogram mzMLs
  */
 process index_chromatograms {
-    publishDir "${params.outdir}/"
 
     input:
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
@@ -657,6 +727,16 @@ process index_chromatograms {
 }
 
 
+// Combine channels of osw files and osw chromatograms
+osw_for_dialignr
+ .transpose()
+ .join(chromatogram_files_indexed, by:1)
+ .groupTuple(by:0)
+ // Channel contains now the following elements:
+ // ([id, [Samples], [Conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
+ .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
+ .set{osw_and_chromatograms_combined_by_condition}
+
 /*
  * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
@@ -664,10 +744,10 @@ process align_dia_runs {
     publishDir "${params.outdir}/"
 
     input:
-     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(Condition_dummy), file(chrom_files_index) from merged_osw_scored.mix(merged_osw_scored_global).join(chromatogram_files_indexed.groupTuple(by:1), by:1)
+     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into DIALignR_result
+     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
 
     script:
      """
@@ -682,6 +762,84 @@ process align_dia_runs {
      """
 }
 
+
+/*
+ * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
+ */
+process prepare_for_msstats {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
+    file exp_design from input_exp_design.first()
+    set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
+
+   output:
+    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_reformatted.csv") into msstats_file
+
+   when:
+    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
+
+   script:
+    """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.tsv
+
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}_reformatted.csv"
+    """
+}
+
+
+/*
+ * STEP 12 - Run MSstats
+ */
+process run_msstats {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
+
+   output:
+    file "*.pdf" // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
+    file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
+    file "*.log" // logfile of msstats run
+
+   when:
+    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
+
+   script:
+    """
+     msstats.R ${csv} > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+    """
+}
+
+
+/*
+ * STEP 13 - Generate plots describing output:
+ * 1) BarChartProtein/Peptide Counts
+ * 2) Pie Chart: Peptide Charge distribution
+ * 3) Density Scatter: Library vs run RT deviations for all identifications
+ * 4) Heatmap: Peptide quantities across MS runs
+ * 5) Pyprophet score plots
+ */
+process generate_output_plots {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
+    set val(Sample_p), val(id_p), val(Condition_p), file(plots) from target_decoy_score_plots.mix(target_decoy_global_score_plots).groupTuple(by:1)
+
+   output:
+    file "*.pdf" into output_plots
+
+   when:
+    params.generate_plots
+
+   script:
+    """
+    plot_quantities_and_counts.R ${Sample}
+    """
+}
 
 /*
  * Output Description HTML

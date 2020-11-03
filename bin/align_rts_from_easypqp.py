@@ -14,6 +14,16 @@ from scipy.interpolate import interp1d
 import argparse
 import logging
 
+
+"""
+align_rts_from_easypqp.py: 
+This script takes multiple spectral libraries as input and can concacenate them into a single merged library.
+If specified a linear RT alignment is carried out between the libraries, in order to bring them in the same RT space.
+"""
+
+__author__      = "Leon Bichmann"
+
+
 #logging setup
 console = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -22,8 +32,9 @@ LOG = logging.getLogger("Align RT of spectral libraries")
 LOG.addHandler(console)
 LOG.setLevel(logging.INFO)
 
-
+# Linear retention time alignment between two libraries (reference and other)
 def align_libs(reference, other, rsq_threshold):
+
     # read first library, groupby modified sequence and charge and store RTs
     df = reference
     df_rt = df.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['NormalizedRetentionTime'].apply(
@@ -44,6 +55,7 @@ def align_libs(reference, other, rsq_threshold):
     (a, b) = (slope, intercept)
     rsq = r_value ** 2
 
+    # raise an error if the alignment is below a specified rsq threshold
     if rsq < rsq_threshold:
         raise Exception("Error: R-squared " + str(rsq) + " is below the threshold of " + str(rsq_threshold) + ".")
 
@@ -56,10 +68,12 @@ def align_libs(reference, other, rsq_threshold):
     return df_II
 
 
+# Compute a minimum spanning tree (MST) across multiple libraries based on their shared peptide overlap
 def compute_MST(libs,min_overlap):
     file_combs = combinations(libs, 2)
     G=nx.Graph()
 
+    #compute peptide shares across all libraries
     for file_comb in file_combs:
 
         lib_I=pd.read_csv(file_comb[0], sep='\t') #.split('/')[-1].split('_Class')[0][3:]
@@ -67,21 +81,24 @@ def compute_MST(libs,min_overlap):
 
         overlap = list(set(lib_I['ModifiedPeptideSequence'].values.tolist()) & set(lib_II['ModifiedPeptideSequence'].values.tolist()))
 
+        # store them as connected graph, if the share is greater than a specified threshold
         if file_comb[0] not in G.nodes():
             G.add_node(file_comb[0])
         if file_comb[1] not in G.nodes():
             G.add_node(file_comb[1])
 
         if len(overlap)>=min_overlap:
-            G.add_edges_from([(file_comb[0],file_comb[1],{'weight':float(10000)/len(overlap)})])
+            G.add_edges_from([(file_comb[0],file_comb[1],{'weight':float(10000)/len(overlap)})]) # the graph edge lengths are antiproportional to the peptide share
 
         # generate minimum spanning tree
         T = nx.minimum_spanning_tree(G)
 
     return T
 
-### TODO: Finish
+# Carry out a pairwise RT alignment and concatenate multiple libraries along the edges of the computed minimum spanning tree of peptide share.
 def combine_libs_by_edges_of_MST(T, rsq_threshold):
+
+    #define the center of the MST as source_file
     source_file = nx.center(T)[0]
 
     #collect shortest paths from center to all nodes in MST
@@ -94,6 +111,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
     short_paths.sort(key=len)
 
     #align all libraries to source file along shortest paths of MST
+    #start with all paths of length 2
     print('>>> align libraries')
     outfiles = {}
     for path in [p for p in short_paths if len(p) == 2]:
@@ -101,7 +119,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         reference = pd.read_csv(path[0], sep='\t')
         other = pd.read_csv(path[1], sep='\t')
 
-        cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c]
+        cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
         aligned = align_libs(reference, other, rsq_threshold)
         concat = pd.concat([reference,aligned])
         regrouped = concat.iloc[concat[cols].drop_duplicates().index]
@@ -110,6 +128,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         regrouped.to_csv(outfile, index=False, sep='\t')
         outfiles[''.join(path)] = outfile
 
+    #continue with all paths of length longer two
     for path in [p for p in short_paths if len(p) > 2]:
         print(path)
         reference = pd.read_csv(outfiles[''.join(path[:len(path) - 1])], sep='\t')
@@ -130,8 +149,34 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         outfile_list.append(df_out)
 
     concat = pd.concat(outfile_list)
+    concat = concat.drop('TransitionId',axis='columns')
     regrouped = concat.iloc[concat[cols].drop_duplicates().index]
     combined_lib = regrouped.drop_duplicates()
+
+    #assign new transition ids
+    combined_lib['TransitionId']=range(0,combined_lib.shape[0])
+
+    return combined_lib
+
+
+# concatenate libraries without carriying out an RT alignment between them (already aligned or no overlap)
+def concatenate_without_alignment(files):
+    reference = pd.read_csv(files[0], sep='\t')
+
+    for other in files[1:]:
+       other_df = pd.read_csv(other, sep='\t')
+
+       cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
+       concat = pd.concat([reference,other_df])
+       regrouped = concat.iloc[concat[cols].drop_duplicates().index]
+
+       reference = regrouped
+
+    combined_lib = regrouped.drop_duplicates()
+    combined_lib['TransitionId']=range(0,combined_lib.shape[0])
+
+    outfile = './' + files[0].split('/')[-1].split('.tsv')[0] + '_concatenated_lib.tsv'
+    combined_lib.to_csv(outfile, index=False, sep='\t')
 
     return combined_lib
 
@@ -160,6 +205,12 @@ def main():
     )
 
     model.add_argument(
+        '-a', '--align',
+        type=str,
+        help='Whether an alignment should be carried out or just the merging of multiple libraries'
+    )
+
+    model.add_argument(
         '-t', '--rsq_threshold',
         type=float,
         help='rsq threshold for alignment'
@@ -176,14 +227,19 @@ def main():
     libs=args.input_libraries
     rsq_threshold=args.rsq_threshold
     min_overlap=args.min_overlap
+    align=args.align
 
-    if len(libs)>1:
-       MST=compute_MST(libs, min_overlap)
+    if align=='true':
+       if len(libs)>1:
+          MST=compute_MST(libs, min_overlap)
 
-       combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
+          combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
+
+       else:
+          combined_lib=pd.read_csv(libs[0], sep='\t')
 
     else:
-       combined_lib=pd.read_csv(libs[0], sep='\t')
+       combined_lib=concatenate_without_alignment(libs)
 
     #output transformed dataframe II
     if args.filter:
