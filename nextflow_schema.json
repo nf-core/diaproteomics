@@ -33,16 +33,18 @@
                     "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Fraction_Group      |   irt_Filepath                       |\n|------------:|------------------------------------------:|\n| Malignant |   data/Melanom_irt_library.tsv    |\n| Benign |   data/Benign_irt_library.tsv    |",
                     "fa_icon": "fas fa-book"
                 },
-                "swath_windows": {
-                    "type": "string",
-                    "description": "Path to swath_windows.txt file (tsv), containing swath window mz ranges",
-                    "fa_icon": "fab fa-windows"
-                },
                 "outdir": {
                     "type": "string",
                     "description": "The output directory where the results will be saved.",
                     "default": "./results",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "generate_plots": {
+                    "type": "boolean",
+                    "description": "Set this flag if output plots should be generated.",
+                    "help_text": "1) BarChartProtein/Peptide Counts\n2) Pie Chart: Peptide Charge distribution\n3) Density Scatter: Library vs run RT deviations for all identifications\n4) Heatmap: Peptide quantities across MS runs\n5) Pyprophet score plots\n\nIn addition MSstats will run and export comparative protein statistics plots such as Volcano plots if protein level is specified.",
+                    "fa_icon": "fas fa-images",
+                    "default": true
                 },
                 "email": {
                     "type": "string",
@@ -84,11 +86,6 @@
                     "default": 6,
                     "description": "Maximum number of transitions for assay"
                 },
-                "prec_charge": {
-                    "type": "string",
-                    "default": "2:3",
-                    "description": "Precursor charge"
-                },
                 "decoy_method": {
                     "type": "string",
                     "default": "shuffle",
@@ -122,6 +119,10 @@
                 "merge_libraries": {
                     "type": "boolean",
                     "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
+                },
+                "align_libraries": {
+                    "type": "boolean",
+                    "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
                 },
                 "min_overlap_for_merging": {
                     "type": "integer",
@@ -218,7 +219,7 @@
                 },
                 "pyprophet_fdr_ms_level": {
                     "type": "string",
-                    "default": "ms2",
+                    "default": "ms1ms2",
                     "description": "MS Level of pyprophet FDR calculation",
                     "enum": [
                         "ms1",
@@ -530,17 +531,5 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-    ],
-    "properties": {
-        "num_hits": {
-            "type": "integer",
-            "default": 1,
-            "hidden": true
-        },
-        "spectrum_batch_size": {
-            "type": "integer",
-            "default": 500,
-            "hidden": true
-        }
-    }
+    ]
 }
