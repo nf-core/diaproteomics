@@ -1,4 +1,4 @@
-# ![nf-core/diaproteomics]
+# ![nf-core/diaproteomics](docs/images/nf-core-diaproteomics_logo.png)
 
 **Automated quantitative analysis of DIA proteomics mass spectrometry measurements.**
 
