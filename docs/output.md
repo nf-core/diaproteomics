@@ -28,11 +28,11 @@ For detailed information about file formats and how they are in the various step
 Several csv tables are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
 
 * Output visualizations:
-  *  the number of peptide / protein identifications
-  *  the peptide charge distribution
-  *  the library and DIA measurement RT deviation
-  *  the comparative quantities across samples as heatmap
-  *  (+ if protein level MSstat was applied additional comparative volcano plots)
+  * the number of peptide / protein identifications
+  * the peptide charge distribution
+  * the library and DIA measurement RT deviation
+  * the comparative quantities across samples as heatmap
+  * (+ if protein level MSstat was applied additional comparative volcano plots)
 
 ## SpectralLibrary
 
