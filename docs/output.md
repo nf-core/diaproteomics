@@ -21,6 +21,8 @@ and processes data using the following steps:
 * [Pyprophet output files](#Pyprophet) - Output files of pyprophet (osw, tsv, pdf)
 * [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
+For detailed information about file formats and how they are in the various steps visit the detailed documentation of the [OpenSwathWorkflow](http://openswath.org/en/latest/docs/openswath.html).
+
 ## SummaryOutput
 
 Several csv tables are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
