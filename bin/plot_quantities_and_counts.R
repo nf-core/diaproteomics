@@ -45,7 +45,7 @@ data <- data.frame(
   Value=as.numeric(table(df$Charge))
 )
 
-pdf(paste0(Sample, '_Charge_stats.pdf'))
+pdf(paste0(Sample, '_charge_stats.pdf'))
 ggplot(data, aes(x="", y=Value, fill=Charge)) + geom_bar(stat="identity", width=1) + coord_polar("y", start=0) + theme_bw()
 dev.off()
 

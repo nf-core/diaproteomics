@@ -789,7 +789,7 @@ process prepare_for_msstats {
     set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
 
    output:
-    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}_reformatted.csv") into msstats_file
+    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
 
    when:
     params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
@@ -799,7 +799,7 @@ process prepare_for_msstats {
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}_reformatted.csv"
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}.csv"
     """
 }
 
@@ -841,7 +841,6 @@ process generate_output_plots {
 
    input:
     set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
-    set val(Sample_p), val(id_p), val(Condition_p), file(plots) from target_decoy_score_plots.mix(target_decoy_global_score_plots).groupTuple(by:1)
 
    output:
     file "*.pdf" into output_plots
