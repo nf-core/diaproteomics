@@ -71,7 +71,7 @@ jobs:
 
       - name: Run pipeline with additional params (no decoy generation)
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_without_decoys,docker
+          nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_with_decoys,docker
 
       - name: Run pipeline with additional params (skip library generation, but generate irts)
         run: |
