@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-usage <- "Rscript msstats_plfq.R input.csv [list of contrasts or 'pairwise'] [default control condition or ''] [output prefix]"
+usage <- "Rscript msstats.R input.csv [list of contrasts or 'pairwise'] [default control condition or ''] [output prefix]"
 
 df_list = list.files(path = "./", pattern = "*.csv")
 print(length(df_list))

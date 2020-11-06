@@ -37,8 +37,6 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt):
         except:
             pass
 
-    print(len(rt_sub_df))
-
     irts = list(set(rt_sub_df))
 
     df_sub = df_pre[(df_pre['ModifiedPeptideSequence'].isin(irts))]

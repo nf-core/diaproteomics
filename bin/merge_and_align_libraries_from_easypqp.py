@@ -16,7 +16,7 @@ import logging
 
 
 """
-align_rts_from_easypqp.py: 
+merge_and_align_libraries_from_easypqp.py:
 This script takes multiple spectral libraries as input and can concacenate them into a single merged library.
 If specified a linear RT alignment is carried out between the libraries, in order to bring them in the same RT space.
 """
@@ -99,7 +99,16 @@ def compute_MST(libs,min_overlap):
 def combine_libs_by_edges_of_MST(T, rsq_threshold):
 
     #define the center of the MST as source_file
-    source_file = nx.center(T)[0]
+    try:
+        source_file = nx.center(T)[0]
+
+    except:
+        print('It was not possible to align all libraries into the same RT space, since they don\'t share enough peptides between all runs!')
+        print('All libries must pairwise connect into a complete graph by shared peptides.')
+        print('There might be one outlier sample that has no overlap with the others or the samples are too distant.')
+        print('You can try lowering the parameter --overlap_for_merging, but be aware that this is the least number of peptides used for linear RT alignment!')
+        sys.exit()
+
 
     #collect shortest paths from center to all nodes in MST
     short_paths=[]
@@ -232,6 +241,8 @@ def main():
     if align=='true':
        if len(libs)>1:
           MST=compute_MST(libs, min_overlap)
+          nx.draw(MST, with_labels=True, node_size=1, font_size=5, alpha=0.4)
+          plt.savefig(args.output.replace('.tsv','.png'),dpi=(1000))
 
           combined_lib=combine_libs_by_edges_of_MST(MST, rsq_threshold)
 

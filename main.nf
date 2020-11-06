@@ -456,7 +456,7 @@ process merge_and_align_spectral_libraries {
 
     script:
      """
-     align_rts_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
+     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
      """
 }
 
@@ -496,7 +496,7 @@ process generate_decoys_for_spectral_library {
      set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
 
     output:
-     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into (input_lib_decoy, input_lib_decoy_1)
+     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into input_lib_decoy
 
     when:
      !params.skip_decoy_generation
