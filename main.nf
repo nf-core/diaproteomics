@@ -450,6 +450,7 @@ process merge_and_align_spectral_libraries {
 
     output:
      set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
+     set val(id), val(Sample), file("*.png") optional true 
 
     when:
      params.merge_libraries
