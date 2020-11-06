@@ -42,6 +42,7 @@ Several files summarizing the used spectral library are generated, depending on 
   * a tsv table listing all peptide precursors and their transitions used for the library
   * a pqp file storing the library in sqlite format including generated decoy transitions
   * a pqp file storing the iRT library in sqlite format
+  * if merging of multiple libraries and RT alignment was specified, the pairwise alignment graph is exported as pdf.
 
 ## OpenSwathWorkflow
 
