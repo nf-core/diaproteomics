@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
+This document describes the output produced by the pipeline.
 
 The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
 
@@ -42,10 +42,11 @@ Several files summarizing the used spectral library are generated, depending on 
   * a tsv table listing all peptide precursors and their transitions used for the library
   * a pqp file storing the library in sqlite format including generated decoy transitions
   * a pqp file storing the iRT library in sqlite format
+  * if merging of multiple libraries and RT alignment was specified, the pairwise alignment graph is exported as pdf.
 
 ## OpenSwathWorkflow
 
-For each provided DIA MS run the OpenSwathWorkflow output is reportet.
+For each provided DIA MS run the OpenSwathWorkflow output is reported.
 
 * OpenSwathWorkflow output:
   * osw files storing the scoring output in sqlite format
@@ -53,7 +54,7 @@ For each provided DIA MS run the OpenSwathWorkflow output is reportet.
 
 ## Pyprophet
 
-Several files summarizing the pyprophet local or global scoring results for each DIA MS run separately, aggregated in sqlite format and visulized as report.
+Several files summarizing the pyprophet local or global scoring results for each DIA MS run separately, aggregated in sqlite format and visualized as report.
 
 * PyprophetOutput
   * osw files storing the aggregated scoring output per sample

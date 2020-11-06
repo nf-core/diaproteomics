@@ -16,7 +16,7 @@
             "properties": {
                 "input": {
                     "type": "string",
-                    "fa_icon": "fas fa-dna",
+                    "fa_icon": "fa-vials",
                     "description": "Input sample sheet (raw / mzML)",
                     "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as SampleID and Fraction. For example:\n\n| Fraction_Group   | Sample      | Fraction  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
                     "default": "false"
@@ -30,7 +30,7 @@
                 "irts": {
                     "type": "string",
                     "description": "Path to internal retention time standard sample sheet (tsv, pqp, TraML)",
-                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Fraction_Group      |   irt_Filepath                       |\n|------------:|------------------------------------------:|\n| Malignant |   data/Melanom_irt_library.tsv    |\n| Benign |   data/Benign_irt_library.tsv    |",
+                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Fraction_Group      | Sample      |   irt_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_irt_library.tsv    |\n| 2    | Benign |   data/Benign_irt_library.tsv    |",
                     "fa_icon": "fas fa-book"
                 },
                 "outdir": {
@@ -99,7 +99,8 @@
                     ]
                 },
                 "skip_decoy_generation": {
-                    "type": "string",
+                    "type": "boolean",
+                    "default": "false",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
                 },
@@ -216,7 +217,7 @@
                 "pyprophet_classifier": {
                     "type": "string",
                     "default": "LDA",
-                    "description": "Machine learning lassifier used for pyprophet target / decoy separation",
+                    "description": "Machine learning classifier used for pyprophet target / decoy separation",
                     "enum": [
                         "LDA",
                         "XGBoost"
@@ -306,27 +307,27 @@
                 "DIAlignR_global_align_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR global Aligment FDR threshold"
+                    "description": "DIAlignR global alignment FDR threshold"
                 },
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR Analyte FDR threshold"
+                    "description": "DIAlignR analyte FDR threshold"
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR UnAligment FDR threshold"
+                    "description": "DIAlignR unalignment FDR threshold"
                 },
                 "DIAlignR_align_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR Aligment FDR threshold"
+                    "description": "DIAlignR alignment FDR threshold"
                 },
                 "DIAlignR_query_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR Query FDR threshold"
+                    "description": "DIAlignR query FDR threshold"
                 }
             }
         },
