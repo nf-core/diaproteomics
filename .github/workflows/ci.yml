@@ -55,4 +55,28 @@ jobs:
 
       - name: Run pipeline with additional params (skip library generation)
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test_2,docker
+          nextflow run ${GITHUB_WORKSPACE} -profile test_with_library,docker
+
+      - name: Run pipeline with additional params (global FDR)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_global_fdr,docker
+
+      - name: Run pipeline with additional params (generate library merge but no alignment)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_no_align,docker
+
+      - name: Run pipeline with additional params (generate library without merging)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_no_merge,docker
+
+      - name: Run pipeline with additional params (no decoy generation)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_with_decoys,docker
+
+      - name: Run pipeline with additional params (skip library generation, but generate irts)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_without_irts,docker
+
+      - name: Run pipeline with additional params (skip irt generation but generate library)
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test_without_library_with_irts,docker

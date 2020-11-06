@@ -237,6 +237,7 @@
                     "type": "string",
                     "description": "Abstraction level of pyrophet FDR calculation",
                     "enum": [
+                        "",
                         "peptide",
                         "protein"
                     ]
