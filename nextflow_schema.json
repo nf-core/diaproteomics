@@ -46,6 +46,12 @@
                     "fa_icon": "fas fa-images",
                     "default": true
                 },
+                "run_msstats": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-calculator",
+                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -171,6 +177,11 @@
                     "type": "integer",
                     "default": 30,
                     "description": "Mass tolerance for transition extraction (ppm)"
+                },
+                "mz_extraction_window_ms1": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Mass tolerance for precursor transition extraction (ppm)"
                 },
                 "rt_extraction_window": {
                     "type": "integer",
