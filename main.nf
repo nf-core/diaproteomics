@@ -799,19 +799,29 @@ process reformatting {
     params.run_msstats
 
    script:
+
+    if (params.pyprophet_global_fdr_level==''){
+
     """
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.csv"
+    """
+
+    } else {
+
+    """
      reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
     """
+    }
 }
 
 
 /*
  * STEP 12 - Run MSstats
  */
-process post_processing_protein_level {
+process statistical_post_processing {
    publishDir "${params.outdir}/"
 
    input:
@@ -827,7 +837,7 @@ process post_processing_protein_level {
 
    script:
     """
-     msstats.R ${csv} > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+     msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
     """
 }
 

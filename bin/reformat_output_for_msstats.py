@@ -79,8 +79,6 @@ def main():
     df['IsotopeLabelType']='L'
     df['ProductCharge']=0
     df['FragmentIon']='NA'
-    files=[f+'.mzML' for f in df['Reference'].values.tolist()]
-    df['Reference']=files
 
     df=df.merge(df_lib, how='inner', on='PeptideSequence')
     df=df.drop_duplicates()
