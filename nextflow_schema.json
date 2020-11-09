@@ -69,7 +69,7 @@
                 "input_sheet_dda": {
                     "type": "string",
                     "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
-                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  SampleID metainformation. For example:\n\n| Fraction_Group   | Sample      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_standard.mzML     |   data/Melanom_DDA_standard.pepXML    |\n| 2    | Benign |      data/Benign_DDA_standard.mzML     |   data/Benign_DDA_standard.pepXML    |\n"
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  SampleID metainformation. For example:\n\n| Fraction_Group   | Sample      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_rep1.mzML     |   data/Melanom_DDA_rep1.pepXML    |\n| 2    | Malignant |      data/Melanom_DDA_rep2.mzML     |   data/Melanom_DDA_rep2.pepXML    |\n| 3    | Benign |      data/Benign_DDA_rep1.mzML     |   data/Benign_DDA_rep1.pepXML    |\n| 4    | Benign |      data/Benign_DDA_rep2.mzML     |   data/Benign_DDA_rep2.pepXML    |\n"
                 },
                 "library_rt_fdr": {
                     "type": "number",
@@ -283,27 +283,27 @@
                 "DIAlignR_global_align_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR global alignment FDR threshold"
+                    "description": "DIAlignR global alignment FDR threshold: After the chromatogram alignment all peaks should still satisfy the global alignment FDR threshold."
                 },
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR analyte FDR threshold"
+                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs."
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR unalignment FDR threshold"
+                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs."
                 },
                 "DIAlignR_align_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR alignment FDR threshold"
+                    "description": "DIAlignR alignment FDR threshold: After the chromatogram alignment aligned peaks should satisfy this threhold."
                 },
                 "DIAlignR_query_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR query FDR threshold"
+                    "description": "DIAlignR query FDR threshold: During the chromatogram alignment ponly eaks satisfying this maximum FDR threshold will be considered as potential matches."
                 }
             }
         },

@@ -44,6 +44,7 @@ def helpMessage() {
       --min_transitions                 Minimum number of transitions for assay
       --max_transitions                 Maximum number of transitions for assay
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
+      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
       --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
@@ -335,7 +336,7 @@ process get_software_versions {
 /*
  * STEP 0 - Raw File Conversion
  */
-process convert_raw_dda_input_files {
+process dda_raw_file_conversion {
     input:
      set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
 
@@ -355,7 +356,7 @@ process convert_raw_dda_input_files {
 /*
  * STEP 1 - Convert IDs for Spectral Library Generation using EasyPQP
  */
-process convert_ids_from_dda_id {
+process dda_id_format_conversion {
 
     input:
      set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
@@ -377,7 +378,7 @@ process convert_ids_from_dda_id {
 /*
  * STEP 2 - Spectral Library Generation using EasyPQP
  */
-process generate_spectral_library {
+process dda_library_generation {
 
     input:
      set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
@@ -409,7 +410,7 @@ process generate_spectral_library {
 /*
  * STEP 3 - Assay Generation for Spectral Library
  */
-process generate_assay_of_spectral_library {
+process assay_generation {
 
     input:
      set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
@@ -442,7 +443,7 @@ if(params.merge_libraries) {
 /*
  * STEP 4 - Merge and align spectral Libraries
  */
-process merge_and_align_spectral_libraries {
+process library_merging_and_alignment {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -465,7 +466,7 @@ process merge_and_align_spectral_libraries {
 /*
  * STEP 5 - Pseudo iRT Library Generation
  */
-process generate_pseudo_irt_library {
+process pseudo_irt_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -490,7 +491,7 @@ process generate_pseudo_irt_library {
 /*
  * STEP 6 - Decoy Generation for Spectral Library
  */
-process generate_decoys_for_spectral_library {
+process decoy_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -515,9 +516,9 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 7 - Raw File Conversion
+ * STEP 7 - DIA Raw File Conversion
  */
-process convert_raw_dia_input_files {
+process dia_raw_file_conversion {
 
     input:
      set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
@@ -533,9 +534,9 @@ process convert_raw_dia_input_files {
 
 
 /*
- * STEP 8 - OpenSwathWorkFlow
+ * STEP 8 - DIA library search with OpenSwathWorkFlow
  */
-process run_openswathworkflow {
+process dia_spectral_library_search {
     publishDir "${params.outdir}/openswathworkflow_output"
 
     input:
@@ -562,6 +563,7 @@ process run_openswathworkflow {
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
+                       -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
                        -mz_extraction_window_unit 'ppm' \\
                        -mz_extraction_window_ms1_unit 'ppm' \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
@@ -598,7 +600,7 @@ process run_openswathworkflow {
 /*
  * STEP 9 - Pyprophet merging of OpenSwath results
  */
-process merge_openswath_output {
+process dia_search_output_merging {
 
     input:
      set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
@@ -619,7 +621,7 @@ process merge_openswath_output {
 /*
  * STEP 10 - Pyprophet FDR Scoring
  */
-process run_fdr_scoring {
+process false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -657,7 +659,7 @@ process run_fdr_scoring {
 /*
  * STEP 11 - Pyprophet global FDR Scoring
  */
-process run_global_fdr_scoring {
+process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -703,7 +705,7 @@ process run_global_fdr_scoring {
 /*
  * STEP 12 - Pyprophet Export
  */
-process export_pyprophet_results {
+process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -727,7 +729,7 @@ process export_pyprophet_results {
 /*
  * STEP 13 - Index Chromatogram mzMLs
  */
-process index_chromatograms {
+process chromatogram_indexing {
 
     input:
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
@@ -756,7 +758,7 @@ osw_for_dialignr
 /*
  * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
-process align_dia_runs {
+process chromatogram_alignment {
     publishDir "${params.outdir}/"
 
     input:
@@ -782,7 +784,7 @@ process align_dia_runs {
 /*
  * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
-process prepare_for_msstats {
+process reformatting {
 
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
@@ -808,7 +810,7 @@ process prepare_for_msstats {
 /*
  * STEP 12 - Run MSstats
  */
-process run_msstats {
+process post_processing_protein_level {
    publishDir "${params.outdir}/"
 
    input:
@@ -837,7 +839,7 @@ process run_msstats {
  * 4) Heatmap: Peptide quantities across MS runs
  * 5) Pyprophet score plots
  */
-process generate_output_plots {
+process output_visualization {
    publishDir "${params.outdir}/"
 
    input:
