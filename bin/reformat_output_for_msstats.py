@@ -33,6 +33,12 @@ def main():
     )
 
     model.add_argument(
+        '-f', '--fdr_level',
+        type=str,
+        help='fdr level'
+    )
+
+    model.add_argument(
         '-o', '--output',
         type=str,
         help='output reformatted file'
@@ -43,11 +49,15 @@ def main():
     exp_design=args.exp_design
     dialignR=args.input
     lib=args.library
+    fdr_level=args.fdr_level
 
     #parse library and rename columns
     df_lib=pd.read_csv(lib,sep='\t')
     df_lib=df_lib[['ModifiedPeptideSequence', 'ProteinId']]
     df_lib.columns=['PeptideSequence', 'ProteinName']
+
+    if fdr_level=='peptide':
+       df_lib['ProteinName']=df_lib['PeptideSequence']
 
     #parse experimental design and rename columns
     df_I=pd.read_csv(exp_design, sep='\t')
@@ -57,21 +67,18 @@ def main():
        files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
     print(files)
     df_I['run']=files
-    df_I=df_I[['Fraction_Group', 'Sample', 'Fraction', 'run']]
-    df_I.colums=['Fraction_Group', 'Sample', 'Fraction', 'run']
+    df_I=df_I[['Sample', 'Sample_Group', 'MSstats_Condition', 'run']]
+    df_I.colums=['Sample', 'Sample_Group','MSstats_Condition', 'run']
 
     #parse dialignr output and merge with experimental design and library
     df=pd.read_csv(dialignR, sep=',')
     df=df.merge(df_I, how='outer', on='run')
 
-    df=df[['sequence', 'charge', 'Fraction', 'Fraction_Group', 'intensity', 'run']]
-    df.columns=['PeptideSequence', 'PrecursorCharge', 'Condition', 'Run', 'Intensity', 'Reference']
-    df['BioReplicate']=df['Run']
+    df=df[['sequence', 'charge', 'MSstats_Condition', 'Sample_Group', 'Sample', 'intensity']]
+    df.columns=['PeptideSequence', 'PrecursorCharge', 'Condition', 'BioReplicate', 'Run', 'Intensity']
     df['IsotopeLabelType']='L'
     df['ProductCharge']=0
     df['FragmentIon']='NA'
-    files=[f+'.mzML' for f in df['Reference'].values.tolist()]
-    df['Reference']=files
 
     df=df.merge(df_lib, how='inner', on='PeptideSequence')
     df=df.drop_duplicates()

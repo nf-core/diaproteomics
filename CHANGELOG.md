@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
+Change workflow step names
+Change column naming in input sheets
 Template update to 1.11
 Added full size test profile
 Added second test profile skipping library generation from DDA

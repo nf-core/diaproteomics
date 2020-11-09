@@ -44,6 +44,7 @@ def helpMessage() {
       --min_transitions                 Minimum number of transitions for assay
       --max_transitions                 Maximum number of transitions for assay
       --mz_extraction_window            Mass tolerance for transition extraction (ppm)
+      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction (ppm)
       --rt_extraction_window            RT window for transition extraction (seconds)
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
       --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
@@ -59,6 +60,7 @@ def helpMessage() {
       --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
+      --run_msstats                     Set flag if MSstats should be run
       --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
 
@@ -119,7 +121,7 @@ params.outdir = params.outdir ?: { log.warn "No output directory provided. Will 
 // DIA MS input
 Channel.from( sample_sheet )
        .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", "${col.Fraction}", file("${col.Spectra_Filepath}", checkifExists: true))}
+       .map { col -> tuple("${col.Sample}", "${col.Sample_Group}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
        .set {input_branch}
 
@@ -159,7 +161,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( dda_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
+        .map { col -> tuple("${col.Sample}", "${col.Sample_Group}", file("${col.Spectra_Filepath}", checkifExists: true), file("${col.Id_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2],it[3])]}
         .into {input_dda;input_check;input_check_samples}
 
@@ -196,7 +198,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
+        .map { col -> tuple("${col.Sample}", "${col.Sample_Group}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .set {input_lib_nd}
 
@@ -218,7 +220,7 @@ if( params.generate_spectral_library) {
 
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
-        .map { col -> tuple("${col.Fraction_Group}", "${col.Sample}", file("${col.Library_Filepath}", checkifExists: true))}
+        .map { col -> tuple("${col.Sample}", "${col.Sample_Group}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .into {input_lib; input_lib_1 }
 
@@ -335,7 +337,7 @@ process get_software_versions {
 /*
  * STEP 0 - Raw File Conversion
  */
-process convert_raw_dda_input_files {
+process dda_raw_file_conversion {
     input:
      set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
 
@@ -355,7 +357,7 @@ process convert_raw_dda_input_files {
 /*
  * STEP 1 - Convert IDs for Spectral Library Generation using EasyPQP
  */
-process convert_ids_from_dda_id {
+process dda_id_format_conversion {
 
     input:
      set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
@@ -377,7 +379,7 @@ process convert_ids_from_dda_id {
 /*
  * STEP 2 - Spectral Library Generation using EasyPQP
  */
-process generate_spectral_library {
+process dda_library_generation {
 
     input:
      set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
@@ -409,7 +411,7 @@ process generate_spectral_library {
 /*
  * STEP 3 - Assay Generation for Spectral Library
  */
-process generate_assay_of_spectral_library {
+process assay_generation {
 
     input:
      set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
@@ -442,7 +444,7 @@ if(params.merge_libraries) {
 /*
  * STEP 4 - Merge and align spectral Libraries
  */
-process merge_and_align_spectral_libraries {
+process library_merging_and_alignment {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -465,7 +467,7 @@ process merge_and_align_spectral_libraries {
 /*
  * STEP 5 - Pseudo iRT Library Generation
  */
-process generate_pseudo_irt_library {
+process pseudo_irt_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -490,7 +492,7 @@ process generate_pseudo_irt_library {
 /*
  * STEP 6 - Decoy Generation for Spectral Library
  */
-process generate_decoys_for_spectral_library {
+process decoy_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
@@ -515,9 +517,9 @@ process generate_decoys_for_spectral_library {
 
 
 /*
- * STEP 7 - Raw File Conversion
+ * STEP 7 - DIA Raw File Conversion
  */
-process convert_raw_dia_input_files {
+process dia_raw_file_conversion {
 
     input:
      set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
@@ -533,9 +535,9 @@ process convert_raw_dia_input_files {
 
 
 /*
- * STEP 8 - OpenSwathWorkFlow
+ * STEP 8 - DIA library search with OpenSwathWorkFlow
  */
-process run_openswathworkflow {
+process dia_spectral_library_search {
     publishDir "${params.outdir}/openswathworkflow_output"
 
     input:
@@ -562,6 +564,7 @@ process run_openswathworkflow {
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
+                       -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
                        -mz_extraction_window_unit 'ppm' \\
                        -mz_extraction_window_ms1_unit 'ppm' \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
@@ -598,7 +601,7 @@ process run_openswathworkflow {
 /*
  * STEP 9 - Pyprophet merging of OpenSwath results
  */
-process merge_openswath_output {
+process dia_search_output_merging {
 
     input:
      set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
@@ -619,7 +622,7 @@ process merge_openswath_output {
 /*
  * STEP 10 - Pyprophet FDR Scoring
  */
-process run_fdr_scoring {
+process false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -657,7 +660,7 @@ process run_fdr_scoring {
 /*
  * STEP 11 - Pyprophet global FDR Scoring
  */
-process run_global_fdr_scoring {
+process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -703,7 +706,7 @@ process run_global_fdr_scoring {
 /*
  * STEP 12 - Pyprophet Export
  */
-process export_pyprophet_results {
+process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
@@ -727,7 +730,7 @@ process export_pyprophet_results {
 /*
  * STEP 13 - Index Chromatogram mzMLs
  */
-process index_chromatograms {
+process chromatogram_indexing {
 
     input:
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
@@ -756,7 +759,7 @@ osw_for_dialignr
 /*
  * STEP 10 - Align DIA Chromatograms using DIAlignR
  */
-process align_dia_runs {
+process chromatogram_alignment {
     publishDir "${params.outdir}/"
 
     input:
@@ -782,7 +785,7 @@ process align_dia_runs {
 /*
  * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
-process prepare_for_msstats {
+process reformatting {
 
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
@@ -793,22 +796,32 @@ process prepare_for_msstats {
     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
 
    when:
-    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
+    params.run_msstats
 
    script:
+
+    if (params.pyprophet_global_fdr_level==''){
+
     """
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --output "${Sample}_${Condition}.csv"
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.csv"
     """
+
+    } else {
+
+    """
+     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
+    """
+    }
 }
 
 
 /*
  * STEP 12 - Run MSstats
  */
-process run_msstats {
+process statistical_post_processing {
    publishDir "${params.outdir}/"
 
    input:
@@ -820,11 +833,11 @@ process run_msstats {
     file "*.log" // logfile of msstats run
 
    when:
-    params.generate_plots & (params.pyprophet_global_fdr_level=='protein')
+    params.run_msstats
 
    script:
     """
-     msstats.R ${csv} > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+     msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
     """
 }
 
@@ -837,7 +850,7 @@ process run_msstats {
  * 4) Heatmap: Peptide quantities across MS runs
  * 5) Pyprophet score plots
  */
-process generate_output_plots {
+process output_visualization {
    publishDir "${params.outdir}/"
 
    input:

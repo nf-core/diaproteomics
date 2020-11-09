@@ -16,21 +16,21 @@
             "properties": {
                 "input": {
                     "type": "string",
-                    "fa_icon": "fa-vials",
+                    "fa_icon": "fab fa-think-peaks",
                     "description": "Input sample sheet (raw / mzML)",
-                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as SampleID and Fraction. For example:\n\n| Fraction_Group   | Sample      | Fraction  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as Sample_GroupID and MSstats_Condition. For example:\n\n| Sample   | Sample_Group      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
                     "default": "false"
                 },
                 "input_spectral_library": {
                     "type": "string",
                     "fa_icon": "fas fa-book",
                     "description": "Input sample sheet of spectral libraries (tsv, pqp, TraML)",
-                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as SampleID and Condition. For example:\n\n| Fraction_Group   | Sample      |   Library_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_library.tsv    |\n| 2    | Benign |   data/Benign_library.tsv    |"
+                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as Sample_GroupID and MSstats_Condition. For example:\n\n| Sample   | Sample_Group      |   Library_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_library.tsv    |\n| 2    | Benign |   data/Benign_library.tsv    |"
                 },
                 "irts": {
                     "type": "string",
                     "description": "Path to internal retention time standard sample sheet (tsv, pqp, TraML)",
-                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Fraction_Group      | Sample      |   irt_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_irt_library.tsv    |\n| 2    | Benign |   data/Benign_irt_library.tsv    |",
+                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Sample      | Sample_Group      |   irt_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_irt_library.tsv    |\n| 2    | Benign |   data/Benign_irt_library.tsv    |",
                     "fa_icon": "fas fa-book"
                 },
                 "outdir": {
@@ -46,6 +46,12 @@
                     "fa_icon": "fas fa-images",
                     "default": true
                 },
+                "run_msstats": {
+                    "type": "boolean",
+                    "default": false,
+                    "fa_icon": "fas fa-calculator",
+                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -56,7 +62,7 @@
             }
         },
         "spectral_library_generation": {
-            "title": "Spectral Library Generation",
+            "title": "Spectral library generation",
             "type": "object",
             "description": "",
             "default": "",
@@ -69,7 +75,7 @@
                 "input_sheet_dda": {
                     "type": "string",
                     "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
-                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  SampleID metainformation. For example:\n\n| Fraction_Group   | Sample      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_standard.mzML     |   data/Melanom_DDA_standard.pepXML    |\n| 2    | Benign |      data/Benign_DDA_standard.mzML     |   data/Benign_DDA_standard.pepXML    |\n"
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  Sample_GroupID metainformation. For example:\n\n| Sample   | Sample_Group      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_rep1.mzML     |   data/Melanom_DDA_rep1.pepXML    |\n| 2    | Malignant |      data/Melanom_DDA_rep2.mzML     |   data/Melanom_DDA_rep2.pepXML    |\n| 3    | Benign |      data/Benign_DDA_rep1.mzML     |   data/Benign_DDA_rep1.pepXML    |\n| 4    | Benign |      data/Benign_DDA_rep2.mzML     |   data/Benign_DDA_rep2.pepXML    |\n"
                 },
                 "library_rt_fdr": {
                     "type": "number",
@@ -112,31 +118,8 @@
                 }
             }
         },
-        "library_merging": {
-            "title": "Library merging",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "merge_libraries": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
-                },
-                "align_libraries": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
-                },
-                "min_overlap_for_merging": {
-                    "type": "integer",
-                    "default": 100,
-                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries"
-                }
-            }
-        },
         "pseudo_irt_generation": {
-            "title": "Pseudo iRT Generation",
+            "title": "Pseudo iRT generation",
             "type": "object",
             "description": "",
             "default": "",
@@ -150,6 +133,65 @@
                     "type": "integer",
                     "default": 250,
                     "description": "Number of pseudo irts selected from dda identifications based on the best q-value"
+                }
+            }
+        },
+        "spectral_library_merging": {
+            "title": "Spectral library merging",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "merge_libraries": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
+                }
+            }
+        },
+        "spectral_library_rt_alignment": {
+            "title": "Spectral library RT alignment",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "align_libraries": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
+                },
+                "min_overlap_for_merging": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries"
+                }
+            }
+        },
+        "dia_spectral_library_search": {
+            "title": "DIA spectral library search",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "mz_extraction_window": {
+                    "type": "integer",
+                    "default": 30,
+                    "description": "Mass tolerance for transition extraction (ppm)"
+                },
+                "mz_extraction_window_ms1": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Mass tolerance for precursor transition extraction (ppm)"
+                },
+                "rt_extraction_window": {
+                    "type": "integer",
+                    "default": 600,
+                    "description": "RT window for transition extraction (seconds)"
+                },
+                "irt_min_rsq": {
+                    "type": "number",
+                    "default": 0.95,
+                    "description": "Minimal random mean squared error for irt RT alignment"
                 },
                 "irt_n_bins": {
                     "type": "integer",
@@ -160,19 +202,6 @@
                     "type": "integer",
                     "default": 8,
                     "description": "Number of bins that have to be covered for the RT Normalization"
-                }
-            }
-        },
-        "openswathworkflow_options": {
-            "title": "OpenSwathWorkflow Options",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "irt_min_rsq": {
-                    "type": "number",
-                    "default": 0.95,
-                    "description": "Minimal random mean squared error for irt RT alignment"
                 },
                 "irt_alignment_method": {
                     "type": "string",
@@ -183,24 +212,6 @@
                         "lowess"
                     ]
                 },
-                "mz_extraction_window": {
-                    "type": "integer",
-                    "default": 30,
-                    "description": "Mass tolerance for transition extraction (ppm)"
-                },
-                "rt_extraction_window": {
-                    "type": "integer",
-                    "default": 600,
-                    "description": "RT window for transition extraction (seconds)"
-                },
-                "number_mods": {
-                    "type": "integer",
-                    "default": 3
-                },
-                "variable_mods": {
-                    "type": "string",
-                    "default": "Oxidation (M)"
-                },
                 "force_option": {
                     "type": "boolean",
                     "default": "false",
@@ -208,8 +219,8 @@
                 }
             }
         },
-        "pyprophet_fdr_scoring": {
-            "title": "Pyprophet FDR Scoring",
+        "false_discovery_rate_estimation": {
+            "title": "False discovery rate estimation",
             "type": "object",
             "description": "",
             "default": "",
@@ -274,61 +285,36 @@
                 }
             }
         },
-        "dialignr_chromatogram_realignment": {
-            "title": "DIAlignR Chromatogram Realignment",
+        "ms2_chromatogram_alignment": {
+            "title": "MS2 chromatogram alignment",
             "type": "object",
             "description": "",
             "default": "",
             "properties": {
-                "realignment_target_fdr": {
-                    "type": "number",
-                    "default": 0.05,
-                    "hidden": true
-                },
-                "realignment_max_fdr": {
-                    "type": "number",
-                    "default": 0.1,
-                    "hidden": true
-                },
-                "realignment_score": {
-                    "type": "number",
-                    "default": 0.001,
-                    "hidden": true
-                },
-                "realignment_method": {
-                    "type": "string",
-                    "default": "lowess_cython",
-                    "hidden": true
-                },
-                "realignment_rt_difference": {
-                    "type": "integer",
-                    "default": 60,
-                    "hidden": true
-                },
                 "DIAlignR_global_align_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR global alignment FDR threshold"
+                    "description": "DIAlignR global alignment FDR threshold: After the chromatogram alignment all peaks should still satisfy the global alignment FDR threshold."
                 },
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR analyte FDR threshold"
+                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs."
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR unalignment FDR threshold"
+                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs."
                 },
                 "DIAlignR_align_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR alignment FDR threshold"
+                    "description": "DIAlignR alignment FDR threshold: After the chromatogram alignment aligned peaks should satisfy this threhold."
                 },
                 "DIAlignR_query_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR query FDR threshold"
+                    "description": "DIAlignR query FDR threshold: During the chromatogram alignment ponly eaks satisfying this maximum FDR threshold will be considered as potential matches."
                 }
             }
         },
@@ -512,19 +498,22 @@
             "$ref": "#/definitions/spectral_library_generation"
         },
         {
-            "$ref": "#/definitions/library_merging"
-        },
-        {
             "$ref": "#/definitions/pseudo_irt_generation"
         },
         {
-            "$ref": "#/definitions/openswathworkflow_options"
+            "$ref": "#/definitions/spectral_library_merging"
         },
         {
-            "$ref": "#/definitions/pyprophet_fdr_scoring"
+            "$ref": "#/definitions/spectral_library_rt_alignment"
         },
         {
-            "$ref": "#/definitions/dialignr_chromatogram_realignment"
+            "$ref": "#/definitions/dia_spectral_library_search"
+        },
+        {
+            "$ref": "#/definitions/false_discovery_rate_estimation"
+        },
+        {
+            "$ref": "#/definitions/ms2_chromatogram_alignment"
         },
         {
             "$ref": "#/definitions/reference_genome_options"
