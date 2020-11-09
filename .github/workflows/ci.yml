@@ -55,7 +55,7 @@ jobs:
 
 
   additional_test_skip_library_generation:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (skip_library_generation)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -99,7 +99,7 @@ jobs:
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library,docker
 
   additional_test_global_fdr:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (global fdr)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -143,7 +143,7 @@ jobs:
           nextflow run ${GITHUB_WORKSPACE} -profile test_global_fdr,docker
 
   additional_test_generate_library_merge_but_no_alignment:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (generate library merge, no alignment)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
           nextflow run ${GITHUB_WORKSPACE} -profile test_no_align,docker
 
   additional_test_generate_library_without_merging:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (generate library no merging)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -231,7 +231,7 @@ jobs:
           nextflow run ${GITHUB_WORKSPACE} -profile test_no_merge,docker
 
   additional_test_library_with_decoys:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (library with decoys)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -275,7 +275,7 @@ jobs:
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_with_decoys,docker
 
   additional_test_generate_library_without_irts:
-    name: Run additional workflow tests
+    name: Run additional workflow tests (generate library without irts)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -318,8 +318,8 @@ jobs:
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_without_irts,docker
 
-  additional_test_generate_library_not_irts:
-    name: Run additional workflow tests
+  additional_test_generate_irts_no_library:
+    name: Run additional workflow tests (generate irts only)
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
@@ -356,7 +356,7 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run pipeline with additonal tests (generate library but not irts)
+      - name: Run pipeline with additonal tests (generate irts only)
         # For example: adding multiple test runs with different parameters
         # Remember that you can parallelise this by using strategy.matrix
         run: |
