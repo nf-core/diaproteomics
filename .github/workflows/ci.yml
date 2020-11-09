@@ -53,30 +53,311 @@ jobs:
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker
 
-      - name: Run pipeline with additional params (skip library generation)
+
+  additional_test_skip_library_generation:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (skip library generation)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library,docker
 
-      - name: Run pipeline with additional params (global FDR)
+  additional_test_global_fdr:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (global fdr)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_global_fdr,docker
 
-      - name: Run pipeline with additional params (generate library merge but no alignment)
+  additional_test_generate_library_merge_but_no_alignment:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (generate library merge but no alignment)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_no_align,docker
 
-      - name: Run pipeline with additional params (generate library without merging)
+  additional_test_generate_library_without_merging:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (generate library without merging)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_no_merge,docker
 
-      - name: Run pipeline with additional params (no decoy generation)
+  additional_test_library_with_decoys:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (library with decoys)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_with_decoys,docker
 
-      - name: Run pipeline with additional params (skip library generation, but generate irts)
+  additional_test_generate_library_without_irts:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (generate library without irts)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_with_library_without_irts,docker
 
-      - name: Run pipeline with additional params (skip irt generation but generate library)
+  additional_test_generate_library_not_irts:
+    name: Run additional workflow tests
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Conda environment changed
+        uses: technote-space/get-diff-action@v1
+        with:
+          PREFIX_FILTER: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.GIT_DIFF
+        run: docker build --no-cache . -t nfcore/diaproteomics:dev
+
+      - name: Pull docker image
+        if: ${{ !env.GIT_DIFF }}
+        run: |
+          docker pull nfcore/diaproteomics:dev
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run pipeline with additonal tests (generate library but not irts)
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test_without_library_with_irts,docker
