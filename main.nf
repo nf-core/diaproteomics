@@ -812,6 +812,9 @@ process reformatting {
     } else {
 
     """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.tsv
+
      reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
     """
     }
