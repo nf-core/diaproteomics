@@ -1,41 +1,73 @@
 # nf-core/diaproteomics: Output
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
+## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/diaproteomics/output](https://nf-co.re/diaproteomics/output)
 
-<!-- TODO nf-core: Write this documentation describing your workflow's output -->
+> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
+
+## Introduction
+
+This document describes the output produced by the pipeline.
+
+The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
 
 ## Pipeline overview
+
 The pipeline is built using [Nextflow](https://www.nextflow.io/)
 and processes data using the following steps:
 
-* [FastQC](#fastqc) - read quality control
-* [MultiQC](#multiqc) - aggregate report, describing results of the whole pipeline
+* [Summary output files](#SummaryOutput) - Output files of peptide / protein quantities and pdf reports
+* [Spectral library files](#SpectralLibrary) - Generated spectral library files (tsv, pqp, with/without decoys, irts)
+* [OpenSwathWorkflow output files](#OpenSwathWorkflow) - Output files of the OpenSwathWorkflow (osw, chrom.mzML)
+* [Pyprophet output files](#Pyprophet) - Output files of pyprophet (osw, tsv, pdf)
+* [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
 
-## FastQC
-[FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your reads. It provides information about the quality score distribution across your reads, the per base sequence content (%T/A/G/C). You get information about adapter contamination and other overrepresented sequences.
+For detailed information about file formats and how they are in the various steps visit the detailed documentation of the [OpenSwathWorkflow](http://openswath.org/en/latest/docs/openswath.html).
 
-For further reading and documentation see the [FastQC help](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
+## SummaryOutput
 
-> **NB:** The FastQC plots displayed in the MultiQC report shows _untrimmed_ reads. They may contain adapter sequence and potentially regions with low quality. To see how your reads look after trimming, look at the FastQC reports in the `trim_galore` directory.
+Several csv tables are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
 
-**Output directory: `results/fastqc`**
+* Output visualizations:
+  * the number of peptide / protein identifications
+  * the peptide charge distribution
+  * the library and DIA measurement RT deviation
+  * the comparative quantities across samples as heatmap
+  * (+ if protein level MSstat was applied additional comparative volcano plots)
 
-* `sample_fastqc.html`
-  * FastQC report, containing quality metrics for your untrimmed raw fastq files
-* `zips/sample_fastqc.zip`
-  * zip file containing the FastQC report, tab-delimited data file and plot images
+## SpectralLibrary
 
+Several files summarizing the used spectral library are generated, depending on whether the library and iRTs were generated from provided matched DDA data.
 
-## MultiQC
-[MultiQC](http://multiqc.info) is a visualisation tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in within the report data directory.
+* Library files:
+  * a tsv table listing all peptide precursors and their transitions used for the library
+  * a pqp file storing the library in sqlite format including generated decoy transitions
+  * a pqp file storing the iRT library in sqlite format
+  * if merging of multiple libraries and RT alignment was specified, the pairwise alignment graph is exported as pdf.
 
-The pipeline has special steps which allow the software versions used to be reported in the MultiQC output for future traceability.
+## OpenSwathWorkflow
 
-**Output directory: `results/multiqc`**
+For each provided DIA MS run the OpenSwathWorkflow output is reported.
 
-* `Project_multiqc_report.html`
-  * MultiQC report - a standalone HTML file that can be viewed in your web browser
-* `Project_multiqc_data/`
-  * Directory containing parsed statistics from the different tools used in the pipeline
+* OpenSwathWorkflow output:
+  * osw files storing the scoring output in sqlite format
+  * chrom.mzML file storing the extracted ion chromatogram for each peptide transition
 
-For more information about how to use MultiQC reports, see [http://multiqc.info](http://multiqc.info)
+## Pyprophet
+
+Several files summarizing the pyprophet local or global scoring results for each DIA MS run separately, aggregated in sqlite format and visualized as report.
+
+* PyprophetOutput
+  * osw files storing the aggregated scoring output per sample
+  * tsv files storing the scoring output as table for each MS run
+  * pdf reports visualizing the aggregated target decoy score distributions
+
+## Pipeline information
+
+[Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
+
+**Output files:**
+
+* `pipeline_info/`
+  * Reports generated by Nextflow: `execution_report.html`, `execution_timeline.html`, `execution_trace.txt` and `pipeline_dag.dot`/`pipeline_dag.svg`.
+  * Reports generated by the pipeline: `pipeline_report.html`, `pipeline_report.txt` and `software_versions.csv`.
+  * Documentation for interpretation of results in HTML format: `results_description.html`.
