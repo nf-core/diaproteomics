@@ -243,7 +243,7 @@ if( !params.generate_pseudo_irts){
 
    Channel.from( irt_sheet )
        .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Sample}", file("${col.irt_Filepath}", checkifExists: true))}
+       .map { col -> tuple("${col.Sample_Group}", file("${col.irt_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1])]}
        .set {input_irts}
 
