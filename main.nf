@@ -243,7 +243,7 @@ if( !params.generate_pseudo_irts){
 
    Channel.from( irt_sheet )
        .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Sample}", file("${col.irt_Filepath}", checkifExists: true))}
+       .map { col -> tuple("${col.Sample_Group}", file("${col.irt_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1])]}
        .set {input_irts}
 
@@ -557,9 +557,9 @@ process dia_spectral_library_search {
                            -out ${irt_file.baseName}.pqp \\
 
      OpenSwathWorkflow -in ${mzml_file} \\
-                       -tr ${lib_file} \\
+                       -tr ${lib_file.baseName}.pqp \\
                        -sort_swath_maps \\
-                       -tr_irt ${irt_file} \\
+                       -tr_irt ${irt_file.baseName}.pqp \\
                        -min_rsq ${params.irt_min_rsq} \\
                        -out_osw ${mzml_file.baseName}.osw \\
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
