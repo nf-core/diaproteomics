@@ -18,19 +18,19 @@
                     "type": "string",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Input sample sheet (raw / mzML)",
-                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as Sample_GroupID and MSstats_Condition. For example:\n\n| Sample   | Sample_Group      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      A     |   data/Melanom_DIA_A_standard.raw    |\n| 2    | Malignant |      B     |   data/Melanom_DIA_B_standard.raw    |\n| 3    | Benign |      A     |   data/Benign_DIA_A_standard.raw    |\n| 4    | Benign |      B     |   data/Benign_DIA_B_standard.raw    |",
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |",
                     "default": "false"
                 },
                 "input_spectral_library": {
                     "type": "string",
                     "fa_icon": "fas fa-book",
                     "description": "Input sample sheet of spectral libraries (tsv, pqp, TraML)",
-                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as Sample_GroupID and MSstats_Condition. For example:\n\n| Sample   | Sample_Group      |   Library_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_library.tsv    |\n| 2    | Benign |   data/Benign_library.tsv    |"
+                    "help_text": "Use this to specify a sample sheet table including your input spectral library files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      |   Library_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | MelanomaStudy |   data/Melanoma_library.tsv    |\n| 2    | BreastCancerStudy |   data/BraCa_library.tsv    |"
                 },
                 "irts": {
                     "type": "string",
                     "description": "Path to internal retention time standard sample sheet (tsv, pqp, TraML)",
-                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their Sample metainformation. For example:\n\n| Sample      | Sample_Group      |   irt_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | Malignant |   data/Melanom_irt_library.tsv    |\n| 2    | Benign |   data/Benign_irt_library.tsv    |",
+                    "help_text": "Use this to specify a sample sheet table including your input internal retention time spectral library files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample      | BatchID      |   irt_Filepath                       |\n| -----|:------------:|------------------------------------------:|\n| 1    | MelanomaStudy |   data/Melanoma_irt_library.tsv    |\n| 2    | BreastCancerStudy |   data/BraCa_irt_library.tsv    |",
                     "fa_icon": "fas fa-book"
                 },
                 "outdir": {
@@ -75,7 +75,7 @@
                 "input_sheet_dda": {
                     "type": "string",
                     "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
-                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  Sample_GroupID metainformation. For example:\n\n| Sample   | Sample_Group      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | Malignant |      data/Melanom_DDA_rep1.mzML     |   data/Melanom_DDA_rep1.pepXML    |\n| 2    | Malignant |      data/Melanom_DDA_rep2.mzML     |   data/Melanom_DDA_rep2.pepXML    |\n| 3    | Benign |      data/Benign_DDA_rep1.mzML     |   data/Benign_DDA_rep1.pepXML    |\n| 4    | Benign |      data/Benign_DDA_rep2.mzML     |   data/Benign_DDA_rep2.pepXML    |\n"
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  BatchID metainformation. For example:\n\n| Sample   | BatchID      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      data/Melanoma_DDA_rep1.mzML     |   data/Melanoma_DDA_rep1.pepXML    |\n| 2    | MelanomaStudy |      data/Melanoma_DDA_rep2.mzML     |   data/Melanoma_DDA_rep2.pepXML    |\n| 3    | BreastCancerStudy |      data/BraCa_DDA_rep1.mzML     |   data/BraCa_DDA_rep1.pepXML    |\n| 4    | BreastCancerStudy |      data/BraCa_DDA_rep2.mzML     |   data/BraCa_DDA_rep2.pepXML    |\n"
                 },
                 "library_rt_fdr": {
                     "type": "number",
