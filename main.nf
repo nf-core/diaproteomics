@@ -633,7 +633,7 @@ process false_discovery_rate_estimation {
      set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_score_plots
 
     when:
-     params.pyprophet_global_fdr_level==''
+     params.pyprophet_global_fdr_level=='test'
 
     script:
     if (params.pyprophet_classifier=='LDA'){
@@ -670,9 +670,6 @@ process global_false_discovery_rate_estimation {
      set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
      set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
 
-    when:
-     params.pyprophet_global_fdr_level!=''
-
     script:
     if (params.pyprophet_classifier=='LDA'){
      """
@@ -683,9 +680,25 @@ process global_false_discovery_rate_estimation {
                      --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global_merged.osw \\
-                                                    --context=global \\
+     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
+                       --out=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
      """
     } else {
      """
@@ -695,9 +708,25 @@ process global_false_discovery_rate_estimation {
                      --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global_merged.osw \\
-                                                    --context=global \\
+     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
+                       --out=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
      """
     }
 }
@@ -777,7 +806,7 @@ process chromatogram_alignment {
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
 
-     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
+     mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """
 }
 
