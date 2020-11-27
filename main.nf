@@ -819,7 +819,7 @@ process reformatting {
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
     file exp_design from input_exp_design.first()
-    set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
+    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I.first()
 
    output:
     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
