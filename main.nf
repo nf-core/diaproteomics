@@ -31,7 +31,7 @@ def helpMessage() {
       --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
-      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by BatchID Column
       --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
