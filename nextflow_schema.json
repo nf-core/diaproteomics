@@ -145,7 +145,7 @@
                 "merge_libraries": {
                     "type": "boolean",
                     "default": "false",
-                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the SampleID"
+                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the BatchID"
                 }
             }
         },

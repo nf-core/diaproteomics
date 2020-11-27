@@ -34,13 +34,13 @@ jobs:
 
       - name: Build new docker image
         if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/diaproteomics:1.0.0
+        run: docker build --no-cache . -t nfcore/diaproteomics:1.1.0
 
       - name: Pull docker image
         if: ${{ !env.GIT_DIFF }}
         run: |
           docker pull nfcore/diaproteomics:dev
-          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.0.0
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.1.0
 
       - name: Install Nextflow
         run: |
@@ -73,13 +73,13 @@ jobs:
 
       - name: Build new docker image
         if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/diaproteomics:1.0.0
+        run: docker build --no-cache . -t nfcore/diaproteomics:1.1.0
 
       - name: Pull docker image
         if: ${{ !env.GIT_DIFF }}
         run: |
           docker pull nfcore/diaproteomics:dev
-          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.0.0
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.1.0
 
       - name: Install Nextflow
         run: |
