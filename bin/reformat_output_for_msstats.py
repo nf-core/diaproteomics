@@ -67,14 +67,14 @@ def main():
        files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
     print(files)
     df_I['run']=files
-    df_I=df_I[['Sample', 'Sample_Group', 'MSstats_Condition', 'run']]
-    df_I.columns=['Sample', 'Sample_Group','MSstats_Condition', 'run']
+    df_I=df_I[['Sample', 'BatchID', 'MSstats_Condition', 'run']]
+    df_I.columns=['Sample', 'BatchID','MSstats_Condition', 'run']
 
     #parse dialignr output and merge with experimental design and library
     df=pd.read_csv(dialignR, sep='\t')
     df=df.merge(df_I, how='outer', on='run')
 
-    df=df[['sequence', 'charge', 'MSstats_Condition', 'Sample_Group', 'Sample', 'intensity']]
+    df=df[['sequence', 'charge', 'MSstats_Condition', 'BatchID', 'Sample', 'intensity']]
     df.columns=['PeptideSequence', 'PrecursorCharge', 'Condition', 'BioReplicate', 'Run', 'Intensity']
     df['IsotopeLabelType']='L'
     df['ProductCharge']=0
