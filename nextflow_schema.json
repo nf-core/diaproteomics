@@ -48,7 +48,6 @@
                 },
                 "run_msstats": {
                     "type": "boolean",
-                    "default": false,
                     "fa_icon": "fas fa-calculator",
                     "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
                 },
@@ -178,10 +177,20 @@
                     "default": 30,
                     "description": "Mass tolerance for transition extraction (ppm)"
                 },
+                "mz_extraction_window_unit": {
+                    "type": "string",
+                    "default": "ppm",
+                    "description": "Unit for mz window"
+                },
                 "mz_extraction_window_ms1": {
                     "type": "integer",
                     "default": 10,
                     "description": "Mass tolerance for precursor transition extraction (ppm)"
+                },
+                "mz_extraction_window_ms1_unit": {
+                    "type": "string",
+                    "default": "ppm",
+                    "description": "Unit for mz window"
                 },
                 "rt_extraction_window": {
                     "type": "integer",
@@ -216,6 +225,11 @@
                     "type": "boolean",
                     "default": "false",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
+                },
+                "use_ms1": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to use ms1 information for scoring and extraction"
                 }
             }
         },

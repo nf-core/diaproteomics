@@ -43,9 +43,12 @@ def helpMessage() {
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum number of transitions for assay
       --max_transitions                 Maximum number of transitions for assay
-      --mz_extraction_window            Mass tolerance for transition extraction (ppm)
-      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction (ppm)
+      --mz_extraction_window            Mass tolerance for transition extraction
+      --mz_extraction_window_unit       Unit for mass tolerance ('ppm' or 'Th')
+      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction
+      --mz_extraction_window_ms1_unit   Unit for ms1 mass tolerance ('ppm' or 'Th')
       --rt_extraction_window            RT window for transition extraction (seconds)
+      --use_ms1                         Whether to extract and use ms1 precursor transitions for scoring
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
       --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
       --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
@@ -253,6 +256,17 @@ if( !params.generate_pseudo_irts){
 
     input_irts = Channel.empty()
 
+}
+
+// MS1 option
+if (params.use_ms1){
+    ms1_option='-use_ms1_traces'
+    ms1_scoring='-Scoring:Scores:use_ms1_mi'
+    ms1_mi='-Scoring:Scores:use_mi_score'
+   } else {
+    ms1_option=''
+    ms1_scoring=''
+    ms1_mi=''
 }
 
 
@@ -567,8 +581,8 @@ process dia_spectral_library_search {
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
-                       -mz_extraction_window_unit 'ppm' \\
-                       -mz_extraction_window_ms1_unit 'ppm' \\
+                       -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
+                       -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:estimateBestPeptides \\
@@ -576,7 +590,6 @@ process dia_spectral_library_search {
                        -RTNormalization:NrRTBins ${params.irt_n_bins} \\
                        -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
-                       -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\
                        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
                        -Scoring:TransitionGroupPicker:peak_integration 'original' \\
@@ -588,14 +601,13 @@ process dia_spectral_library_search {
                        -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
                        -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
                        -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
-                       -Scoring:Scores:use_ms1_mi \\
-                       -Scoring:Scores:use_mi_score \\
                        -batchSize 1000 \\
                        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\  
+                       ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi} \\
+  
      """
 }
 

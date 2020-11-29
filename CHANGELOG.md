@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Template update
 DIAlignR 1.3.5
 Unify FDR scoring steps
+Add params
 
 ## v.1.0.0 - [11.11.20]
 
