@@ -48,6 +48,7 @@
                 },
                 "run_msstats": {
                     "type": "boolean",
+                    "default": "true",
                     "fa_icon": "fas fa-calculator",
                     "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
                 },
