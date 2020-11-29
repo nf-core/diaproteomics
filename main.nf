@@ -609,7 +609,7 @@ process dia_search_output_merging {
      set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
+     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into merged_osw_file_for_global
 
     script:
      """
@@ -622,45 +622,7 @@ process dia_search_output_merging {
 
 
 /*
- * STEP 10 - Pyprophet FDR Scoring
- */
-process false_discovery_rate_estimation {
-    publishDir "${params.outdir}/pyprophet_output"
-
-    input:
-     set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
-
-    output:
-     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into merged_osw_scored_for_pyprophet
-     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_score_plots
-
-    when:
-     params.pyprophet_global_fdr_level=='test'
-
-    script:
-    if (params.pyprophet_classifier=='LDA'){
-     """
-     pyprophet score --in=${merged_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored_merged.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
-                     --threads=${task.cpus} \\
-     """
-    } else {
-     """
-     pyprophet score --in=${merged_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored_merged.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --threads=${task.cpus} \\
-     """
-    }
-}
-
-
-/*
- * STEP 11 - Pyprophet global FDR Scoring
+ * STEP 10 - Pyprophet global FDR Scoring
  */
 process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
@@ -735,13 +697,13 @@ process global_false_discovery_rate_estimation {
 
 
 /*
- * STEP 12 - Pyprophet Export
+ * STEP 11 - Pyprophet Export
  */
 process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
-     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_for_pyprophet.mix(merged_osw_scored_global_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
 
     output:
      set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
@@ -759,7 +721,7 @@ process export_of_scoring_results {
 
 
 /*
- * STEP 13 - Index Chromatogram mzMLs
+ * STEP 12 - Index Chromatogram mzMLs
  */
 process chromatogram_indexing {
 
@@ -788,7 +750,7 @@ osw_for_dialignr
  .set{osw_and_chromatograms_combined_by_condition}
 
 /*
- * STEP 10 - Align DIA Chromatograms using DIAlignR
+ * STEP 13 - Align DIA Chromatograms using DIAlignR
  */
 process chromatogram_alignment {
     publishDir "${params.outdir}/"
@@ -814,7 +776,7 @@ process chromatogram_alignment {
 
 
 /*
- * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
+ * STEP 14 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process reformatting {
 
@@ -853,7 +815,7 @@ process reformatting {
 
 
 /*
- * STEP 12 - Run MSstats
+ * STEP 15 - Run MSstats
  */
 process statistical_post_processing {
    publishDir "${params.outdir}/"
@@ -877,7 +839,7 @@ process statistical_post_processing {
 
 
 /*
- * STEP 13 - Generate plots describing output:
+ * STEP 16 - Generate plots describing output:
  * 1) BarChartProtein/Peptide Counts
  * 2) Pie Chart: Peptide Charge distribution
  * 3) Density Scatter: Library vs run RT deviations for all identifications
