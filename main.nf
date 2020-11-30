@@ -791,7 +791,7 @@ process chromatogram_alignment {
  * STEP 14 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process reformatting {
-   publishDir "${params.outdir}/
+   publishDir "${params.outdir}/"
 
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
