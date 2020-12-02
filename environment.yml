@@ -1,6 +1,6 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-diaproteomics-1.0.0
+name: nf-core-diaproteomics-1.1.0
 channels:
   - conda-forge
   - bioconda
@@ -21,5 +21,18 @@ dependencies:
   - conda-forge::r-ggplot2=3.3.2
   - conda-forge::r-gplots=3.1.0
   - conda-forge::r-reshape2=1.4.4
+  - conda-forge::r-biocmanager=1.30.10
+  - conda-forge::r-remotes=2.2.0
+  - conda-forge::r-signal=0.7_6
+  - conda-forge::r-dbi=1.1.0
+  - conda-forge::r-gridextra=2.3
+  - conda-forge::r-rcpp=1.0.5
+  - conda-forge::r-rlang=0.4.9
+  - conda-forge::r-rsqlite=2.2.1
+  - conda-forge::r-scales=1.1.1
+  - conda-forge::r-reticulate=1.18
+  - conda-forge::r-zoo=1.8_8
+  - conda-forge::r-remotes=2.2.0
   - bioconductor-MSstats=3.20.1
-  - bioconductor-dialignr=1.2.0
+  - bioconductor-mzr=2.24.0
+  - bioconductor-biocparallel=1.24.0

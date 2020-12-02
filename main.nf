@@ -31,7 +31,7 @@ def helpMessage() {
       --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
       --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
       --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
-      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by SampleID Column
+      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by BatchID Column
       --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
@@ -43,9 +43,13 @@ def helpMessage() {
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum number of transitions for assay
       --max_transitions                 Maximum number of transitions for assay
-      --mz_extraction_window            Mass tolerance for transition extraction (ppm)
-      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction (ppm)
+      --mz_extraction_window            Mass tolerance for transition extraction
+      --mz_extraction_window_unit       Unit for mass tolerance ('ppm' or 'Th')
+      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction
+      --mz_extraction_window_ms1_unit   Unit for ms1 mass tolerance ('ppm' or 'Th')
+      --min_upper_edge_dist             Minimal distance to the upper edge of a Swath window to still consider a precursor ('Th')
       --rt_extraction_window            RT window for transition extraction (seconds)
+      --use_ms1                         Whether to extract and use ms1 precursor transitions for scoring
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
       --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
       --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
@@ -109,8 +113,9 @@ if (workflow.profile.contains('awsbatch')) {
 }
 
 // Stage config files
-ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
-ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
+projectDir=workflow.projectDir
+ch_output_docs = file("$projectDir/docs/output.md", checkIfExists: true)
+ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 sample_sheet = file(params.input)
 Channel
  .from( sample_sheet )
@@ -251,6 +256,17 @@ if( !params.generate_pseudo_irts){
 
     input_irts = Channel.empty()
 
+}
+
+// MS1 option
+if (params.use_ms1){
+    ms1_option='-use_ms1_traces'
+    ms1_scoring='-Scoring:Scores:use_ms1_mi'
+    ms1_mi='-Scoring:Scores:use_mi_score'
+   } else {
+    ms1_option=''
+    ms1_scoring=''
+    ms1_mi=''
 }
 
 
@@ -565,16 +581,16 @@ process dia_spectral_library_search {
                        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
                        -mz_extraction_window ${params.mz_extraction_window} \\
                        -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
-                       -mz_extraction_window_unit 'ppm' \\
-                       -mz_extraction_window_ms1_unit 'ppm' \\
+                       -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
+                       -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
+                       -min_upper_edge_dist ${params.min_upper_edge_dist} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\
                        -RTNormalization:NrRTBins ${params.irt_n_bins} \\
                        -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
                        -mz_correction_function quadratic_regression_delta_ppm \\
-                       -use_ms1_traces \\
                        -Scoring:stop_report_after_feature 5 \\
                        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
                        -Scoring:TransitionGroupPicker:peak_integration 'original' \\
@@ -586,14 +602,13 @@ process dia_spectral_library_search {
                        -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
                        -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
                        -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
-                       -Scoring:Scores:use_ms1_mi \\
-                       -Scoring:Scores:use_mi_score \\
                        -batchSize 1000 \\
                        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
-                       ${force_option} \\  
+                       ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi} \\
+  
      """
 }
 
@@ -607,7 +622,7 @@ process dia_search_output_merging {
      set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into (merged_osw_file, merged_osw_file_for_global)
+     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into merged_osw_file_for_global
 
     script:
      """
@@ -620,45 +635,7 @@ process dia_search_output_merging {
 
 
 /*
- * STEP 10 - Pyprophet FDR Scoring
- */
-process false_discovery_rate_estimation {
-    publishDir "${params.outdir}/pyprophet_output"
-
-    input:
-     set val(id), val(Sample), val(Condition), file(merged_osw) from merged_osw_file
-
-    output:
-     set val(id), val(Sample), val(Condition), file("${merged_osw.baseName}_scored_merged.osw") into merged_osw_scored_for_pyprophet
-     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_score_plots
-
-    when:
-     params.pyprophet_global_fdr_level==''
-
-    script:
-    if (params.pyprophet_classifier=='LDA'){
-     """
-     pyprophet score --in=${merged_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored_merged.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
-                     --threads=${task.cpus} \\
-     """
-    } else {
-     """
-     pyprophet score --in=${merged_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${merged_osw.baseName}_scored_merged.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --threads=${task.cpus} \\
-     """
-    }
-}
-
-
-/*
- * STEP 11 - Pyprophet global FDR Scoring
+ * STEP 10 - Pyprophet global FDR Scoring
  */
 process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
@@ -670,9 +647,6 @@ process global_false_discovery_rate_estimation {
      set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
      set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
 
-    when:
-     params.pyprophet_global_fdr_level!=''
-
     script:
     if (params.pyprophet_classifier=='LDA'){
      """
@@ -683,9 +657,25 @@ process global_false_discovery_rate_estimation {
                      --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
                      --threads=${task.cpus} \\
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global_merged.osw \\
-                                                    --context=global \\
+     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
+                       --out=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
      """
     } else {
      """
@@ -695,22 +685,38 @@ process global_false_discovery_rate_estimation {
                      --classifier=${params.pyprophet_classifier} \\
                      --threads=${task.cpus} \\
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_scored.osw \\
-                                                    --out=${scored_osw.baseName}_global_merged.osw \\
-                                                    --context=global \\
+     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
+                       --out=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=run-specific \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=experiment-wide \\
+
+     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
+                       --context=global \\
+
      """
     }
 }
 
 
 /*
- * STEP 12 - Pyprophet Export
+ * STEP 11 - Pyprophet Export
  */
 process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
-     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_for_pyprophet.mix(merged_osw_scored_global_for_pyprophet)
+     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
 
     output:
      set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
@@ -728,7 +734,7 @@ process export_of_scoring_results {
 
 
 /*
- * STEP 13 - Index Chromatogram mzMLs
+ * STEP 12 - Index Chromatogram mzMLs
  */
 process chromatogram_indexing {
 
@@ -757,7 +763,7 @@ osw_for_dialignr
  .set{osw_and_chromatograms_combined_by_condition}
 
 /*
- * STEP 10 - Align DIA Chromatograms using DIAlignR
+ * STEP 13 - Align DIA Chromatograms using DIAlignR
  */
 process chromatogram_alignment {
     publishDir "${params.outdir}/"
@@ -775,22 +781,23 @@ process chromatogram_alignment {
      mkdir mzml 
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${task.cpus}
 
-     mv DIAlignR.csv ${Sample}_peptide_quantities.csv
+     mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """
 }
 
 
 /*
- * STEP 11 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
+ * STEP 14 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process reformatting {
+   publishDir "${params.outdir}/"
 
    input:
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
     file exp_design from input_exp_design.first()
-    set val(id), val(Sample), file(lib_file) from input_lib_used_I.first()
+    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I.first()
 
    output:
     set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
@@ -822,7 +829,7 @@ process reformatting {
 
 
 /*
- * STEP 12 - Run MSstats
+ * STEP 15 - Run MSstats
  */
 process statistical_post_processing {
    publishDir "${params.outdir}/"
@@ -846,7 +853,7 @@ process statistical_post_processing {
 
 
 /*
- * STEP 13 - Generate plots describing output:
+ * STEP 16 - Generate plots describing output:
  * 1) BarChartProtein/Peptide Counts
  * 2) Pie Chart: Peptide Charge distribution
  * 3) Density Scatter: Library vs run RT deviations for all identifications
@@ -945,18 +952,18 @@ workflow.onComplete {
 
     // Render the TXT template
     def engine = new groovy.text.GStringTemplateEngine()
-    def tf = new File("$baseDir/assets/email_template.txt")
+    def tf = new File("$projectDir/assets/email_template.txt")
     def txt_template = engine.createTemplate(tf).make(email_fields)
     def email_txt = txt_template.toString()
 
     // Render the HTML template
-    def hf = new File("$baseDir/assets/email_template.html")
+    def hf = new File("$projectDir/assets/email_template.html")
     def html_template = engine.createTemplate(hf).make(email_fields)
     def email_html = html_template.toString()
 
     // Render the sendmail template
-    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
-    def sf = new File("$baseDir/assets/sendmail_template.txt")
+    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
+    def sf = new File("$projectDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
 
