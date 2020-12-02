@@ -23,3 +23,4 @@ dependencies:
   - conda-forge::r-reshape2=1.4.4
   - bioconductor-MSstats=3.20.1
   - bioconductor-dialignr=1.2.0
+  - bioconductor-biocparallel=1.24.0
