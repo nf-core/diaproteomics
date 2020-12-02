@@ -717,13 +717,12 @@ process export_of_scoring_results {
      set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
 
     output:
-     set val(id), val(Sample), val(Condition), file("*.tsv") into (pyprophet_results, pyprophet_results_viz)
+     set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
      set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
 
     script:
      """
      pyprophet export --in=${global_osw} \\
-                      --format=legacy_merged \\
                       --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
                       --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
                       --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
@@ -794,7 +793,6 @@ process reformatting {
    publishDir "${params.outdir}/"
 
    input:
-    set val(id), val(Sample), val(Condition), file(tsv_file) from pyprophet_results
     set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
     file exp_design from input_exp_design.first()
     set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I.first()
@@ -864,7 +862,7 @@ process output_visualization {
    publishDir "${params.outdir}/"
 
    input:
-    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results_viz, by:1)
+    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
 
    output:
     file "*.pdf" into output_plots
