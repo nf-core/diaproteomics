@@ -47,6 +47,7 @@ def helpMessage() {
       --mz_extraction_window_unit       Unit for mass tolerance ('ppm' or 'Th')
       --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction
       --mz_extraction_window_ms1_unit   Unit for ms1 mass tolerance ('ppm' or 'Th')
+      --min_upper_edge_dist             Minimal distance to the upper edge of a Swath window to still consider a precursor ('Th')
       --rt_extraction_window            RT window for transition extraction (seconds)
       --use_ms1                         Whether to extract and use ms1 precursor transitions for scoring
       --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
@@ -583,6 +584,7 @@ process dia_spectral_library_search {
                        -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
                        -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
                        -rt_extraction_window ${params.rt_extraction_window} \\
+                       -min_upper_edge_dist ${params.min_upper_edge_dist} \\
                        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
                        -RTNormalization:estimateBestPeptides \\
                        -RTNormalization:outlierMethod none \\

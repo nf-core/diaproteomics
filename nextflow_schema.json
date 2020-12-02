@@ -231,6 +231,10 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to use ms1 information for scoring and extraction"
+                },
+                "min_upper_edge_dist": {
+                    "type": "integer",
+                    "description": "Minimal distance to the upper edge of a Swath window to still consider a precursor, in Thomson"
                 }
             }
         },
