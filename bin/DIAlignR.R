@@ -32,4 +32,4 @@ params$level<-p_level
 BiocParallel::register(BiocParallel::MulticoreParam(workers = 5))
 
 # run dialignR with the specified FDR settings
-alignTargetedRuns(dataPath='./', params=params)
+alignTargetedRuns(dataPath='./', params=params, applyFun = BiocParallel::bplapply, oswMerged = TRUE)
