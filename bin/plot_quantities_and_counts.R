@@ -54,7 +54,7 @@ dev.off()
 df_list = list.files(path = "./", pattern = "*quantities.csv")
 
 for (df_name in df_list)
-  df <- read.csv(paste0("./",df_name), sep=',')
+  df <- read.csv(paste0("./",df_name), sep='\t')
 
   df$intensity <- log10(df$intensity)
 
