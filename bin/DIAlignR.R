@@ -15,8 +15,9 @@ p_unalignFDR<-args[8]
 p_alignFDR<-args[9]
 p_queryFDR<-args[10]
 p_level<-args[11]
-parallel<-args[12]
-workers<-args[13]
+xic_filter<-args[12]
+parallel<-args[13]
+workers<-args[14]
 
 #set params for DIAlignR
 params<-paramsDIAlignR()
@@ -28,6 +29,7 @@ params$maxFdrQuery<-p_queryFDR
 params$maxPeptideFdr<-p_queryFDR
 p_level<-toTitleCase(p_level)
 params$level<-p_level
+params$XICfilter<-xic_filter
 
 if (parallel=='parallel'){
 #configure mutlicore execution
