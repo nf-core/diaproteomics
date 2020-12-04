@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [test_with_library, test_global_fdr, test_no_align, test_no_merge, test_with_library_with_decoys, test_with_library_without_irts, test_without_library_with_irts]
+        profile: [test_with_library, test_skip_processing, test_no_align, test_no_merge, test_with_library_with_decoys, test_with_library_without_irts, test_without_library_with_irts]
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2

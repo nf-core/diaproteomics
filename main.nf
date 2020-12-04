@@ -394,7 +394,7 @@ process dda_id_format_conversion {
     script:
      """
      IDFileConverter -in ${dda_id_file} \\
-                     -out ${id}_${Sample}_peptide_ids.idXML
+                     -out ${id}_${Sample}_peptide_ids.idXML \\
                      -threads ${task.cpus} \\
      """
 }
@@ -449,7 +449,7 @@ process assay_generation {
     script:
      """
      TargetedFileConverter -in ${lib_file_na} \\
-                           -out ${lib_file_na.baseName}.tsv
+                           -out ${lib_file_na.baseName}.tsv \\
                            -threads ${task.cpus} \\
 
      OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
@@ -510,7 +510,7 @@ process pseudo_irt_generation {
      select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
 
      TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
-                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp
+                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
                            -threads ${task.cpus} \\
      """
 }
