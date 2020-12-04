@@ -339,9 +339,21 @@
                     "default": 0.05,
                     "description": "DIAlignR query FDR threshold: During the chromatogram alignment ponly eaks satisfying this maximum FDR threshold will be considered as potential matches."
                 },
+                "DIAlignR_XICfilter": {
+                    "type": "string",
+                    "default": "sgolay",
+                    "enum": [
+                        "sgolay",
+                        "boxcar",
+                        "gaussian",
+                        "loess",
+                        "none"
+                    ],
+                    "description": "DIAlignR XICfilter parameter"
+                },
                 "DIAlignR_parallelization": {
                     "type": "boolean",
-                    "default": false,
+                    "default": true,
                     "description": "Whether DIAlignR should be executed using multithreading (may cause errors)"
                 }
             }

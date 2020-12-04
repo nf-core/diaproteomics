@@ -65,6 +65,7 @@ def helpMessage() {
       --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
+      --DIAlignR_XICfilter              DIAlignR XIC filter option ("sgolay","boxcar","gaussian","loess","none")
       --DIAlignR_parallelize            Set flag to enable multithread execution of DIAlignR (may cause errors)
       --run_msstats                     Set flag if MSstats should be run
       --generate_plots                  Set flag if plots should be generated and included in the output
@@ -817,7 +818,7 @@ process chromatogram_alignment {
      mkdir mzml 
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${DIAlignR_parallel} ${task.cpus}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
 
      mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """
