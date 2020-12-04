@@ -11,6 +11,7 @@ Skip DIA processing (if only library generation is needed)
 New DIAlignR parameters (optional parallelization) 
 Multi-thread parameter to multiple steps
 Update tests
+Template update 1.12.1
 
 ## v.1.1.0 - [27.11.20]
 
