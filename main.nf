@@ -39,6 +39,7 @@ def helpMessage() {
       --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
       --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
+      --skip_dia_processing             Set this flag if you only want to generate spectral libraries from DDA data
       --skip_decoy_generation           Use a spectral library that already includes decoy sequences
       --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
       --min_transitions                 Minimum number of transitions for assay
@@ -64,6 +65,7 @@ def helpMessage() {
       --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
+      --DIAlignR_parallelize            Set flag to enable multithread execution of DIAlignR (may cause errors)
       --run_msstats                     Set flag if MSstats should be run
       --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
@@ -269,7 +271,6 @@ if (params.use_ms1){
     ms1_mi=''
 }
 
-
 // Force option
 if (params.force_option){
     force_option='-force'
@@ -277,6 +278,12 @@ if (params.force_option){
     force_option=''
 }
 
+// DIAlignR multithreading
+if (params.DIAlignR_parallelize){
+    DIAlignR_parallel='parallel'
+   } else {
+    DIAlignR_parallel=''
+}
 
 // Header log info
 log.info nfcoreHeader()
@@ -388,6 +395,7 @@ process dda_id_format_conversion {
      """
      IDFileConverter -in ${dda_id_file} \\
                      -out ${id}_${Sample}_peptide_ids.idXML
+                     -threads ${task.cpus} \\
      """
 }
 
@@ -442,11 +450,13 @@ process assay_generation {
      """
      TargetedFileConverter -in ${lib_file_na} \\
                            -out ${lib_file_na.baseName}.tsv
+                           -threads ${task.cpus} \\
 
      OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
                              -min_transitions ${params.min_transitions} \\
                              -max_transitions ${params.max_transitions} \\
                              -out ${id}_${Sample}_assay.tsv \\
+                             -threads ${task.cpus} \\
      """
 }
 
@@ -501,6 +511,7 @@ process pseudo_irt_generation {
 
      TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
                            -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp
+                           -threads ${task.cpus} \\
      """
 }
 
@@ -524,10 +535,12 @@ process decoy_generation {
      """
      TargetedFileConverter -in ${lib_file_nd} \\
                            -out ${lib_file_nd.baseName}.pqp \\
+                           -threads ${task.cpus} \\
 
      OpenSwathDecoyGenerator -in ${lib_file_nd.baseName}.pqp \\
                              -method ${params.decoy_method} \\
                              -out ${lib_file_nd.baseName}_decoy.pqp \\
+                             -threads ${task.cpus} \\
      """
 }
 
@@ -542,6 +555,9 @@ process dia_raw_file_conversion {
 
     output:
      set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
+
+    when:
+     !params.skip_dia_processing
 
     script:
      """
@@ -564,13 +580,18 @@ process dia_spectral_library_search {
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
      set val(id), val(Sample), file(lib_file) into (input_lib_used, input_lib_used_I)
 
+    when:
+     !params.skip_dia_processing
+
     script:
      """
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.pqp \\
+                           -threads ${task.cpus} \\
 
      TargetedFileConverter -in ${irt_file} \\
                            -out ${irt_file.baseName}.pqp \\
+                           -threads ${task.cpus} \\
 
      OpenSwathWorkflow -in ${mzml_file} \\
                        -tr ${lib_file.baseName}.pqp \\
@@ -624,6 +645,9 @@ process dia_search_output_merging {
     output:
      set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into merged_osw_file_for_global
 
+    when:
+     !params.skip_dia_processing
+
     script:
      """
      pyprophet merge --template=${lib_file_template} \\
@@ -646,6 +670,9 @@ process global_false_discovery_rate_estimation {
     output:
      set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
      set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
+
+    when:
+     !params.skip_dia_processing
 
     script:
     if (params.pyprophet_classifier=='LDA'){
@@ -722,6 +749,9 @@ process export_of_scoring_results {
      set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
      set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
 
+    when:
+     !params.skip_dia_processing
+
     script:
      """
      pyprophet export --in=${global_osw} \\
@@ -743,6 +773,9 @@ process chromatogram_indexing {
 
     output:
      set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML") into chromatogram_files_indexed
+
+    when:
+     !params.skip_dia_processing
 
     script:
      """
@@ -774,6 +807,9 @@ process chromatogram_alignment {
     output:
      set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
 
+    when:
+     !params.skip_dia_processing
+
     script:
      """
      mkdir osw
@@ -781,7 +817,7 @@ process chromatogram_alignment {
      mkdir mzml 
      mv *.chrom.mzML mzml/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${task.cpus}
+     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${DIAlignR_parallel} ${task.cpus}
 
      mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """

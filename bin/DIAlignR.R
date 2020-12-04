@@ -15,7 +15,8 @@ p_unalignFDR<-args[8]
 p_alignFDR<-args[9]
 p_queryFDR<-args[10]
 p_level<-args[11]
-workers<-args[12]
+parallel<-args[12]
+workers<-args[13]
 
 #set params for DIAlignR
 params<-paramsDIAlignR()
@@ -28,8 +29,15 @@ params$maxPeptideFdr<-p_queryFDR
 p_level<-toTitleCase(p_level)
 params$level<-p_level
 
+if (parallel=='parallel'){
 #configure mutlicore execution
-BiocParallel::register(BiocParallel::MulticoreParam(workers = 5))
+BiocParallel::register(BiocParallel::MulticoreParam(workers = workers))
 
-# run dialignR with the specified FDR settings
+# run dialignR with the specified FDR settings with paralellization
 alignTargetedRuns(dataPath='./', params=params, applyFun = BiocParallel::bplapply, oswMerged = TRUE)
+
+} else {
+
+# run dialignR with the specified FDR settings without parallelization
+alignTargetedRuns(dataPath='./', params=params, applyFun = BiocParallel::bplapply, oswMerged = TRUE)
+}

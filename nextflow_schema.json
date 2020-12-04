@@ -115,6 +115,10 @@
                     "help_text": "Example file:\nhttps://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
                     "description": "Path to unimod file needs to be provided",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml"
+                },
+                "skip_dia_processing": {
+                    "type": "boolean",
+                    "description": "Set this flag if only you only want to generate spectral libraries from DDA data"
                 }
             }
         },
@@ -334,6 +338,11 @@
                     "type": "number",
                     "default": 0.05,
                     "description": "DIAlignR query FDR threshold: During the chromatogram alignment ponly eaks satisfying this maximum FDR threshold will be considered as potential matches."
+                },
+                "DIAlignR_parallelization": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether DIAlignR should be executed using multithreading (may cause errors)"
                 }
             }
         },
