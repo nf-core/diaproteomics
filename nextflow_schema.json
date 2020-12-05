@@ -239,6 +239,17 @@
                 "min_upper_edge_dist": {
                     "type": "integer",
                     "description": "Minimal distance to the upper edge of a Swath window to still consider a precursor, in Thomson"
+                },
+                "cache_option": {
+                    "type": "string",
+                    "default": "normal",
+                    "description": "Set mode whether to work in memory or to store data as cache first",
+                    "enum": [
+                        "normal",
+                        "cache",
+                        "cacheWorkingInMemory",
+                        "WorkingInMemory"
+                    ]
                 }
             }
         },

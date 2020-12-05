@@ -70,6 +70,7 @@ def helpMessage() {
       --run_msstats                     Set flag if MSstats should be run
       --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
+      --cache_option                    Specify whether to process data in memory or caching it first in case of very large files ("normal","cache","cacheWorkingInMemory","WorkingInMemor")
 
     Other options:
       --outdir [file]                 The output directory where the results will be saved
@@ -586,6 +587,8 @@ process dia_spectral_library_search {
 
     script:
      """
+     mkdir tmp\\
+
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.pqp \\
                            -threads ${task.cpus} \\
@@ -625,6 +628,8 @@ process dia_spectral_library_search {
                        -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
                        -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
                        -batchSize 1000 \\
+                       -readOptions ${params.cache_option} \\
+                       -tempDirectory tmp \\
                        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
                        -enable_uis_scoring \\
                        -Scoring:uis_threshold_sn -1 \\
