@@ -574,6 +574,8 @@ process dia_raw_file_conversion {
 process dia_spectral_library_search {
     publishDir "${params.outdir}/openswathworkflow_output"
 
+    label 'process_medium'
+
     input:
      set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
 
@@ -669,6 +671,8 @@ process dia_search_output_merging {
  */
 process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
+
+    label 'process_low'
 
     input:
      set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
@@ -807,6 +811,8 @@ osw_for_dialignr
 process chromatogram_alignment {
     publishDir "${params.outdir}/"
 
+    label 'process_high_mem'
+
     input:
      set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
@@ -904,6 +910,8 @@ process statistical_post_processing {
  */
 process output_visualization {
    publishDir "${params.outdir}/"
+
+   label 'process_low'
 
    input:
     set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
