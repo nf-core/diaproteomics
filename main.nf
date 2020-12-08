@@ -672,7 +672,7 @@ process dia_search_output_merging {
 process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
-    label 'process_low'
+    label 'process_medium'
 
     input:
      set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
