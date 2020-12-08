@@ -3,6 +3,17 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v.1.2.0 - [04.12.20]
+
+### `Added`
+
+Skip DIA processing (if only library generation is needed)
+New DIAlignR parameters (optional parallelization)
+Multi-thread parameter to multiple steps
+Cache option
+Update tests
+Template update 1.12.1
+
 ## v.1.1.0 - [27.11.20]
 
 ### `Added`

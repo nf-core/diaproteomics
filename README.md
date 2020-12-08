@@ -54,13 +54,18 @@ The nf-core/diaproteomics pipeline comes with documentation about the pipeline: 
 
 nf-core/diaproteomics was originally written by Leon Bichmann.
 
+We thank the following people for their extensive assistance in the development
+of this pipeline:
+
+Shubham Gupta, George Rosenberger, Leon Kuchenbecker, Timo Sachsenberg, Oliver Alka, Julianus Pfeuffer and the nf-core team
+
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 For further information or help, don't hesitate to get in touch on the [Slack `#diaproteomics` channel](https://nfcore.slack.com/channels/diaproteomics) (you can join with [this invite](https://nf-co.re/join/slack)).
 
-## Citation
+## Citations
 
 You can cite the `nf-core` publication as follows:
 
@@ -70,3 +75,7 @@ You can cite the `nf-core` publication as follows:
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
+
+In addition, references of tools and data used in this pipeline are as follows:
+
+<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
