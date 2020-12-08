@@ -882,6 +882,8 @@ process reformatting {
 process statistical_post_processing {
    publishDir "${params.outdir}/"
 
+    label 'process_low'
+
    input:
     set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
 
