@@ -118,7 +118,7 @@
                 },
                 "skip_dia_processing": {
                     "type": "boolean",
-                    "description": "Set this flag if only you only want to generate spectral libraries from DDA data"
+                    "description": "Set this flag if you only want to generate spectral libraries from DDA data"
                 }
             }
         },
