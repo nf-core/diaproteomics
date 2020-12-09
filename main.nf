@@ -216,7 +216,7 @@ if( params.generate_spectral_library) {
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .set {input_lib_nd; check_decoy; check_decoy_2}
 
-    check_decoy_n2 = check_decoy.tolist().size().val
+    check_decoy_n2 = check_decoy.toList().size().val
     check_decoy_n = check_decoy.map{it[1]}.unique().toList().size().val
     if ((check_decoy_n > 1) & (check_decoy_n2 != check_decoy_n)) {
         print('You specified multiple spectral libraries including decoys for one batch \n')
@@ -251,7 +251,7 @@ if( params.generate_spectral_library) {
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
         .into {input_lib; input_lib_1; input_lib_n; input_lib_n2 }
 
-    check_lib_n2 = input_lib_n2.tolist().size().val
+    check_lib_n2 = input_lib_n2.toList().size().val
     check_lib_n = input_lib.map{it[1]}.unique().toList().size().val
     if ((check_lib_n > 1) & (check_lib_n2 != check_lib_n) & (!params.merge_libraries)) {
         print('You specified multiple spectral libraries for one batch \n')
