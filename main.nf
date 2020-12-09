@@ -214,7 +214,7 @@ if( params.generate_spectral_library) {
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Sample}", "${col.BatchID}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
-        .set {input_lib_nd; check_decoy; check_decoy_2}
+        .into {input_lib_nd; check_decoy; check_decoy_2}
 
     check_decoy_n2 = check_decoy_2.toList().size().val
     check_decoy_n = check_decoy.map{it[1]}.unique().toList().size().val
