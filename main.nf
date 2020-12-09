@@ -285,7 +285,7 @@ if( !params.generate_pseudo_irts){
        .splitCsv(header: true, sep:'\t')
        .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1])]}
-       .set {input_irts; input_irts_check; input_irts_check_2}
+       .into {input_irts; input_irts_check; input_irts_check_2}
 
     check_irts_n = input_irts_check.toList().size().val
     check_irts_n2 = input_irts_check_2.map{it[0]}.unique().toList().size().val
