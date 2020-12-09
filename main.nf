@@ -132,7 +132,7 @@ Channel.from( sample_sheet )
        .splitCsv(header: true, sep:'\t')
        .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
-       .set {input_branch}
+       .set {input_branch;check_dia}
 
 
 // Check file extension
@@ -148,7 +148,7 @@ input_branch.branch {
 }.set{input_dia_ms_files}
 
 input_dia_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
-
+check_dia_n = check_dia.map{it[1]}.unique().toList().size().val
 
 // Validate inputs
 sample_sheet = file(params.input)
@@ -182,6 +182,11 @@ if( params.generate_spectral_library) {
         exit 1
     }
 
+    if ((check_lib_n != check_dia_n)) {
+        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        exit 1
+    }
+
     input_dda.branch {
         raw: hasExtension(it[2], 'raw')
         mzml: hasExtension(it[2], 'mzML')
@@ -209,7 +214,20 @@ if( params.generate_spectral_library) {
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Sample}", "${col.BatchID}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
-        .set {input_lib_nd}
+        .set {input_lib_nd; check_decoy; check_decoy_2}
+
+    check_decoy_n2 = check_decoy.tolist().size().val
+    check_decoy_n = check_decoy.map{it[1]}.unique().toList().size().val
+    if ((check_decoy_n > 1) & (check_decoy_n2 != check_decoy_n)) {
+        print('You specified multiple spectral libraries including decoys for one batch \n')
+        print('This is not possible yet, merging and aligning would be possible without decoys\n')
+        exit 1
+    }
+
+    if ((check_decoy_n != check_dia_n)) {
+        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        exit 1
+    }
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
@@ -231,7 +249,20 @@ if( params.generate_spectral_library) {
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Sample}", "${col.BatchID}", file("${col.Library_Filepath}", checkifExists: true))}
         .flatMap{it -> [tuple(it[0],it[1],it[2])]}
-        .into {input_lib; input_lib_1 }
+        .into {input_lib; input_lib_1; input_lib_n; input_lib_n2 }
+
+    check_lib_n2 = input_lib_n2.tolist().size().val
+    check_lib_n = input_lib.map{it[1]}.unique().toList().size().val
+    if ((check_lib_n > 1) & (check_lib_n2 != check_lib_n) & (!params.merge_libraries)) {
+        print('You specified multiple spectral libraries for one batch \n')
+        print('Set --merge_libraries and possibly --align_libraries to align them in the same RT space \n')
+        exit 1
+    }
+
+    if ((check_lib_n != check_dia_n)) {
+        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        exit 1
+    }
 
     input_lib_nd = Channel.empty()
     input_lib_nd_1 = Channel.empty()
@@ -254,7 +285,20 @@ if( !params.generate_pseudo_irts){
        .splitCsv(header: true, sep:'\t')
        .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1])]}
-       .set {input_irts}
+       .set {input_irts; input_irts_check; input_irts_check_2}
+
+    check_irts_n = input_irts_check.toList().size().val
+    check_irts_n2 = input_irts_check_2.map{it[0]}.unique().toList().size().val
+    if ((check_irts_n > 1) & (check_irts_n != check_irts_n2)) {
+        print('You specified multiple DDA files to generate spectral libraries, but library merging is not set \n')
+        print('Set --merge_libraries and possibly --align_libraries to align them in the same RT space \n')
+        exit 1
+    }
+
+    if ((check_irts_n != check_dia_n)) {
+        print('The number of batches in the sample input do not match the number of batches of the irt input \n')
+        exit 1
+    }
 
 } else {
 
