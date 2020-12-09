@@ -132,7 +132,7 @@ Channel.from( sample_sheet )
        .splitCsv(header: true, sep:'\t')
        .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
        .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
-       .set {input_branch;check_dia}
+       .into {input_branch;check_dia}
 
 
 // Check file extension
@@ -182,7 +182,7 @@ if( params.generate_spectral_library) {
         exit 1
     }
 
-    if ((check_lib_n != check_dia_n)) {
+    if ((check_n_sample != check_dia_n)) {
         print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
         exit 1
     }
@@ -295,7 +295,7 @@ if( !params.generate_pseudo_irts){
         exit 1
     }
 
-    if ((check_irts_n != check_dia_n)) {
+    if ((check_irts_n2 != check_dia_n)) {
         print('The number of batches in the sample input do not match the number of batches of the irt input \n')
         exit 1
     }
