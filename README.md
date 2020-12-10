@@ -73,9 +73,8 @@ If you apply DIAproteomics on your data please cite:
 >
 > Leon Bichmann, Shubham Gupta, George Rosenberger, Leon Kuchenbecker, Timo Sachsenberg, Oliver Alka, Julianus Pfeuffer, Oliver Kohlbacher & Hannes Rost.
 >
-> bioRxiv: https://www.biorxiv.org/content/10.1101/2020.12.08.415844v1
+> bioRxiv: "https://www.biorxiv.org/content/10.1101/2020.12.08.415844v1"
 >
-
 
 You can cite the `nf-core` publication as follows:
 
