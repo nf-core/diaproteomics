@@ -260,7 +260,7 @@ if( params.generate_spectral_library) {
     }
 
     if ((check_lib_n != check_dia_n)) {
-        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        print('The number of batches in the sample input does not match the number of batches of the spectral library input \n')
         exit 1
     }
 
