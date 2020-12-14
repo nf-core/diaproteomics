@@ -626,7 +626,7 @@ process dia_spectral_library_search {
     output:
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
-     set val(id), val(Sample), file(lib_file) into (input_lib_used, input_lib_used_I)
+     set val(id), val(Sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I)
 
     when:
      !params.skip_dia_processing
