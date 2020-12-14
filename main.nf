@@ -183,7 +183,7 @@ if( params.generate_spectral_library) {
     }
 
     if ((check_n_sample != check_dia_n)) {
-        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        print('The number of batches in the sample input does not match the number of batches of the spectral library input \n')
         exit 1
     }
 
@@ -260,7 +260,7 @@ if( params.generate_spectral_library) {
     }
 
     if ((check_lib_n != check_dia_n)) {
-        print('The number of batches in the sample input do not match the number of batches of the spectral library input \n')
+        print('The number of batches in the sample input does not match the number of batches of the spectral library input \n')
         exit 1
     }
 
@@ -296,7 +296,7 @@ if( !params.generate_pseudo_irts){
     }
 
     if ((check_irts_n2 != check_dia_n)) {
-        print('The number of batches in the sample input do not match the number of batches of the irt input \n')
+        print('The number of batches in the sample input does not match the number of batches of the irt input \n')
         exit 1
     }
 
