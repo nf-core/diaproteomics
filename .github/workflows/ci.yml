@@ -34,13 +34,13 @@ jobs:
 
       - name: Build new docker image
         if: env.MATCHED_FILES
-        run: docker build --no-cache . -t nfcore/diaproteomics:1.1.0
+        run: docker build --no-cache . -t nfcore/diaproteomics:1.2.0
 
       - name: Pull docker image
         if: ${{ !env.MATCHED_FILES }}
         run: |
           docker pull nfcore/diaproteomics:dev
-          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.1.0
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.2.0
 
       - name: Install Nextflow
         env:
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [test_with_library, test_global_fdr, test_no_align, test_no_merge, test_with_library_with_decoys, test_with_library_without_irts, test_without_library_with_irts]
+        profile: [test_with_library, test_skip_processing, test_no_align, test_no_merge, test_with_library_with_decoys, test_with_library_without_irts, test_without_library_with_irts]
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -75,13 +75,13 @@ jobs:
 
       - name: Build new docker image
         if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/diaproteomics:1.1.0
+        run: docker build --no-cache . -t nfcore/diaproteomics:1.2.0
 
       - name: Pull docker image
         if: ${{ !env.GIT_DIFF }}
         run: |
           docker pull nfcore/diaproteomics:dev
-          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.1.0
+          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:1.2.0
 
       - name: Install Nextflow
         run: |
