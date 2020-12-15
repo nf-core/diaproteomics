@@ -66,7 +66,7 @@ def helpMessage() {
       --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
       --DIAlignR_query_FDR              DIAlignR Query FDR threshold
       --DIAlignR_XICfilter              DIAlignR XIC filter option ("sgolay","boxcar","gaussian","loess","none")
-      --DIAlignR_parallelize            Set flag to enable multithread execution of DIAlignR (may cause errors)
+      --DIAlignR_parallelization            Set flag to enable multithread execution of DIAlignR (may cause errors)
       --run_msstats                     Set flag if MSstats should be run
       --generate_plots                  Set flag if plots should be generated and included in the output
       --force_option                    Force the analysis despite severe warnings
@@ -325,7 +325,7 @@ if (params.force_option){
 }
 
 // DIAlignR multithreading
-if (params.DIAlignR_parallelize){
+if (params.DIAlignR_parallelization){
     DIAlignR_parallel='parallel'
    } else {
     DIAlignR_parallel=''

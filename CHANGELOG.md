@@ -12,6 +12,7 @@ New DIAlignR parameters (optional parallelization)
 Multi-thread parameter to multiple steps
 Cache option
 Update tests
+Fixed TraML libray input
 Template update 1.12.1
 
 ## v.1.1.0 - [27.11.20]
