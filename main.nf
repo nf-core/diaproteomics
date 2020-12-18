@@ -932,7 +932,7 @@ process statistical_post_processing {
     set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
 
    output:
-    file "*.pdf" // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
+    file "*.pdf" optional true // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
     file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
     file "*.log" // logfile of msstats run
 
