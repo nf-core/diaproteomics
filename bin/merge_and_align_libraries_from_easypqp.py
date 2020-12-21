@@ -131,7 +131,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
         aligned = align_libs(reference, other, rsq_threshold)
         concat = pd.concat([reference,aligned])
-        regrouped = concat.iloc[concat[cols].drop_duplicates().index]
+        regrouped = concat  #.iloc[concat[cols].drop_duplicates().index]
 
         outfile = './' + path[0].split('/')[-1].split('.tsv')[0] + '_' + path[1].split('/')[-1]
         regrouped.to_csv(outfile, index=False, sep='\t')
@@ -145,7 +145,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
 
         aligned = align_libs(reference, other, rsq_threshold)
         concat = pd.concat([reference,aligned])
-        regrouped = concat.iloc[concat[cols].drop_duplicates().index]
+        regrouped = concat  #.iloc[concat[cols].drop_duplicates().index]
 
         outfile = './' + outfiles[''.join(path[:len(path) - 1])].split('/')[-1].split('.tsv')[0] + '_' + path[-1].split('/')[-1]
         regrouped.to_csv(outfile, index=False, sep='\t')
@@ -159,8 +159,8 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
 
     concat = pd.concat(outfile_list)
     concat = concat.drop('TransitionId',axis='columns')
-    regrouped = concat.iloc[concat[cols].drop_duplicates().index]
-    combined_lib = regrouped.drop_duplicates()
+    regrouped = concat  #.iloc[concat[cols].drop_duplicates().index]
+    combined_lib = regrouped  #.drop_duplicates()
 
     #assign new transition ids
     combined_lib['TransitionId']=range(0,combined_lib.shape[0])
