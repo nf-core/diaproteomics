@@ -130,6 +130,8 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
 
         cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
         aligned = align_libs(reference, other, rsq_threshold)
+        seqs_ref=reference['ModifiedPeptideSequence'].values.tolist()
+        aligned = aligned[~aligned['ModifiedPeptideSequence'].isin(seqs_ref)]
         concat = pd.concat([reference,aligned])
         regrouped = concat  #.iloc[concat[cols].drop_duplicates().index]
 
@@ -144,6 +146,8 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         other = pd.read_csv(path[-1], sep='\t')
 
         aligned = align_libs(reference, other, rsq_threshold)
+        seqs_ref=reference['ModifiedPeptideSequence'].values.tolist()
+        aligned = aligned[~aligned['ModifiedPeptideSequence'].isin(seqs_ref)]
         concat = pd.concat([reference,aligned])
         regrouped = concat  #.iloc[concat[cols].drop_duplicates().index]
 
@@ -176,12 +180,15 @@ def concatenate_without_alignment(files):
        other_df = pd.read_csv(other, sep='\t')
 
        cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
+
+       seqs_ref=reference['ModifiedPeptideSequence'].values.tolist()
+       other_df = other_df[~other_df['ModifiedPeptideSequence'].isin(seqs_ref)]
        concat = pd.concat([reference,other_df])
-       regrouped = concat.iloc[concat[cols].drop_duplicates().index]
+       regrouped = concat #.iloc[concat[cols].drop_duplicates().index]
 
        reference = regrouped
 
-    combined_lib = regrouped.drop_duplicates()
+    combined_lib = regrouped #.drop_duplicates()
     combined_lib['TransitionId']=range(0,combined_lib.shape[0])
 
     outfile = './' + files[0].split('/')[-1].split('.tsv')[0] + '_concatenated_lib.tsv'
