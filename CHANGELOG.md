@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Skip DIA processing (if only library generation is needed)
 New DIAlignR parameters (optional parallelization)
-Update DIAlignR to 1.7.5
+Update DIAlignR to 1.3.5@b0698a5
 Multi-thread parameter to multiple steps
 Cache option
 Update tests
