@@ -24,13 +24,25 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt):
 
     # select irts based on dda Intensity
     df_pre = pd.read_csv(lib, sep='\t')
+
     # sum up individual transition intensities
     df_sum = df_pre.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['LibraryIntensity'].apply(sum).reset_index()
     df_merged = df_pre.merge(df_sum, on=['ModifiedPeptideSequence', 'PrecursorCharge'])[['ModifiedPeptideSequence', 'NormalizedRetentionTime', 'LibraryIntensity_y']]
 
-    rt_sample_space = np.linspace(min_rt, max_rt, n_irts)
+    # select from 1st and 4th quantile of all peptide RTs to avoid overfitting to the center of the RT distribution
+    #rt_sample_space = np.linspace(min_rt, max_rt, n_irts)
+    rt_sample_space = np.linspace(min_rt, int(round(np.quantile(df_merged['NormalizedRetentionTime'], q=0.25))), int(round(n_irts/2)))
+    rt_sample_space_2 = np.linspace(int(round(np.quantile(df_merged['NormalizedRetentionTime'], q=0.75))), max_rt, int(round(n_irts/2)))
+
     rt_sub_df = []
     for rt in rt_sample_space:
+        try:
+            best_pep = df_merged[(df_pre['NormalizedRetentionTime'] < rt + 0.5) & (df_merged['NormalizedRetentionTime'] > rt)].sort_values('LibraryIntensity_y', ascending=False).iloc[0]['ModifiedPeptideSequence']
+            rt_sub_df.append(best_pep)
+        except:
+            pass
+
+    for rt in rt_sample_space_2:
         try:
             best_pep = df_merged[(df_pre['NormalizedRetentionTime'] < rt + 0.5) & (df_merged['NormalizedRetentionTime'] > rt)].sort_values('LibraryIntensity_y', ascending=False).iloc[0]['ModifiedPeptideSequence']
             rt_sub_df.append(best_pep)
