@@ -106,7 +106,7 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         print('It was not possible to align all libraries into the same RT space, since they don\'t share enough peptides between all runs!')
         print('All libraries must pairwise connect into a complete graph by shared peptides.')
         print('There might be one outlier sample that has no overlap with the others or the samples are too distant.')
-        print('You can try lowering the parameter --overlap_for_merging, but be aware that this is the least number of peptides used for linear RT alignment!')
+        print('You can try lowering the parameter --min_overlap_for_merging, but be aware that this is the least number of peptides used for linear RT alignment!')
         sys.exit()
 
 
