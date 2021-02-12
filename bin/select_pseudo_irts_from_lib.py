@@ -114,8 +114,9 @@ def main():
     n_irts=args.n_irts
     min_rt=args.min_rt
     max_rt=args.max_rt
+    quantile=args.quantiles
 
-    df_sub=get_pseudo_irts(lib, n_irts, min_rt, max_rt)
+    df_sub=get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile)
     df_sub.to_csv(args.output, sep='\t')
 
 
