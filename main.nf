@@ -35,6 +35,7 @@ def helpMessage() {
       --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
+      --irts_from_outer_quantiles       Set flag if pseudo irts should be selected from 1st and 4th RT quantile only.
       --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
       --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
@@ -153,6 +154,11 @@ check_dia_n = check_dia.map{it[1]}.unique().toList().size().val
 // Validate inputs
 sample_sheet = file(params.input)
 
+if( params.irts_from_outer_quantiles){
+    irts_from_outer_quantiles = 'true'
+} else {
+    irts_from_outer_quantiles = 'false'
+}
 
 if( params.align_libraries) {
     align_libraries = 'true'
@@ -553,7 +559,7 @@ process pseudo_irt_generation {
 
     script:
      """
-     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --quantiles ${irts_from_outer_quantiles} --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
 
      TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
                            -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
