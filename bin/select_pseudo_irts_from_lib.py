@@ -29,18 +29,14 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
     df_sum = df_pre.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['LibraryIntensity'].apply(sum).reset_index()
     df_merged = df_pre.merge(df_sum, on=['ModifiedPeptideSequence', 'PrecursorCharge'])[['ModifiedPeptideSequence', 'NormalizedRetentionTime', 'LibraryIntensity_y']]
 
-    if(quantile=='false'){
-
+    if quantile=='false':
         # select irts from all RT quantiles
         rt_sample_space = np.linspace(min_rt, max_rt, n_irts)
 
-    } else {
-
+    else:
         # select from 1st and 4th quantile of all peptide RTs to avoid overfitting to the center of the RT distribution
         rt_sample_space = np.linspace(min_rt, int(round(np.quantile(df_merged['NormalizedRetentionTime'], q=0.25))), int(round(n_irts/2)))
         rt_sample_space_2 = np.linspace(int(round(np.quantile(df_merged['NormalizedRetentionTime'], q=0.75))), max_rt, int(round(n_irts/2)))
-
-    }
 
     rt_sub_df = []
     for rt in rt_sample_space:
@@ -50,7 +46,7 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
         except:
             pass
 
-    if(quantile=='true'){
+    if quantile=='true':
 
         for rt in rt_sample_space_2:
             try:
@@ -59,7 +55,6 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
             except:
                 pass
 
-    }
 
     irts = list(set(rt_sub_df))
 
