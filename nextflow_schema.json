@@ -137,6 +137,10 @@
                     "type": "integer",
                     "default": 250,
                     "description": "Number of pseudo irts selected from dda identifications based on the best q-value"
+                },
+                "irts_from_outer_quantiles": {
+                    "type": "boolean",
+                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only"
                 }
             }
         },
