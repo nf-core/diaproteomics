@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
-Select irts from 1st and 4th RT quantile only to avoid overfitting to the center of the RT distribution
+Fix RT alignment of libraries by swapping x and y coordinates of linear regression
+Option to select irts from 1st and 4th RT quantile only to avoid overfitting to the center of the RT distribution
 Skip DIA processing (if only library generation is needed)
 New DIAlignR parameters (optional parallelization)
 Update DIAlignR to 1.3.5@b0698a5
