@@ -51,7 +51,7 @@ def align_libs(reference, other, rsq_threshold):
 
     # calibrate rt alignment
     df_rt_merged = pd.merge(df_rt, df_rt_II, on='Key')
-    slope, intercept, r_value, p_value, std_err = stats.linregress(df_rt_merged['NormalizedRetentionTime_x'], df_rt_merged['NormalizedRetentionTime_y'])
+    slope, intercept, r_value, p_value, std_err = stats.linregress(df_rt_merged['NormalizedRetentionTime_y'], df_rt_merged['NormalizedRetentionTime_x'])
     (a, b) = (slope, intercept)
     rsq = r_value ** 2
 
