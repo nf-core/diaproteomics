@@ -14,6 +14,7 @@ New DIAlignR parameters (optional parallelization)
 Update DIAlignR to 1.3.5@b0698a5
 Multi-thread parameter to multiple steps
 Cache option
+Chromatogram indexing at low memory usage
 Update tests
 Fixed TraML libray input
 Template update 1.12.1

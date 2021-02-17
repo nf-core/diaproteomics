@@ -840,6 +840,7 @@ process chromatogram_indexing {
     script:
      """
      FileConverter -in ${chrom_file_noindex} \\
+                   -process_lowmemory \\
                    -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
      """
 }
