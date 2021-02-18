@@ -41,5 +41,5 @@ alignTargetedRuns(dataPath='./', params=params, applyFun = BiocParallel::bplappl
 } else {
 
 # run dialignR with the specified FDR settings without parallelization
-alignTargetedRuns(dataPath='./', params=params, applyFun = BiocParallel::bplapply, oswMerged = TRUE)
+alignTargetedRuns(dataPath='./', params=params, oswMerged = TRUE)
 }

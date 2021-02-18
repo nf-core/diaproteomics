@@ -35,6 +35,7 @@ def helpMessage() {
       --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
       --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
       --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
+      --irts_from_outer_quantiles       Set flag if pseudo irts should be selected from 1st and 4th RT quantile only.
       --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
       --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
       --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
@@ -153,11 +154,16 @@ check_dia_n = check_dia.map{it[1]}.unique().toList().size().val
 // Validate inputs
 sample_sheet = file(params.input)
 
+if( params.irts_from_outer_quantiles){
+    quant_flag = '--quantiles True'
+} else {
+    quant_flag = ''
+}
 
 if( params.align_libraries) {
-    align_libraries = 'true'
+    align_flag = '--align True'
 } else {
-    align_libraries = 'false'
+    align_flag = ''
 }
 
 /*
@@ -531,7 +537,7 @@ process library_merging_and_alignment {
 
     script:
      """
-     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
+     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv ${align_flag}\\
      """
 }
 
@@ -553,7 +559,7 @@ process pseudo_irt_generation {
 
     script:
      """
-     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv ${quant_flag}\\
 
      TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
                            -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
@@ -834,6 +840,7 @@ process chromatogram_indexing {
     script:
      """
      FileConverter -in ${chrom_file_noindex} \\
+                   -process_lowmemory \\
                    -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
      """
 }
@@ -932,7 +939,7 @@ process statistical_post_processing {
     set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
 
    output:
-    file "*.pdf" // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
+    file "*.pdf" optional true // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
     file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
     file "*.log" // logfile of msstats run
 

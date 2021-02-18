@@ -49,9 +49,13 @@ def align_libs(reference, other, rsq_threshold):
     df_rt_II['Key'] = df_rt_II['ModifiedPeptideSequence'] + df_rt_II['PrecursorCharge'].apply(str)
     df_rt_II = df_rt_II[['Key', 'NormalizedRetentionTime']]
 
-    # calibrate rt alignment
+    # inner join of reference and other library on common peptides to compare their RTs
     df_rt_merged = pd.merge(df_rt, df_rt_II, on='Key')
-    slope, intercept, r_value, p_value, std_err = stats.linregress(df_rt_merged['NormalizedRetentionTime_x'], df_rt_merged['NormalizedRetentionTime_y'])
+    reference_rts = df_rt_merged['NormalizedRetentionTime_x']
+    other_rts = df_rt_merged['NormalizedRetentionTime_y']
+
+    # calibrate rt alignment
+    slope, intercept, r_value, p_value, std_err = stats.linregress(other_rts, reference_rts)
     (a, b) = (slope, intercept)
     rsq = r_value ** 2
 
@@ -59,7 +63,7 @@ def align_libs(reference, other, rsq_threshold):
     if rsq < rsq_threshold:
         raise Exception("Error: R-squared " + str(rsq) + " is below the threshold of " + str(rsq_threshold) + ".")
 
-    # apply rt transformation
+    # apply rt transformation to align the other library to the reference
     for i, row in df_II.iterrows():
         rt = row["NormalizedRetentionTime"]
         new_rt = scipy.polyval([a, b], rt)
@@ -106,12 +110,12 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         print('It was not possible to align all libraries into the same RT space, since they don\'t share enough peptides between all runs!')
         print('All libraries must pairwise connect into a complete graph by shared peptides.')
         print('There might be one outlier sample that has no overlap with the others or the samples are too distant.')
-        print('You can try lowering the parameter --overlap_for_merging, but be aware that this is the least number of peptides used for linear RT alignment!')
+        print('You can try lowering the parameter --min_overlap_for_merging, but be aware that this is the least number of peptides used for linear RT alignment!')
         sys.exit()
 
 
     #collect shortest paths from center to all nodes in MST
-    short_paths=[]
+    short_paths = []
     for node_combi in sorted(product([source_file], T.nodes())):
 
         if node_combi[0] != node_combi[1]:
@@ -128,13 +132,18 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         reference = pd.read_csv(path[0], sep='\t')
         other = pd.read_csv(path[1], sep='\t')
 
-        cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
+        cols = [c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
+
+        # align references and corresponding libraries
         aligned = align_libs(reference, other, rsq_threshold)
+
+        # concatenate reference and aligned library by adding only additional peptide sequences from the aligned library
+        seqs_ref = reference['ModifiedPeptideSequence'].values.tolist()
+        aligned = aligned[~aligned['ModifiedPeptideSequence'].isin(seqs_ref)]
         concat = pd.concat([reference,aligned])
-        regrouped = concat.iloc[concat[cols].drop_duplicates().index]
 
         outfile = './' + path[0].split('/')[-1].split('.tsv')[0] + '_' + path[1].split('/')[-1]
-        regrouped.to_csv(outfile, index=False, sep='\t')
+        concat.to_csv(outfile, index=False, sep='\t')
         outfiles[''.join(path)] = outfile
 
     #continue with all paths of length longer two
@@ -143,27 +152,30 @@ def combine_libs_by_edges_of_MST(T, rsq_threshold):
         reference = pd.read_csv(outfiles[''.join(path[:len(path) - 1])], sep='\t')
         other = pd.read_csv(path[-1], sep='\t')
 
+        # align references and corresponding libraries
         aligned = align_libs(reference, other, rsq_threshold)
+
+        # concatenate reference and aligned library by adding only additional peptide sequences from the aligned library
+        seqs_ref = reference['ModifiedPeptideSequence'].values.tolist()
+        aligned = aligned[~aligned['ModifiedPeptideSequence'].isin(seqs_ref)]
         concat = pd.concat([reference,aligned])
-        regrouped = concat.iloc[concat[cols].drop_duplicates().index]
 
         outfile = './' + outfiles[''.join(path[:len(path) - 1])].split('/')[-1].split('.tsv')[0] + '_' + path[-1].split('/')[-1]
-        regrouped.to_csv(outfile, index=False, sep='\t')
+        concat.to_csv(outfile, index=False, sep='\t')
         outfiles[''.join(path)] = outfile
 
     #group all aligned merged libs and drop duplicates
     outfile_list=[]
     for o in outfiles.values():
-        df_out=pd.read_csv(o, sep='\t')
+        df_out = pd.read_csv(o, sep='\t')
         outfile_list.append(df_out)
 
     concat = pd.concat(outfile_list)
     concat = concat.drop('TransitionId',axis='columns')
-    regrouped = concat.iloc[concat[cols].drop_duplicates().index]
-    combined_lib = regrouped.drop_duplicates()
 
     #assign new transition ids
-    combined_lib['TransitionId']=range(0,combined_lib.shape[0])
+    combined_lib = concat
+    combined_lib['TransitionId'] = range(0,combined_lib.shape[0])
 
     return combined_lib
 
@@ -176,13 +188,17 @@ def concatenate_without_alignment(files):
        other_df = pd.read_csv(other, sep='\t')
 
        cols=[c for c in reference.columns if not 'NormalizedRetentionTime' in c and not 'TransitionId' in c]
+
+       # concatenate reference and aligned library by adding only additional peptide sequences from the aligned library
+       seqs_ref = reference['ModifiedPeptideSequence'].values.tolist()
+       other_df = other_df[~other_df['ModifiedPeptideSequence'].isin(seqs_ref)]
        concat = pd.concat([reference,other_df])
-       regrouped = concat.iloc[concat[cols].drop_duplicates().index]
 
-       reference = regrouped
+       # update reference in each iteration
+       reference = concat
 
-    combined_lib = regrouped.drop_duplicates()
-    combined_lib['TransitionId']=range(0,combined_lib.shape[0])
+    combined_lib = concat 
+    combined_lib['TransitionId'] = range(0,combined_lib.shape[0])
 
     outfile = './' + files[0].split('/')[-1].split('.tsv')[0] + '_concatenated_lib.tsv'
     combined_lib.to_csv(outfile, index=False, sep='\t')
@@ -215,7 +231,7 @@ def main():
 
     model.add_argument(
         '-a', '--align',
-        type=str,
+        type=bool,
         help='Whether an alignment should be carried out or just the merging of multiple libraries'
     )
 
@@ -238,7 +254,7 @@ def main():
     min_overlap=args.min_overlap
     align=args.align
 
-    if align=='true':
+    if align:
        if len(libs)>1:
           MST=compute_MST(libs, min_overlap)
           nx.draw(MST, with_labels=True, node_size=1, font_size=5, alpha=0.4)

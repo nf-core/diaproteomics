@@ -3,12 +3,22 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v.1.2.1 - [18.02.21]
+
+### `Added`
+
+Fix RT alignment of libraries by swapping x and y coordinates of linear regression
+Option to select irts from 1st and 4th RT quantile only to avoid overfitting to the center of the RT distribution
+Update DIAlignR to 1.3.5@b0698a5
+Chromatogram indexing at low memory usage
+
 ## v.1.2.0 - [04.12.20]
 
 ### `Added`
 
 Skip DIA processing (if only library generation is needed)
 New DIAlignR parameters (optional parallelization)
+Update DIAlignR to 1.3.5@52eaf4e
 Multi-thread parameter to multiple steps
 Cache option
 Update tests
