@@ -524,7 +524,7 @@ process library_merging_and_alignment {
      params.merge_libraries
 
     script:
-     align_flag = params.align_libraries ? "--align" : ""
+     align_flag = params.align_libraries ? "--align True" : "--align False"
      """
      merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv ${align_flag}\\
      """
@@ -547,7 +547,7 @@ process pseudo_irt_generation {
      params.generate_pseudo_irts
 
     script:
-     quant_flag = params.irts_from_outer_quantiles ? "--quantiles" : ""
+     quant_flag = params.irts_from_outer_quantiles ? "--quantiles True" : "--quantiles False"
      """
      select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv ${quant_flag}\\
 
