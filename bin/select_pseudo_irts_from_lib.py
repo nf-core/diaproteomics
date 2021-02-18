@@ -29,7 +29,7 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantiles):
     df_sum = df_pre.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['LibraryIntensity'].apply(sum).reset_index()
     df_merged = df_pre.merge(df_sum, on=['ModifiedPeptideSequence', 'PrecursorCharge'])[['ModifiedPeptideSequence', 'NormalizedRetentionTime', 'LibraryIntensity_y']]
 
-    if !quantiles:
+    if not quantiles:
         # select irts from all RT quantiles
         rt_sample_space = np.linspace(min_rt, max_rt, n_irts)
 
