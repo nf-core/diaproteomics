@@ -20,7 +20,7 @@ __author__      = "Leon Bichmann"
 
 
 # Select iRT standards based on the library intensity spanning the RT range
-def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
+def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantiles):
 
     # select irts based on dda Intensity
     df_pre = pd.read_csv(lib, sep='\t')
@@ -29,7 +29,7 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
     df_sum = df_pre.groupby(['ModifiedPeptideSequence', 'PrecursorCharge'])['LibraryIntensity'].apply(sum).reset_index()
     df_merged = df_pre.merge(df_sum, on=['ModifiedPeptideSequence', 'PrecursorCharge'])[['ModifiedPeptideSequence', 'NormalizedRetentionTime', 'LibraryIntensity_y']]
 
-    if quantile=='false':
+    if not quantiles:
         # select irts from all RT quantiles
         rt_sample_space = np.linspace(min_rt, max_rt, n_irts)
 
@@ -46,7 +46,7 @@ def get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile):
         except:
             pass
 
-    if quantile=='true':
+    if quantiles:
 
         for rt in rt_sample_space_2:
             try:
@@ -92,7 +92,7 @@ def main():
 
     model.add_argument(
         '-q', '--quantiles',
-        type=str,
+        type=bool,
         help='whether to use only the 1st and 4th RT quantile for irt selection'
     )
 
@@ -109,9 +109,9 @@ def main():
     n_irts=args.n_irts
     min_rt=args.min_rt
     max_rt=args.max_rt
-    quantile=args.quantiles
+    quantiles=args.quantiles
 
-    df_sub=get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantile)
+    df_sub=get_pseudo_irts(lib, n_irts, min_rt, max_rt, quantiles)
     df_sub.to_csv(args.output, sep='\t')
 
 
