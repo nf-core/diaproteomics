@@ -526,7 +526,7 @@ process library_merging_and_alignment {
     script:
      align_flag = params.align_libraries ? "--align" : ""
      """
-     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv {align_flag}\\
+     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv ${align_flag}\\
      """
 }
 
