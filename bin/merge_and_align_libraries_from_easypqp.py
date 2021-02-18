@@ -231,7 +231,7 @@ def main():
 
     model.add_argument(
         '-a', '--align',
-        type=str,
+        type=bool,
         help='Whether an alignment should be carried out or just the merging of multiple libraries'
     )
 
@@ -254,7 +254,7 @@ def main():
     min_overlap=args.min_overlap
     align=args.align
 
-    if align=='true':
+    if align:
        if len(libs)>1:
           MST=compute_MST(libs, min_overlap)
           nx.draw(MST, with_labels=True, node_size=1, font_size=5, alpha=0.4)

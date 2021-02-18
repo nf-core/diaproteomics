@@ -154,18 +154,6 @@ check_dia_n = check_dia.map{it[1]}.unique().toList().size().val
 // Validate inputs
 sample_sheet = file(params.input)
 
-if( params.irts_from_outer_quantiles){
-    irts_from_outer_quantiles = 'true'
-} else {
-    irts_from_outer_quantiles = 'false'
-}
-
-if( params.align_libraries) {
-    align_libraries = 'true'
-} else {
-    align_libraries = 'false'
-}
-
 /*
  * Create a channel for input spectral library
  */
@@ -536,8 +524,9 @@ process library_merging_and_alignment {
      params.merge_libraries
 
     script:
+     align_flag = params.align_libraries ? "--align" : ""
      """
-     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75 --align ${align_libraries} --output ${Sample}_library_merged.tsv
+     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv {align_flag}\\
      """
 }
 
@@ -558,8 +547,9 @@ process pseudo_irt_generation {
      params.generate_pseudo_irts
 
     script:
+     quant_flag = params.irts_from_outer_quantiles ? "--quantiles" : ""
      """
-     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --quantiles ${irts_from_outer_quantiles} --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv ${quant_flag}\\
 
      TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
                            -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
