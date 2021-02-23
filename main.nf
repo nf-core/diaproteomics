@@ -832,7 +832,7 @@ process chromatogram_indexing {
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML") into chromatogram_files_indexed
+     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
 
     when:
      !params.skip_dia_processing
@@ -842,6 +842,10 @@ process chromatogram_indexing {
      FileConverter -in ${chrom_file_noindex} \\
                    -process_lowmemory \\
                    -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+
+     OpenSwathMzMLFileCacher -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+                             -lossy_compression false \\
+                             -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass \\
      """
 }
 
@@ -877,8 +881,8 @@ process chromatogram_alignment {
      """
      mkdir osw
      mv ${pyresults} osw/ 
-     mkdir mzml 
-     mv *.chrom.mzML mzml/
+     mkdir xics 
+     mv *.chrom.sqMass xics/
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
 
