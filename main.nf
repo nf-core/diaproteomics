@@ -832,7 +832,7 @@ process chromatogram_indexing {
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML") into chromatogram_files_indexed
+     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
 
     when:
      !params.skip_dia_processing
@@ -842,6 +842,10 @@ process chromatogram_indexing {
      FileConverter -in ${chrom_file_noindex} \\
                    -process_lowmemory \\
                    -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+
+     OpenSwathMzMLFileCacher -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+                             -lossy_compression false \\
+                             -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass \\
      """
 }
 

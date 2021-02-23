@@ -13,7 +13,7 @@ ENV PATH /opt/conda/envs/nf-core-diaproteomics-1.2.1/bin:$PATH
 RUN conda env export --name nf-core-diaproteomics-1.2.1 > nf-core-diaproteomics-1.2.1.yml
 
 # Install DIAlignR from GitHub
-RUN Rscript -e 'remotes::install_github("shubham1637/DIAlignR@b0698a5", dependencies=FALSE)'
+RUN Rscript -e 'remotes::install_github("shubham1637/DIAlignR@ab61a78", ref="speed", dependencies=FALSE)'
 
 # Instruct R processes to use these empty files instead of clashing with a local version
 RUN touch .Rprofile
