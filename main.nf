@@ -882,7 +882,7 @@ process chromatogram_alignment {
      mkdir osw
      mv ${pyresults} osw/ 
      mkdir mzml 
-     mv *.chrom.mzML mzml/
+     mv *.chrom.sqMass mzml/
 
      DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
 
