@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Fix AWS full test profile
 Enable XIC compression by sqMass file format
-Update to DIAlignR@81befa7
+Update to DIAlignR@2119587
 Update dependencies
 
 ## v.1.2.1 - [18.02.21]
