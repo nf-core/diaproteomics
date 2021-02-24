@@ -845,6 +845,7 @@ process chromatogram_indexing {
 
      OpenSwathMzMLFileCacher -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
                              -lossy_compression false \\
+                             -process_lowmemory \\
                              -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass \\
      """
 }
