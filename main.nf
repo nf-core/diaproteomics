@@ -828,6 +828,8 @@ process export_of_scoring_results {
  */
 process chromatogram_indexing {
 
+    label 'process_high'
+
     input:
      set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
 
