@@ -35,11 +35,8 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 4. Start running your own analysis!
 
     ```bash
-<<<<<<< HEAD
     nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv'
-=======
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
->>>>>>> ed5610eff6dfd7e33488e8f1ddb9e27eb76a5d55
+
     ```
 
     OR optionally:
@@ -87,11 +84,3 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-<<<<<<< HEAD
-> ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
-=======
-
-In addition, references of tools and data used in this pipeline are as follows:
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
->>>>>>> ed5610eff6dfd7e33488e8f1ddb9e27eb76a5d55

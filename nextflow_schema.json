@@ -18,8 +18,7 @@
                     "type": "string",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Input sample sheet (raw / mzML)",
-                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |",
-                    "default": "false"
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |"
                 },
                 "input_spectral_library": {
                     "type": "string",
@@ -48,7 +47,7 @@
                 },
                 "run_msstats": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": true,
                     "fa_icon": "fas fa-calculator",
                     "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
                 },
@@ -58,6 +57,11 @@
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Specify costum run name",
+                    "fa_icon": "far fa-address-card"
                 }
             }
         },
@@ -69,7 +73,6 @@
             "properties": {
                 "generate_spectral_library": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "input_sheet_dda": {
@@ -106,7 +109,6 @@
                 },
                 "skip_decoy_generation": {
                     "type": "boolean",
-                    "default": "false",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
                 },
@@ -130,7 +132,6 @@
             "properties": {
                 "generate_pseudo_irts": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "n_irts": {
@@ -140,8 +141,7 @@
                 },
                 "irts_from_outer_quantiles": {
                     "type": "boolean",
-                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only",
-                    "default": "false"
+                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only"
                 }
             }
         },
@@ -153,7 +153,6 @@
             "properties": {
                 "merge_libraries": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the BatchID"
                 }
             }
@@ -166,7 +165,6 @@
             "properties": {
                 "align_libraries": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
                 },
                 "min_overlap_for_merging": {
@@ -233,7 +231,6 @@
                 },
                 "force_option": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
                 },
                 "use_ms1": {
