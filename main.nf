@@ -9,112 +9,54 @@
 ----------------------------------------------------------------------------------------
 */
 
-def helpMessage() {
-    log.info nfcoreHeader()
-    log.info"""
+log.info Headers.nf_core(workflow, params.monochrome_logs)
 
-    Usage:
-
-    The typical command for running the pipeline is as follows:
-
-    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' -profile standard,docker
-
-    Mandatory arguments:
-      --input                           Path to input DIA raw/mzML/mzXML data sheet (must be surrounded with quotes)
-      -profile                          Configuration profile to use. Can use multiple (comma separated)
-                                        Available: standard, conda, docker, singularity, awsbatch, test
-    DIA Mass Spectrometry Search:
-      --input_spectral_library          Path to spectral library input sheet
-      --irts                            Path to internal retention time standards input_sheet
-      --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
-      --irt_n_bins                      Number of RT bins for iRT alignment
-      --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
-      --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
-      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by BatchID Column
-      --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
-      --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
-      --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
-      --irts_from_outer_quantiles       Set flag if pseudo irts should be selected from 1st and 4th RT quantile only.
-      --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
-      --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
-      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
-      --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
-      --skip_dia_processing             Set this flag if you only want to generate spectral libraries from DDA data
-      --skip_decoy_generation           Use a spectral library that already includes decoy sequences
-      --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
-      --min_transitions                 Minimum number of transitions for assay
-      --max_transitions                 Maximum number of transitions for assay
-      --mz_extraction_window            Mass tolerance for transition extraction
-      --mz_extraction_window_unit       Unit for mass tolerance ('ppm' or 'Th')
-      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction
-      --mz_extraction_window_ms1_unit   Unit for ms1 mass tolerance ('ppm' or 'Th')
-      --min_upper_edge_dist             Minimal distance to the upper edge of a Swath window to still consider a precursor ('Th')
-      --rt_extraction_window            RT window for transition extraction (seconds)
-      --use_ms1                         Whether to extract and use ms1 precursor transitions for scoring
-      --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
-      --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
-      --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
-      --pyprophet_peakgroup_fdr         Threshold for FDR filtering
-      --pyprophet_peptide_fdr           Threshold for global Peptide FDR
-      --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --pyprophet_pi0_start             Start for non-parametric pi0 estimation
-      --pyprophet_pi0_end               End for non-parametric pi0 estimation
-      --pyprophet_pi0_steps             Steps for non-parametric pi0 estimation
-      --DIAlignR_global_align_FDR       DIAlignR global Aligment FDR threshold
-      --DIAlignR_analyte_FDR            DIAlignR Analyte FDR threshold
-      --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
-      --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
-      --DIAlignR_query_FDR              DIAlignR Query FDR threshold
-      --DIAlignR_XICfilter              DIAlignR XIC filter option ("sgolay","boxcar","gaussian","loess","none")
-      --DIAlignR_parallelization            Set flag to enable multithread execution of DIAlignR (may cause errors)
-      --run_msstats                     Set flag if MSstats should be run
-      --generate_plots                  Set flag if plots should be generated and included in the output
-      --force_option                    Force the analysis despite severe warnings
-      --cache_option                    Specify whether to process data in memory or caching it first in case of very large files ("normal","cache","cacheWorkingInMemory","WorkingInMemor")
-
-    Other options:
-      --outdir [file]                 The output directory where the results will be saved
-      --publish_dir_mode [str]        Mode for publishing results in the output directory. Available: symlink, rellink, link, copy, copyNoFollow, move (Default: copy)
-      --email [email]                 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --email_on_fail [email]         Same as --email, except only send mail if the workflow is not successful
-      --max_multiqc_email_size [str]  Threshold size for MultiQC report to be attached in notification email. If file generated by pipeline exceeds the threshold, it will not be attached (Default: 25MB)
-      -name [str]                     Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
-
-    AWSBatch options:
-      --awsqueue [str]                The AWSBatch JobQueue that needs to be set when running on AWSBatch
-      --awsregion [str]               The AWS Region for your AWS Batch job to run on
-      --awscli [str]                  Path to the AWS CLI tool
-    """.stripIndent()
-}
-
-// Show help message
+////////////////////////////////////////////////////
+/* --               PRINT HELP                 -- */
+////////////////////////////////////////////////////+
+def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    helpMessage()
+    def command = "nextflow run nf-core/diaproteomics --input '*_R{1,2}.fastq.gz' -profile docker"
+    log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
     exit 0
 }
 
-/*
- * SET UP CONFIGURATION VARIABLES
- */
-
-
-// Has the run name been specified by the user?
-// this has the bonus effect of catching both -name and --name
-custom_runName = params.name
-if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
-    custom_runName = workflow.runName
+////////////////////////////////////////////////////
+/* --         VALIDATE PARAMETERS              -- */
+////////////////////////////////////////////////////+
+if (params.validate_params) {
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
+
+////////////////////////////////////////////////////
+/* --     Collect configuration parameters     -- */
+////////////////////////////////////////////////////
+
+// Check if genome exists in the config file
+if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
+    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(', ')}"
+}
+
+// TODO nf-core: Add any reference files that are needed
+// Configurable reference genomes
+//
+// NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
+// If you want to use the channel below in a process, define the following:
+//   input:
+//   file fasta from ch_fasta
+//
+params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
+if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 // Check AWS batch settings
 if (workflow.profile.contains('awsbatch')) {
     // AWSBatch sanity checking
-    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+    if (!params.awsqueue || !params.awsregion) exit 1, 'Specify correct --awsqueue and --awsregion parameters on AWSBatch!'
     // Check outdir paths to be S3 buckets if running on AWSBatch
     // related: https://github.com/nextflow-io/nextflow/issues/813
-    if (!params.outdir.startsWith('s3:')) exit 1, "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
+    if (!params.outdir.startsWith('s3:')) exit 1, 'Outdir not on S3 - specify S3 Bucket to run on AWSBatch!'
     // Prevent trace files to be stored on S3 since S3 does not support rolling files.
-    if (params.tracedir.startsWith('s3:')) exit 1, "Specify a local tracedir or run without trace! S3 cannot be used for tracefiles."
+    if (params.tracedir.startsWith('s3:')) exit 1, 'Specify a local tracedir or run without trace! S3 cannot be used for tracefiles.'
 }
 
 // Stage config files
@@ -337,12 +279,17 @@ if (params.DIAlignR_parallelization){
     DIAlignR_parallel=''
 }
 
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
+
 // Header log info
-log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
-summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Spectral Library']    = params.input_spectral_library
+summary['Run Name']         = workflow.runName
+summary['Input']            = params.input
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -364,8 +311,6 @@ if (params.email || params.email_on_fail) {
     summary['E-mail Address']    = params.email
     summary['E-mail on failure'] = params.email_on_fail
 }
-log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
-log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Check the hostnames against configured profiles
 checkHostname()
@@ -392,13 +337,13 @@ Channel.from(summary.collect{ [it.key, it.value] })
 process get_software_versions {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
-                      if (filename.indexOf(".csv") > 0) filename
+                      if (filename.indexOf('.csv') > 0) filename
                       else null
-                }
+        }
 
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
-    file "software_versions.csv"
+    file 'software_versions.csv'
 
     script:
     """
@@ -636,6 +581,7 @@ process dia_spectral_library_search {
 
     when:
      !params.skip_dia_processing
+
 
     script:
      """
@@ -1000,7 +946,7 @@ process output_documentation {
     file images from ch_output_docs_images
 
     output:
-    file "results_description.html"
+    file 'results_description.html'
 
     script:
     """
@@ -1020,7 +966,7 @@ workflow.onComplete {
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
-    email_fields['runName'] = custom_runName ?: workflow.runName
+    email_fields['runName'] = workflow.runName
     email_fields['success'] = workflow.success
     email_fields['dateComplete'] = workflow.complete
     email_fields['duration'] = workflow.duration
@@ -1126,28 +1072,9 @@ workflow.onComplete {
 
 }
 
-
-def nfcoreHeader() {
-    // Log colors ANSI codes
-    c_black = params.monochrome_logs ? '' : "\033[0;30m";
-    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
-    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
-    c_dim = params.monochrome_logs ? '' : "\033[2m";
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_white = params.monochrome_logs ? '' : "\033[0;37m";
-    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
-
-    return """    -${c_dim}--------------------------------------------------${c_reset}-
-                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
-    ${c_blue}        ___     __   __   __   ___     ${c_green}/,-._.--~\'${c_reset}
-    ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
-    ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
-                                            ${c_green}`._,._,\'${c_reset}
-    ${c_purple}  nf-core/diaproteomics v${workflow.manifest.version}${c_reset}
-    -${c_dim}--------------------------------------------------${c_reset}-
-    """.stripIndent()
+workflow.onError {
+    // Print unexpected parameters - easiest is to just rerun validation
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
 
 def checkHostname() {
@@ -1156,15 +1083,15 @@ def checkHostname() {
     def c_red = params.monochrome_logs ? '' : "\033[1;91m"
     def c_yellow_bold = params.monochrome_logs ? '' : "\033[1;93m"
     if (params.hostnames) {
-        def hostname = "hostname".execute().text.trim()
+        def hostname = 'hostname'.execute().text.trim()
         params.hostnames.each { prof, hnames ->
             hnames.each { hname ->
                 if (hostname.contains(hname) && !workflow.profile.contains(prof)) {
-                    log.error "====================================================\n" +
+                    log.error '====================================================\n' +
                             "  ${c_red}WARNING!${c_reset} You are running with `-profile $workflow.profile`\n" +
                             "  but your machine hostname is ${c_white}'$hostname'${c_reset}\n" +
                             "  ${c_yellow_bold}It's highly recommended that you use `-profile $prof${c_reset}`\n" +
-                            "============================================================"
+                            '============================================================'
                 }
             }
         }
