@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v.dev - [23.03.21]
 
 ### `Added`
+
 Template update to 1.13.2
 
 ## v.1.2.2 - [23.02.21]
