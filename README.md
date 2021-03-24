@@ -47,6 +47,16 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 
 See [usage docs](https://nf-co.re/diaproteomics/usage) for all of the available options when running the pipeline.
 
+## Pipeline Summary
+
+By default, the pipeline currently performs the following:
+
+* Optional spectral library generation from DDA input ('EasyPQP')
+* DIA Targeted Extraction ('OpenSwathWorkflow')
+* False discovery rate estimation ('Pyprophet')
+* Chromatogram alignment ('DIAlignR')
+* Statistical postprocessing ('MSstats')
+
 ## Documentation
 
 The nf-core/diaproteomics pipeline comes with documentation about the pipeline: [usage](https://nf-co.re/diaproteomics/usage) and [output](https://nf-co.re/diaproteomics/output).
@@ -84,3 +94,21 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+
+In addition, references of tools and data used in this pipeline are as follows:
+
+> **OpenSwathWorkflow:
+>
+> Röst H. et al, _Nat Biotechnol._ 2014 Mar;32(3):219-23. doi: 10.1038/nbt.2841.
+>
+> **PyProphet:
+>
+> Rosenberger G. et al, _Nat Methods_ 2017 Sep;14(9):921-927. doi: 10.1038/nmeth.4398. Epub 2017 Aug 21.
+>
+> **DIAlignR:
+>
+> Gupta S. et al, Mol Cell _Proteomics_ 2019 Apr;18(4):806-817. doi: 10.1074/mcp.TIR118.001132. Epub 2019 Jan 31.
+>
+> **MSstats:
+>
+> Choi M. et al, _Bioinformatics_ 2014 Sep 1;30(17):2524-6. doi: 10.1093/bioinformatics/btu305. Epub 2014 May 2.
