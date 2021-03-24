@@ -97,18 +97,18 @@ You can cite the `nf-core` publication as follows:
 
 In addition, references of tools and data used in this pipeline are as follows:
 
-> **OpenSwathWorkflow:
+> **OpenSwathWorkflow**
 >
 > Röst H. et al, _Nat Biotechnol._ 2014 Mar;32(3):219-23. doi: 10.1038/nbt.2841.
 >
-> **PyProphet:
+> **PyProphet**
 >
 > Rosenberger G. et al, _Nat Methods_ 2017 Sep;14(9):921-927. doi: 10.1038/nmeth.4398. Epub 2017 Aug 21.
 >
-> **DIAlignR:
+> **DIAlignR**
 >
 > Gupta S. et al, Mol Cell _Proteomics_ 2019 Apr;18(4):806-817. doi: 10.1074/mcp.TIR118.001132. Epub 2019 Jan 31.
 >
-> **MSstats:
+> **MSstats**
 >
 > Choi M. et al, _Bioinformatics_ 2014 Sep 1;30(17):2524-6. doi: 10.1093/bioinformatics/btu305. Epub 2014 May 2.
