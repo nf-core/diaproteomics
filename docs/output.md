@@ -1,9 +1,5 @@
 # nf-core/diaproteomics: Output
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/diaproteomics/output](https://nf-co.re/diaproteomics/output)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
-
 ## Introduction
 
 This document describes the output produced by the pipeline.

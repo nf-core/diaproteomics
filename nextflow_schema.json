@@ -18,8 +18,7 @@
                     "type": "string",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Input sample sheet (raw / mzML)",
-                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |",
-                    "default": "false"
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |"
                 },
                 "input_spectral_library": {
                     "type": "string",
@@ -48,7 +47,7 @@
                 },
                 "run_msstats": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": true,
                     "fa_icon": "fas fa-calculator",
                     "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
                 },
@@ -69,7 +68,6 @@
             "properties": {
                 "generate_spectral_library": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "input_sheet_dda": {
@@ -106,7 +104,6 @@
                 },
                 "skip_decoy_generation": {
                     "type": "boolean",
-                    "default": "false",
                     "fa_icon": "fab fa-think-peaks",
                     "description": "Set this flag if using a spectral library that already includes decoy sequences and therefor skip assay and decoy generation."
                 },
@@ -130,7 +127,6 @@
             "properties": {
                 "generate_pseudo_irts": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
                 },
                 "n_irts": {
@@ -140,8 +136,7 @@
                 },
                 "irts_from_outer_quantiles": {
                     "type": "boolean",
-                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only",
-                    "default": "false"
+                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only"
                 }
             }
         },
@@ -153,7 +148,6 @@
             "properties": {
                 "merge_libraries": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the BatchID"
                 }
             }
@@ -166,7 +160,6 @@
             "properties": {
                 "align_libraries": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
                 },
                 "min_overlap_for_merging": {
@@ -233,7 +226,6 @@
                 },
                 "force_option": {
                     "type": "boolean",
-                    "default": "false",
                     "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
                 },
                 "use_ms1": {
@@ -379,22 +371,7 @@
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Options for the reference genome indices used to align reads.",
-            "properties": {
-                "igenomes_base": {
-                    "type": "string",
-                    "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes/",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
-                },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                }
-            }
+            "properties": {}
         },
         "generic_options": {
             "title": "Generic options",
@@ -425,12 +402,12 @@
                         "move"
                     ]
                 },
-                "name": {
-                    "type": "string",
-                    "description": "Workflow name.",
-                    "fa_icon": "fas fa-fingerprint",
-                    "hidden": true,
-                    "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
                 },
                 "email_on_fail": {
                     "type": "string",
@@ -460,6 +437,13 @@
                     "default": "${params.outdir}/pipeline_info",
                     "fa_icon": "fas fa-cogs",
                     "hidden": true
+                },
+                "show_hidden_params": {
+                    "type": "boolean",
+                    "fa_icon": "far fa-eye-slash",
+                    "description": "Show all params when using `--help`",
+                    "hidden": true,
+                    "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 }
             }
         },
@@ -483,6 +467,7 @@
                     "description": "Maximum amount of memory that can be requested for any single job.",
                     "default": "128.GB",
                     "fa_icon": "fas fa-memory",
+                    "pattern": "^[\\d\\.]+\\s*.(K|M|G|T)?B$",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
                 },
@@ -491,6 +476,7 @@
                     "description": "Maximum amount of time that can be requested for any single job.",
                     "default": "240.h",
                     "fa_icon": "far fa-clock",
+                    "pattern": "^[\\d\\.]+\\.*(s|m|h|d)$",
                     "hidden": true,
                     "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
                 }
@@ -522,6 +508,12 @@
                 "hostnames": {
                     "type": "string",
                     "description": "Institutional configs hostname.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog"
                 },

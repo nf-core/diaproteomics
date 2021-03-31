@@ -22,12 +22,12 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 
 1. Install [`nextflow`](https://nf-co.re/usage/installation)
 
-2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`Podman`](https://podman.io/) for full pipeline reproducibility _(please only use [`Conda`](https://conda.io/miniconda.html) as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_
+2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(please only use [`Conda`](https://conda.io/miniconda.html) as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_
 
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile test,<docker/singularity/podman/conda/institute>
+    nextflow run nf-core/diaproteomics -profile test,<docker/singularity/podman/shifter/charliecloud/conda/institute>
     ```
 
     > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
@@ -36,6 +36,7 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 
     ```bash
     nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv'
+
     ```
 
     OR optionally:
@@ -45,6 +46,16 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
     ```
 
 See [usage docs](https://nf-co.re/diaproteomics/usage) for all of the available options when running the pipeline.
+
+## Pipeline Summary
+
+By default, the pipeline currently performs the following:
+
+* Optional spectral library generation from DDA input ('EasyPQP')
+* DIA Targeted Extraction ('OpenSwathWorkflow')
+* False discovery rate estimation ('Pyprophet')
+* Chromatogram alignment ('DIAlignR')
+* Statistical postprocessing ('MSstats')
 
 ## Documentation
 
@@ -83,4 +94,21 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-> ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
+
+In addition, references of tools and data used in this pipeline are as follows:
+
+> **OpenSwathWorkflow**
+>
+> Röst H. et al, _Nat Biotechnol._ 2014 Mar;32(3):219-23. doi: 10.1038/nbt.2841.
+>
+> **PyProphet**
+>
+> Rosenberger G. et al, _Nat Methods_ 2017 Sep;14(9):921-927. doi: 10.1038/nmeth.4398. Epub 2017 Aug 21.
+>
+> **DIAlignR**
+>
+> Gupta S. et al, Mol Cell _Proteomics_ 2019 Apr;18(4):806-817. doi: 10.1074/mcp.TIR118.001132. Epub 2019 Jan 31.
+>
+> **MSstats**
+>
+> Choi M. et al, _Bioinformatics_ 2014 Sep 1;30(17):2524-6. doi: 10.1093/bioinformatics/btu305. Epub 2014 May 2.
