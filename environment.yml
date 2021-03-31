@@ -33,7 +33,7 @@ dependencies:
   - conda-forge::r-dbi=1.1.0
   - conda-forge::r-gridextra=2.3
   - conda-forge::r-rcpp=1.0.5
-  - conda-forge::r-rlang=0.4.9
+  - conda-forge::r-rlang=0.4.10
   - conda-forge::r-rsqlite=2.2.1
   - conda-forge::r-scales=1.1.1
   - conda-forge::r-reticulate=1.18
