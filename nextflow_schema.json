@@ -68,12 +68,14 @@
             "properties": {
                 "generate_spectral_library": {
                     "type": "boolean",
-                    "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                    "description": "Set this flag if the spectral library should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data.",
+                    "fa_icon": "fas fa-plus-square"
                 },
                 "input_sheet_dda": {
                     "type": "string",
                     "description": "Input sample sheet to use for library generation eg. DDA raw data (mzML) and DDA identification data (pepXML, mzid, idXML)",
-                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  BatchID metainformation. For example:\n\n| Sample   | BatchID      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      data/Melanoma_DDA_rep1.mzML     |   data/Melanoma_DDA_rep1.pepXML    |\n| 2    | MelanomaStudy |      data/Melanoma_DDA_rep2.mzML     |   data/Melanoma_DDA_rep2.pepXML    |\n| 3    | BreastCancerStudy |      data/BraCa_DDA_rep1.mzML     |   data/BraCa_DDA_rep1.pepXML    |\n| 4    | BreastCancerStudy |      data/BraCa_DDA_rep2.mzML     |   data/BraCa_DDA_rep2.pepXML    |\n"
+                    "help_text": "Use this to specify a sample sheet table including your input DDA raw or mzml files as well as their corresponding peptide identification files and  BatchID metainformation. For example:\n\n| Sample   | BatchID      | Spectra_Filepath  |   Id_Filepath                       |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      data/Melanoma_DDA_rep1.mzML     |   data/Melanoma_DDA_rep1.pepXML    |\n| 2    | MelanomaStudy |      data/Melanoma_DDA_rep2.mzML     |   data/Melanoma_DDA_rep2.pepXML    |\n| 3    | BreastCancerStudy |      data/BraCa_DDA_rep1.mzML     |   data/BraCa_DDA_rep1.pepXML    |\n| 4    | BreastCancerStudy |      data/BraCa_DDA_rep2.mzML     |   data/BraCa_DDA_rep2.pepXML    |\n",
+                    "fa_icon": "fas fa-file-csv"
                 },
                 "library_rt_fdr": {
                     "type": "number",
@@ -84,12 +86,14 @@
                 "min_transitions": {
                     "type": "integer",
                     "default": 4,
-                    "description": "Minimum number of transitions for assay"
+                    "description": "Minimum number of transitions for assay",
+                    "fa_icon": "fas fa-compress-alt"
                 },
                 "max_transitions": {
                     "type": "integer",
                     "default": 6,
-                    "description": "Maximum number of transitions for assay"
+                    "description": "Maximum number of transitions for assay",
+                    "fa_icon": "fas fa-expand-alt"
                 },
                 "decoy_method": {
                     "type": "string",
@@ -100,7 +104,8 @@
                         "pseudo-reverse",
                         "reverse",
                         "shift"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-user-secret"
                 },
                 "skip_decoy_generation": {
                     "type": "boolean",
@@ -111,13 +116,16 @@
                     "type": "string",
                     "help_text": "Example file:\nhttps://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
                     "description": "Path to unimod file needs to be provided",
-                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml"
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/diaproteomics/unimod.xml",
+                    "fa_icon": "fas fa-file-alt"
                 },
                 "skip_dia_processing": {
                     "type": "boolean",
-                    "description": "Set this flag if you only want to generate spectral libraries from DDA data"
+                    "description": "Set this flag if you only want to generate spectral libraries from DDA data",
+                    "fa_icon": "fas fa-fast-forward"
                 }
-            }
+            },
+            "fa_icon": "fas fa-signal"
         },
         "pseudo_irt_generation": {
             "title": "Pseudo iRT generation",
@@ -127,18 +135,22 @@
             "properties": {
                 "generate_pseudo_irts": {
                     "type": "boolean",
-                    "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data."
+                    "description": "Set this flag if pseudo internal retention time standards should be generated using EasyPQP from provided DDA data - identification search results and corresponding raw data.",
+                    "fa_icon": "fas fa-clock"
                 },
                 "n_irts": {
                     "type": "integer",
                     "default": 250,
-                    "description": "Number of pseudo irts selected from dda identifications based on the best q-value"
+                    "description": "Number of pseudo irts selected from dda identifications based on the best q-value",
+                    "fa_icon": "fas fa-sort-numeric-up-alt"
                 },
                 "irts_from_outer_quantiles": {
                     "type": "boolean",
-                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only"
+                    "description": "Set this flag if pseudo irts should be selected from the 1st and 4th RT quantile only",
+                    "fa_icon": "fas fa-expand"
                 }
-            }
+            },
+            "fa_icon": "fas fa-stopwatch"
         },
         "spectral_library_merging": {
             "title": "Spectral library merging",
@@ -148,9 +160,11 @@
             "properties": {
                 "merge_libraries": {
                     "type": "boolean",
-                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the BatchID"
+                    "description": "Set this flag if the libraries defined in the input or by generation should be merged according to the BatchID",
+                    "fa_icon": "fas fa-code-branch"
                 }
-            }
+            },
+            "fa_icon": "fas fa-project-diagram"
         },
         "spectral_library_rt_alignment": {
             "title": "Spectral library RT alignment",
@@ -160,14 +174,17 @@
             "properties": {
                 "align_libraries": {
                     "type": "boolean",
-                    "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging."
+                    "description": "Set this flag if pairwise RT alignment should be applied to libraries when merging.",
+                    "fa_icon": "fas fa-align-justify"
                 },
                 "min_overlap_for_merging": {
                     "type": "integer",
                     "default": 100,
-                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries"
+                    "description": "Minimum number of peptides to compute RT alignment during pairwise merging of libraries",
+                    "fa_icon": "fas fa-compress"
                 }
-            }
+            },
+            "fa_icon": "fas fa-align-left"
         },
         "dia_spectral_library_search": {
             "title": "DIA spectral library search",
@@ -178,42 +195,50 @@
                 "mz_extraction_window": {
                     "type": "integer",
                     "default": 30,
-                    "description": "Mass tolerance for transition extraction (ppm)"
+                    "description": "Mass tolerance for transition extraction (ppm)",
+                    "fa_icon": "fas fa-weight-hanging"
                 },
                 "mz_extraction_window_unit": {
                     "type": "string",
                     "default": "ppm",
-                    "description": "Unit for mz window"
+                    "description": "Unit for mz window",
+                    "fa_icon": "fas fa-ruler"
                 },
                 "mz_extraction_window_ms1": {
                     "type": "integer",
                     "default": 10,
-                    "description": "Mass tolerance for precursor transition extraction (ppm)"
+                    "description": "Mass tolerance for precursor transition extraction (ppm)",
+                    "fa_icon": "fas fa-balance-scale-left"
                 },
                 "mz_extraction_window_ms1_unit": {
                     "type": "string",
                     "default": "ppm",
-                    "description": "Unit for mz window"
+                    "description": "Unit for mz window",
+                    "fa_icon": "fas fa-ruler"
                 },
                 "rt_extraction_window": {
                     "type": "integer",
                     "default": 600,
-                    "description": "RT window for transition extraction (seconds)"
+                    "description": "RT window for transition extraction (seconds)",
+                    "fa_icon": "fas fa-stopwatch-20"
                 },
                 "irt_min_rsq": {
                     "type": "number",
                     "default": 0.95,
-                    "description": "Minimal random mean squared error for irt RT alignment"
+                    "description": "Minimal random mean squared error for irt RT alignment",
+                    "fa_icon": "fas fa-crosshairs"
                 },
                 "irt_n_bins": {
                     "type": "integer",
                     "default": 10,
-                    "description": "Number of bins defined for the RT Normalization"
+                    "description": "Number of bins defined for the RT Normalization",
+                    "fa_icon": "fas fa-arrows-alt-h"
                 },
                 "irt_min_bins_covered": {
                     "type": "integer",
                     "default": 8,
-                    "description": "Number of bins that have to be covered for the RT Normalization"
+                    "description": "Number of bins that have to be covered for the RT Normalization",
+                    "fa_icon": "fas fa-chart-bar"
                 },
                 "irt_alignment_method": {
                     "type": "string",
@@ -222,20 +247,24 @@
                     "enum": [
                         "linear",
                         "lowess"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-cash-register"
                 },
                 "force_option": {
                     "type": "boolean",
-                    "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings"
+                    "description": "Force the analysis of the OpenSwathWorkflow despite severe warnings",
+                    "fa_icon": "fas fa-exclamation-triangle"
                 },
                 "use_ms1": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether to use ms1 information for scoring and extraction"
+                    "description": "Whether to use ms1 information for scoring and extraction",
+                    "fa_icon": "far fa-hand-point-up"
                 },
                 "min_upper_edge_dist": {
                     "type": "integer",
-                    "description": "Minimal distance to the upper edge of a Swath window to still consider a precursor, in Thomson"
+                    "description": "Minimal distance to the upper edge of a Swath window to still consider a precursor, in Thomson",
+                    "fa_icon": "fas fa-border-style"
                 },
                 "cache_option": {
                     "type": "string",
@@ -246,9 +275,11 @@
                         "cache",
                         "cacheWorkingInMemory",
                         "WorkingInMemory"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-memory"
                 }
-            }
+            },
+            "fa_icon": "fas fa-search"
         },
         "false_discovery_rate_estimation": {
             "title": "False discovery rate estimation",
@@ -263,7 +294,8 @@
                     "enum": [
                         "LDA",
                         "XGBoost"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-robot"
                 },
                 "pyprophet_fdr_ms_level": {
                     "type": "string",
@@ -273,7 +305,8 @@
                         "ms1",
                         "ms2",
                         "ms1ms2"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-chart-line"
                 },
                 "pyprophet_global_fdr_level": {
                     "type": "string",
@@ -282,39 +315,47 @@
                         "",
                         "peptide",
                         "protein"
-                    ]
+                    ],
+                    "fa_icon": "fas fa-globe-africa"
                 },
                 "pyprophet_peakgroup_fdr": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "Threshold for pyprophet FDR filtering on peakgroup abstraction level"
+                    "description": "Threshold for pyprophet FDR filtering on peakgroup abstraction level",
+                    "fa_icon": "fas fa-mountain"
                 },
                 "pyprophet_peptide_fdr": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "Threshold for pyprophet FDR filtering on peptide abstraction level"
+                    "description": "Threshold for pyprophet FDR filtering on peptide abstraction level",
+                    "fa_icon": "fas fa-compress-arrows-alt"
                 },
                 "pyprophet_protein_fdr": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "Threshold for pyprophet FDR filtering on protein abstraction level"
+                    "description": "Threshold for pyprophet FDR filtering on protein abstraction level",
+                    "fa_icon": "fas fa-microscope"
                 },
                 "pyprophet_pi0_start": {
                     "type": "number",
                     "default": 0.1,
-                    "description": "Start for pyprophet non-parametric pi0 estimation"
+                    "description": "Start for pyprophet non-parametric pi0 estimation",
+                    "fa_icon": "far fa-play-circle"
                 },
                 "pyprophet_pi0_end": {
                     "type": "number",
                     "default": 0.5,
-                    "description": "End for pyprophet non-parametric pi0 estimation"
+                    "description": "End for pyprophet non-parametric pi0 estimation",
+                    "fa_icon": "far fa-stop-circle"
                 },
                 "pyprophet_pi0_steps": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "Steps for pyprophet non-parametric pi0 estimation"
+                    "description": "Steps for pyprophet non-parametric pi0 estimation",
+                    "fa_icon": "fas fa-calculator"
                 }
-            }
+            },
+            "fa_icon": "fas fa-fire-alt"
         },
         "ms2_chromatogram_alignment": {
             "title": "MS2 chromatogram alignment",
@@ -325,27 +366,32 @@
                 "DIAlignR_global_align_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR global alignment FDR threshold: After the chromatogram alignment all peaks should still satisfy the global alignment FDR threshold."
+                    "description": "DIAlignR global alignment FDR threshold: After the chromatogram alignment all peaks should still satisfy the global alignment FDR threshold.",
+                    "fa_icon": "fas fa-globe-asia"
                 },
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs."
+                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs.",
+                    "fa_icon": "fas fa-step-backward"
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs."
+                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
+                    "fa_icon": "fas fa-align-center"
                 },
                 "DIAlignR_align_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR alignment FDR threshold: After the chromatogram alignment aligned peaks should satisfy this threhold."
+                    "description": "DIAlignR alignment FDR threshold: After the chromatogram alignment aligned peaks should satisfy this threshold.",
+                    "fa_icon": "fas fa-step-forward"
                 },
                 "DIAlignR_query_FDR": {
                     "type": "number",
                     "default": 0.05,
-                    "description": "DIAlignR query FDR threshold: During the chromatogram alignment ponly eaks satisfying this maximum FDR threshold will be considered as potential matches."
+                    "description": "DIAlignR query FDR threshold: During the chromatogram alignment only peaks satisfying this maximum FDR threshold will be considered as potential matches.",
+                    "fa_icon": "fas fa-filter"
                 },
                 "DIAlignR_XICfilter": {
                     "type": "string",
@@ -357,21 +403,17 @@
                         "loess",
                         "none"
                     ],
-                    "description": "DIAlignR XICfilter parameter"
+                    "description": "DIAlignR XICfilter parameter",
+                    "fa_icon": "fas fa-funnel-dollar"
                 },
                 "DIAlignR_parallelization": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether DIAlignR should be executed using multithreading (may cause errors)"
+                    "description": "Whether DIAlignR should be executed using multithreading (may cause errors)",
+                    "fa_icon": "fas fa-microchip"
                 }
-            }
-        },
-        "reference_genome_options": {
-            "title": "Reference genome options",
-            "type": "object",
-            "fa_icon": "fas fa-dna",
-            "description": "Options for the reference genome indices used to align reads.",
-            "properties": {}
+            },
+            "fa_icon": "fas fa-balance-scale-right"
         },
         "generic_options": {
             "title": "Generic options",
@@ -423,6 +465,14 @@
                     "fa_icon": "fas fa-remove-format",
                     "hidden": true,
                     "help_text": "Set to receive plain-text e-mails instead of HTML formatted."
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "default": "25 MB",
+                    "hidden": true,
+                    "description": "File size limit when attaching MultiQC reports to summary emails.",
+                    "help_text": "If file generated by pipeline exceeds the threshold, it will not be attached.",
+                    "fa_icon": "fas fa-file-upload"
                 },
                 "monochrome_logs": {
                     "type": "boolean",
@@ -564,9 +614,6 @@
             "$ref": "#/definitions/ms2_chromatogram_alignment"
         },
         {
-            "$ref": "#/definitions/reference_genome_options"
-        },
-        {
             "$ref": "#/definitions/generic_options"
         },
         {
@@ -575,11 +622,5 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-    ],
-    "properties": {
-        "max_multiqc_email_size": {
-            "type": "string",
-            "default": "25 MB"
-        }
-    }
+    ]
 }
