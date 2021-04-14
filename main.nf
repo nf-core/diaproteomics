@@ -16,7 +16,7 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 ////////////////////////////////////////////////////+
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    def command = "nextflow run nf-core/diaproteomics --input '*_R{1,2}.fastq.gz' -profile docker"
+    def command = "nextflow run nf-core/diaproteomics -profile test,docker"
     log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
     exit 0
 }
@@ -50,7 +50,7 @@ ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 sample_sheet = file(params.input)
 Channel
  .from( sample_sheet )
- .set { input_exp_design}
+ .into { input_exp_design; input_exp_design_mztab}
 
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
@@ -561,7 +561,7 @@ process dia_spectral_library_search {
     output:
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
      set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
-     set val(id), val(Sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I)
+     set val(id), val(Sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I, input_lib_used_I_mztab)
 
     when:
      !params.skip_dia_processing
@@ -806,7 +806,7 @@ process chromatogram_alignment {
      set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
+     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I, DIALignR_result_mztab)
 
     when:
      !params.skip_dia_processing
@@ -862,6 +862,34 @@ process reformatting {
      reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
     """
     }
+}
+
+
+/*
+ * STEP 14.5 - export_mztab
+ */
+process mztab_export {
+   publishDir "${params.outdir}/"
+
+   input:
+    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result_mztab
+    file exp_design from input_exp_design_mztab.first()
+    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I_mztab.first()
+
+   output:
+    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.mzTab") into mztab_file
+
+   when:
+    params.mztab_export
+
+   script:
+
+    """
+     TargetedFileConverter -in ${lib_file} \\
+                           -out ${lib_file.baseName}.tsv
+
+     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.mzTab"
+    """
 }
 
 
