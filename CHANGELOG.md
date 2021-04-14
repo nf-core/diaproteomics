@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v.1.2.3 - [14.04.21]
+
+### `Added`
+
+Optional mzTab output
+
+
 ## v.1.2.3dev - [25.03.21]
 
 ### `Added`
