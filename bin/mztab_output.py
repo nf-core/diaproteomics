@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import pandas as pd
+import numpy as np
 
 
 """
@@ -77,18 +78,16 @@ def main():
     df=df.merge(df_lib, how='inner', on='PeptideSequence')
     df=df.drop_duplicates()
 
-    #reformat MTD header
-    header='\t'.join(['MTD','mzTab-version','1.0'])+'\n\n'
-
     #reformat as PRT protein mzTab
     remaining_prh_cols='unit_id,description,taxid,species,database,database_version,search_engine,search_engine_score,reliability,num_peptides_unambiguous,ambiguity_members,modifications,uri,go_terms,protein_coverage'.split(',')
 
     num_peptides=df.groupby(['ProteinName'])['PeptideSequence'].apply(list).apply(len).reset_index()['PeptideSequence']
     num_peptides_distinct=df.groupby(['ProteinName'])['PeptideSequence'].apply(list).apply(set).apply(len).reset_index()['PeptideSequence']
     df_prot=df.groupby(['ProteinName','Run'])['Intensity'].apply(sum).reset_index().pivot(index='ProteinName', columns='Run', values='Intensity').reset_index()
-    col_idxs=df_prot.columns[1:]
-    df_prot.columns=['accession']+['protein_abundance_sub['+str(i)+']' for i in col_idxs]
-    for i in col_idxs:
+    col_idxs=df_prot.columns[1:].tolist()
+    col_idxs_enum=[i[0]+1 for i in enumerate(col_idxs)]
+    df_prot.columns=['accession']+['protein_abundance_sub['+str(i)+']' for i in col_idxs_enum]
+    for i in col_idxs_enum:
         df_prot['protein_abundance_stdev_sub['+str(i)+']']='null'
         df_prot['protein_abundance_std_error_sub['+str(i)+']']='null'
 
@@ -100,14 +99,18 @@ def main():
     for c in remaining_prh_cols:
         df_prot[c]='null'
 
+    df_prot.to_csv('PRT_dataframe.csv',index=False, sep='\t')
+    op=open('PRT_dataframe.csv','r')
+    opr_prt=op.readlines()
+    op.close()
+
     #reformat as PEP peptide mzTab
     remaining_pep_cols='unit_id,unique,database,database_version,search_engine_score,reliability,modifications,uri,spectra_ref'.split(',')
 
     retention_time=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz'])['retention_time'].apply(np.median).reset_index()['retention_time']
     df_pep=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz','Run'])['Intensity'].apply(sum).unstack('Run').reset_index()
-    col_idxs=df_pep.columns[4:]
-    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_sub['+str(i)+']' for i in col_idxs]
-    for i in col_idxs:
+    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_sub['+str(i)+']' for i in col_idxs_enum]
+    for i in col_idxs_enum:
         df_pep['peptide_abundance_stdev_sub['+str(i)+']']='null'
         df_pep['peptide_abundance_std_error_sub['+str(i)+']']='null'
 
@@ -119,8 +122,32 @@ def main():
     for c in remaining_pep_cols:
         df_pep[c]='null'
 
+    df_pep.to_csv('PEP_dataframe.csv',index=False, sep='\t')
+
+    op=open('PEP_dataframe.csv','r')
+    opr_pep=op.readlines()
+    op.close()
+
+    #reformat MTD header
+    header=['\t'.join(['MTD','mzTab-version','1.0'])+'\n']
+    for i in enumerate(col_idxs):
+        file_org=df_I[df_I['Sample']==i[1]]['run'].tolist()[0]
+        header.append('\t'.join(['MTD','ms_run['+str(i[0]+1)+']-location',file_org])+'\n')
+
     #output mzTab
-    
+    op=open(str(args.output),'w')
+    for line in header:
+        op.write(line)
+
+    op.write('\n')
+    for line in opr_prt:
+        op.write(line)
+
+    op.write('\n')
+    for line in opr_pep:
+        op.write(line)
+
+    op.close() 
 
 if __name__=="__main__":
     main()
