@@ -60,7 +60,7 @@
                 },
                 "mztab_export": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "fa_icon": "fas fa-align-left",
                     "description": "Optional mzTab export (Warning: the mzTab format is not yet well supported for DIA)"
                 }
