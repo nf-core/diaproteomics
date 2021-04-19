@@ -377,13 +377,13 @@
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs.",
+                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
                     "fa_icon": "fas fa-step-backward"
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
+                    "description": "DIAlignR unalignment FDR threshold: XICs below this threshold will be considered valid without any alignment.",
                     "fa_icon": "fas fa-align-center"
                 },
                 "DIAlignR_align_FDR": {
