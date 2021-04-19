@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 Optional mzTab output
+Optional BioReplicate annotation for MSstats
 
 ## v.1.2.3dev - [25.03.21]
 

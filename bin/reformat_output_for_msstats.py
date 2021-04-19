@@ -67,7 +67,7 @@ def main():
        files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
     print(files)
     df_I['run']=files
-    if 'BioReplicate' in df_I.columns:
+    if 'MSstats_BioReplicate' in df_I.columns:
        df_I=df_I[['Sample', 'BatchID', 'MSstats_Condition', 'MSstats_BioReplicate','run']]
        df_I.columns=['Sample', 'BatchID','MSstats_Condition', 'MSstats_BioReplicate','run']
     else:
@@ -77,7 +77,7 @@ def main():
     #parse dialignr output and merge with experimental design and library
     df=pd.read_csv(dialignR, sep='\t')
     df=df.merge(df_I, how='outer', on='run')
-    if 'BioReplicate' in df_I.columns:
+    if 'MSstats_BioReplicate' in df_I.columns:
        df=df[['sequence', 'charge', 'MSstats_Condition', 'MSstats_BioReplicate', 'Sample', 'intensity']]
     else:
        df=df[['sequence', 'charge', 'MSstats_Condition', 'BatchID', 'Sample', 'intensity']]
