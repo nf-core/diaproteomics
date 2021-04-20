@@ -17,8 +17,8 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fab fa-think-peaks",
-                    "description": "Input sample sheet (raw / mzML)",
-                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID and MSstats_Condition. For example:\n\n| Sample   | BatchID      | MSstats_Condition  |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |   data/Melanoma_DIA_standard.raw    |\n| 2    | MelanomaStudy |      Benign     |   data/SkinTissue_DIA_standard.raw    |\n| 3    | BreastCancerStudy |      Malignant     |   data/BraCa_DIA_standard.raw    |\n| 4    | BreastCancerStudy |      Benign     |   data/BreastTissue_DIA_standard.raw    |"
+                    "description": "Input sample sheet (containing path and meta data of raw or mzML files)",
+                    "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID, MSstats_Condition and MSstats_BioReplicate (of note: the BioReplicate column is optional). For example:\n\n| Sample   | BatchID      | MSstats_Condition  | MSstats_BioReplicate |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |  BioReplicate1  |   data/Melanoma_DIA_standard_rep1.raw    |\n| 2    | MelanomaStudy |      Malignant     |  BioReplicate1  |   data/Melanoma_DIA_standard_rep2.raw    |\n| 3    | MelanomaStudy |      Benign     |  BioReplicate2  |   data/SkinTissue_DIA_standard_rep1.raw    |\n| 4    | MelanomaStudy |      Benign     |  BioReplicate2  |   data/SkinTissue_DIA_standard_rep2.raw    |\n| 5    | BreastCancerStudy |      Malignant     |  BioReplicate1  |   data/BreastCancer_DIA_standard_rep1.raw    |\n| 6    | BreastCancerStudy |      Malignant     |  BioReplicate1  |   data/BreastCancer_DIA_standard_rep2.raw    |\n| 7    | BreastCancerStudy |      Benign     |  BioReplicate2  |   data/BreastTissue_DIA_standard_rep1.raw    |\n| 8    | BreastCancerStudy |      Benign     |  BioReplicate2  |   data/BreastTissue_DIA_standard_rep2.raw    |"
                 },
                 "input_spectral_library": {
                     "type": "string",
@@ -37,19 +37,6 @@
                     "description": "The output directory where the results will be saved.",
                     "default": "./results",
                     "fa_icon": "fas fa-folder-open"
-                },
-                "generate_plots": {
-                    "type": "boolean",
-                    "description": "Set this flag if output plots should be generated.",
-                    "help_text": "1) BarChartProtein/Peptide Counts\n2) Pie Chart: Peptide Charge distribution\n3) Density Scatter: Library vs run RT deviations for all identifications\n4) Heatmap: Peptide quantities across MS runs\n5) Pyprophet score plots\n\nIn addition MSstats will run and export comparative protein statistics plots such as Volcano plots if protein level is specified.",
-                    "fa_icon": "fas fa-images",
-                    "default": true
-                },
-                "run_msstats": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-calculator",
-                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
                 },
                 "email": {
                     "type": "string",
@@ -219,8 +206,7 @@
                 "rt_extraction_window": {
                     "type": "integer",
                     "default": 600,
-                    "description": "RT window for transition extraction (seconds)",
-                    "fa_icon": "fas fa-stopwatch-20"
+                    "description": "RT window for transition extraction (seconds)"
                 },
                 "irt_min_rsq": {
                     "type": "number",
@@ -372,13 +358,13 @@
                 "DIAlignR_analyte_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satusfying this threshold will be matched across runs.",
+                    "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
                     "fa_icon": "fas fa-step-backward"
                 },
                 "DIAlignR_unalign_FDR": {
                     "type": "number",
                     "default": 0.01,
-                    "description": "DIAlignR unalignment FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
+                    "description": "DIAlignR unalignment FDR threshold: XICs below this threshold will be considered valid without any alignment.",
                     "fa_icon": "fas fa-align-center"
                 },
                 "DIAlignR_align_FDR": {
@@ -414,6 +400,33 @@
                 }
             },
             "fa_icon": "fas fa-balance-scale-right"
+        },
+        "output_summary": {
+            "title": "Output summary",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "run_msstats": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-calculator",
+                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
+                },
+                "generate_plots": {
+                    "type": "boolean",
+                    "description": "Set this flag if output plots should be generated.",
+                    "help_text": "1) BarChartProtein/Peptide Counts\n2) Pie Chart: Peptide Charge distribution\n3) Density Scatter: Library vs run RT deviations for all identifications\n4) Heatmap: Peptide quantities across MS runs\n5) Pyprophet score plots\n\nIn addition MSstats will run and export comparative protein statistics plots such as Volcano plots if protein level is specified.",
+                    "fa_icon": "fas fa-images",
+                    "default": true
+                },
+                "mztab_export": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-align-left",
+                    "description": "Optional mzTab export (Warning: the mzTab format is not yet well supported for DIA)"
+                }
+            },
+            "fa_icon": "fas fa-align-left"
         },
         "generic_options": {
             "title": "Generic options",
@@ -612,6 +625,9 @@
         },
         {
             "$ref": "#/definitions/ms2_chromatogram_alignment"
+        },
+        {
+            "$ref": "#/definitions/output_summary"
         },
         {
             "$ref": "#/definitions/generic_options"

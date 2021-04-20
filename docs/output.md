@@ -21,7 +21,7 @@ For detailed information about file formats and how they are in the various step
 
 ## SummaryOutput
 
-Several csv tables are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
+Several csv tables and optional an mzTab file (Note: the mzTab format is not yet well supported for DIA) are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
 
 * Output visualizations:
   * the number of peptide / protein identifications
