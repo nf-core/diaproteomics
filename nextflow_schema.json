@@ -38,31 +38,12 @@
                     "default": "./results",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "generate_plots": {
-                    "type": "boolean",
-                    "description": "Set this flag if output plots should be generated.",
-                    "help_text": "1) BarChartProtein/Peptide Counts\n2) Pie Chart: Peptide Charge distribution\n3) Density Scatter: Library vs run RT deviations for all identifications\n4) Heatmap: Peptide quantities across MS runs\n5) Pyprophet score plots\n\nIn addition MSstats will run and export comparative protein statistics plots such as Volcano plots if protein level is specified.",
-                    "fa_icon": "fas fa-images",
-                    "default": true
-                },
-                "run_msstats": {
-                    "type": "boolean",
-                    "default": true,
-                    "fa_icon": "fas fa-calculator",
-                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
-                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
-                "mztab_export": {
-                    "type": "boolean",
-                    "default": false,
-                    "fa_icon": "fas fa-align-left",
-                    "description": "Optional mzTab export (Warning: the mzTab format is not yet well supported for DIA)"
                 }
             }
         },
@@ -420,6 +401,33 @@
             },
             "fa_icon": "fas fa-balance-scale-right"
         },
+        "output_summary": {
+            "title": "Output summary",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "run_msstats": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-calculator",
+                    "description": "Set this flag if statistical normalization and visualizations should be generated using MSstats"
+                },
+                "generate_plots": {
+                    "type": "boolean",
+                    "description": "Set this flag if output plots should be generated.",
+                    "help_text": "1) BarChartProtein/Peptide Counts\n2) Pie Chart: Peptide Charge distribution\n3) Density Scatter: Library vs run RT deviations for all identifications\n4) Heatmap: Peptide quantities across MS runs\n5) Pyprophet score plots\n\nIn addition MSstats will run and export comparative protein statistics plots such as Volcano plots if protein level is specified.",
+                    "fa_icon": "fas fa-images",
+                    "default": true
+                },
+                "mztab_export": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-align-left",
+                    "description": "Optional mzTab export (Warning: the mzTab format is not yet well supported for DIA)"
+                }
+            },
+            "fa_icon": "fas fa-align-left"
+        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
@@ -617,6 +625,9 @@
         },
         {
             "$ref": "#/definitions/ms2_chromatogram_alignment"
+        },
+        {
+            "$ref": "#/definitions/output_summary"
         },
         {
             "$ref": "#/definitions/generic_options"
