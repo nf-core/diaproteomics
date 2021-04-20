@@ -17,7 +17,7 @@
                 "input": {
                     "type": "string",
                     "fa_icon": "fab fa-think-peaks",
-                    "description": "Input sample sheet (raw / mzML)",
+                    "description": "Input sample sheet (containing path and meta data of raw or mzML files)",
                     "help_text": "Use this to specify a sample sheet table including your input raw or mzml files as well as their metainformation such as BatchID, MSstats_Condition and MSstats_BioReplicate (of note: the BioReplicate column is optional). For example:\n\n| Sample   | BatchID      | MSstats_Condition  | MSstats_BioReplicate |   Spectra_Filepath                      |\n| -----|:------------:| ----------:|----------:|------------------------------------------:|\n| 1    | MelanomaStudy |      Malignant     |  BioReplicate1  |   data/Melanoma_DIA_standard_rep1.raw    |\n| 2    | MelanomaStudy |      Malignant     |  BioReplicate1  |   data/Melanoma_DIA_standard_rep2.raw    |\n| 3    | MelanomaStudy |      Benign     |  BioReplicate2  |   data/SkinTissue_DIA_standard_rep1.raw    |\n| 4    | MelanomaStudy |      Benign     |  BioReplicate2  |   data/SkinTissue_DIA_standard_rep2.raw    |\n| 5    | BreastCancerStudy |      Malignant     |  BioReplicate1  |   data/BreastCancer_DIA_standard_rep1.raw    |\n| 6    | BreastCancerStudy |      Malignant     |  BioReplicate1  |   data/BreastCancer_DIA_standard_rep2.raw    |\n| 7    | BreastCancerStudy |      Benign     |  BioReplicate2  |   data/BreastTissue_DIA_standard_rep1.raw    |\n| 8    | BreastCancerStudy |      Benign     |  BioReplicate2  |   data/BreastTissue_DIA_standard_rep2.raw    |"
                 },
                 "input_spectral_library": {
