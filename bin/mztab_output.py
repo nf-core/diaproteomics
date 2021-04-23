@@ -52,6 +52,72 @@ def main():
     )
 
     model.add_argument(
+        '-ms1', '--ms1_scoring',
+        type=str,
+        help='ms1_scoring'
+    )
+
+    model.add_argument(
+        '-r', '--rt_extraction_window',
+        type=float,
+        help='rt_extraction_window'
+    )
+
+    model.add_argument(
+        '-m', '--mz_extraction_window',
+        type=float,
+        help='mz_extraction_window'
+    )
+
+    model.add_argument(
+        '-m1','--mz_extraction_window_ms1',
+        type=float,
+        help='mz_extraction_window_ms1'
+    )
+
+    model.add_argument(
+        '-mu', '--mz_extraction_unit',
+        type=str,
+        help='mz_extraction_unit'
+    )
+
+    model.add_argument(
+        '-mu1', '--mz_extraction_unit_ms1',
+        type=str,
+        help='mz_extraction_unit_ms1'
+    )
+
+    model.add_argument(
+        '-dg', '--dialignr_global_align_fdr',
+        type=float,
+        help='dialignr_global_align_fdr'
+    )
+
+    model.add_argument(
+        '-dn','--dialignr_align_fdr',
+        type=float,
+        help='dialignr_align_fdr'
+    )
+
+    model.add_argument(
+        '-du', '--dialignr_unalign_fdr',
+        type=float,
+        help='dialignr_unalign_fdr'
+    )
+
+    model.add_argument(
+        '-da', '--dialignr_analyte_fdr',
+        type=float,
+        help='dialignr_analyte_fdr'
+    )
+
+    model.add_argument(
+        '-dq', '--dialignr_query_fdr',
+        type=float,
+        help='dialignr_query_fdr'
+    )
+
+    model.add_argument(
         '-w', '--workflow_version',
         type=str,
         help='workflow version'
@@ -76,6 +142,17 @@ def main():
        fdr_short='pep'
        fdr_threshold=str(args.fdr_threshold_pep) 
 
+    ms1_scoring=str(args.ms1_scoring)
+    rt_extraction_window=str(args.rt_extraction_window)
+    mz_extraction_window=str(args.mz_extraction_window)
+    mz_extraction_window_ms1=str(args.mz_extraction_window_ms1)
+    mz_extraction_unit=str(args.mz_extraction_unit)
+    mz_extraction_unit_ms1=str(args.mz_extraction_unit_ms1)
+    dialignr_global_align_fdr=str(args.dialignr_global_align_fdr)
+    dialignr_align_fdr=str(args.dialignr_align_fdr)
+    dialignr_unalign_fdr=str(args.dialignr_unalign_fdr)
+    dialignr_analyte_fdr=str(args.dialignr_analyte_fdr)
+    dialignr_query_fdr=str(args.dialignr_query_fdr)
     diaproteomics_version=str(args.workflow_version)
 
     #parse library and rename columns
@@ -93,6 +170,11 @@ def main():
     df_I['run']=files
     df_I=df_I[['Sample', 'BatchID', 'MSstats_Condition', 'run']]
     df_I.columns=['Sample', 'BatchID','MSstats_Condition', 'run']
+
+    assays=list(set(df_I['MSstats_Condition'].tolist()))
+    assayDict={}
+    for a in enumerate(assays):
+        assayDict[a[1]]=a[0]+1
 
     #parse dialignr output and merge with experimental design and library
     df=pd.read_csv(dialignR, sep='\t')
@@ -112,10 +194,10 @@ def main():
     df_prot=df.groupby(['ProteinName','Run'])['Intensity'].apply(sum).reset_index().pivot(index='ProteinName', columns='Run', values='Intensity').reset_index()
     col_idxs=df_prot.columns[1:].tolist()
     col_idxs_enum=[i[0]+1 for i in enumerate(col_idxs)]
-    df_prot.columns=['accession']+['protein_abundance_sub['+str(i)+']' for i in col_idxs_enum]
+    df_prot.columns=['accession']+['protein_abundance_varialbe['+str(i)+']' for i in col_idxs_enum]
     for i in col_idxs_enum:
-        df_prot['protein_abundance_stdev_sub['+str(i)+']']='null'
-        df_prot['protein_abundance_std_error_sub['+str(i)+']']='null'
+        df_prot['protein_abundance_stdev['+str(i)+']']='null'
+        df_prot['protein_abundance_std_error['+str(i)+']']='null'
 
     cols=df_prot.columns.tolist()
     df_prot['PRH']='PRT'
@@ -135,10 +217,10 @@ def main():
 
     retention_time=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz'])['retention_time'].apply(np.median).reset_index()['retention_time']
     df_pep=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz','Run'])['Intensity'].apply(sum).unstack('Run').reset_index()
-    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_sub['+str(i)+']' for i in col_idxs_enum]
+    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_variable['+str(i)+']' for i in col_idxs_enum]
     for i in col_idxs_enum:
-        df_pep['peptide_abundance_stdev_sub['+str(i)+']']='null'
-        df_pep['peptide_abundance_std_error_sub['+str(i)+']']='null'
+        df_pep['peptide_abundance_stdev['+str(i)+']']='null'
+        df_pep['peptide_abundance_std_error['+str(i)+']']='null'
 
     cols=df_pep.columns.tolist()
     df_pep['PEH']='PEP'
@@ -161,10 +243,25 @@ def main():
     header.append('\t'.join(['MTD','description','mztab-like output summarizing DIAproteomics search results'])+'\n')
     header.append('\t'.join(['MTD','software','nfcore/DIAproteomics V.'+diaproteomics_version])+'\n')
     header.append('\t'.join(['MTD','false_discovery_rate', fdr_short+':global FDR', fdr_threshold])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[1]', 'ms1_scoring='+ms1_scoring])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[2]', 'rt_extraction_window='+rt_extraction_window])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[3]', 'mz_extraction_window='+mz_extraction_window])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[4]', 'mz_extraction_window_ms1='+mz_extraction_window_ms1])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[5]', 'mz_extraction_unit='+mz_extraction_unit])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[6]', 'mz_extraction_unit_ms1='+mz_extraction_unit_ms1])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[7]', 'dialignr_global_align_fdr='+dialignr_global_align_fdr])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[8]', 'dialignr_align_fdr='+dialignr_align_fdr])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[9]', 'dialignr_unalign_fdr='+dialignr_unalign_fdr])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[10]', 'dialignr_analyte_fdr='+dialignr_analyte_fdr])+'\n')
+    header.append('\t'.join(['MTD', 'software[1]-setting[11]', 'dialignr_query_fdr='+dialignr_query_fdr])+'\n')
 
     for i in enumerate(col_idxs):
         file_org=df_I[df_I['Sample']==i[1]]['run'].tolist()[0]
+        condition=df_I[df_I['Sample']==i[1]]['MSstats_Condition'].tolist()[0]
         header.append('\t'.join(['MTD','ms_run['+str(i[0]+1)+']-location',file_org])+'\n')
+        header.append('\t'.join(['MTD','assay['+str(assayDict[condition])+']-ms_run_ref','ms_run['+str(i[0]+1)+']'])+'\n')
+        header.append('\t'.join(['MTD','study_variable['+str(i[0]+1)+']-assay_ref','assay['+str(assayDict[condition])+']'])+'\n')
+        header.append('\t'.join(['MTD','study_variable['+str(i[0]+1)+']-description',condition])+'\n')
 
     #output mzTab
     op=open(str(args.output),'w')
