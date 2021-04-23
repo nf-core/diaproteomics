@@ -349,37 +349,37 @@
             "description": "",
             "default": "",
             "properties": {
-                "DIAlignR_global_align_FDR": {
+                "dialignr_global_align_fdr": {
                     "type": "number",
                     "default": 0.01,
                     "description": "DIAlignR global alignment FDR threshold: After the chromatogram alignment all peaks should still satisfy the global alignment FDR threshold.",
                     "fa_icon": "fas fa-globe-asia"
                 },
-                "DIAlignR_analyte_FDR": {
+                "dialignr_analyte_fdr": {
                     "type": "number",
                     "default": 0.01,
                     "description": "DIAlignR analyte FDR threshold: Before the chromatogram alignment only peaks satisfying this threshold will be matched across runs.",
                     "fa_icon": "fas fa-step-backward"
                 },
-                "DIAlignR_unalign_FDR": {
+                "dialignr_unalign_fdr": {
                     "type": "number",
                     "default": 0.01,
                     "description": "DIAlignR unalignment FDR threshold: XICs below this threshold will be considered valid without any alignment.",
                     "fa_icon": "fas fa-align-center"
                 },
-                "DIAlignR_align_FDR": {
+                "dialignr_align_fdr": {
                     "type": "number",
                     "default": 0.05,
                     "description": "DIAlignR alignment FDR threshold: After the chromatogram alignment aligned peaks should satisfy this threshold.",
                     "fa_icon": "fas fa-step-forward"
                 },
-                "DIAlignR_query_FDR": {
+                "dialignr_query_fdr": {
                     "type": "number",
                     "default": 0.05,
                     "description": "DIAlignR query FDR threshold: During the chromatogram alignment only peaks satisfying this maximum FDR threshold will be considered as potential matches.",
                     "fa_icon": "fas fa-filter"
                 },
-                "DIAlignR_XICfilter": {
+                "dialignr_xicfilter": {
                     "type": "string",
                     "default": "sgolay",
                     "enum": [
@@ -392,7 +392,7 @@
                     "description": "DIAlignR XICfilter parameter",
                     "fa_icon": "fas fa-funnel-dollar"
                 },
-                "DIAlignR_parallelization": {
+                "dialignr_parallelization": {
                     "type": "boolean",
                     "default": true,
                     "description": "Whether DIAlignR should be executed using multithreading (may cause errors)",
