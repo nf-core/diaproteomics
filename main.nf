@@ -257,10 +257,10 @@ if (params.force_option){
 }
 
 // DIAlignR multithreading
-if (params.DIAlignR_parallelization){
-    DIAlignR_parallel='parallel'
+if (params.dialignr_parallelization){
+    dialignr_parallel='parallel'
    } else {
-    DIAlignR_parallel=''
+    dialignr_parallel=''
 }
 
 ////////////////////////////////////////////////////
@@ -820,7 +820,7 @@ process chromatogram_alignment {
      mkdir xics 
      mv *.chrom.sqMass xics/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
+     DIAlignR.R ${params.dialignr_global_align_fdr} ${params.dialignr_analyte_fdr} ${params.dialignr_unalign_fdr} ${params.dialignr_align_fdr} ${params.dialignr_query_fdr} ${params.pyprophet_global_fdr_level} ${params.dialignr_xicfilter} ${dialignr_parallel} ${task.cpus}
 
      mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """
