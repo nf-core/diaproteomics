@@ -77,7 +77,6 @@ def main():
        fdr_threshold=str(args.fdr_threshold_pep) 
 
     diaproteomics_version=str(args.workflow_version)
-    print(fdr_threshold)
 
     #parse library and rename columns
     df_lib=pd.read_csv(lib,sep='\t')
@@ -89,7 +88,7 @@ def main():
     if any(['/' in f for f in df_I['Spectra_Filepath'].values.tolist()]):
        files=[f.replace('.mzml','').replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','').split('/')[-1] for f in df_I['Spectra_Filepath'].values.tolist()]
     else:
-       files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
+       files=[f.replace('.mzml','').replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
     print(files)
     df_I['run']=files
     df_I=df_I[['Sample', 'BatchID', 'MSstats_Condition', 'run']]
