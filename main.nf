@@ -257,10 +257,10 @@ if (params.force_option){
 }
 
 // DIAlignR multithreading
-if (params.DIAlignR_parallelization){
-    DIAlignR_parallel='parallel'
+if (params.dialignr_parallelization){
+    dialignr_parallel='parallel'
    } else {
-    DIAlignR_parallel=''
+    dialignr_parallel=''
 }
 
 ////////////////////////////////////////////////////
@@ -333,6 +333,8 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
+    FileInfo --help &> v_openms.txt
+    pyprophet --version &> v_pyprophet.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -818,7 +820,7 @@ process chromatogram_alignment {
      mkdir xics 
      mv *.chrom.sqMass xics/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
+     DIAlignR.R ${params.dialignr_global_align_fdr} ${params.dialignr_analyte_fdr} ${params.dialignr_unalign_fdr} ${params.dialignr_align_fdr} ${params.dialignr_query_fdr} ${params.pyprophet_global_fdr_level} ${params.dialignr_xicfilter} ${dialignr_parallel} ${task.cpus}
 
      mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
      """
@@ -888,7 +890,7 @@ process mztab_export {
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.mzTab"
+     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --fdr_threshold_pep ${params.pyprophet_peptide_fdr} --fdr_threshold_prot ${params.pyprophet_protein_fdr} --workflow_version $workflow.manifest.version --output "${Sample}_${Condition}.mzTab"
     """
 }
 

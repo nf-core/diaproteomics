@@ -7,7 +7,7 @@ regexes = {
     "nf-core/diaproteomics": ["v_pipeline.txt", r"(\S+)"],
     "Nextflow": ["v_nextflow.txt", r"(\S+)"],
     'OpenMS': ['v_openms.txt', r"Version: (\S+)"],
-    'Pyprophet': ['v_pyprophet.txt', r"version: (\S+)"],
+    'Pyprophet': ['v_pyprophet.txt', r"version (\S+)"],
     "FastQC": ["v_fastqc.txt", r"FastQC v(\S+)"],
     "MultiQC": ["v_multiqc.txt", r"multiqc, version (\S+)"],
 }
