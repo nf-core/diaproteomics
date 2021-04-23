@@ -890,7 +890,25 @@ process mztab_export {
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --fdr_threshold_pep ${params.pyprophet_peptide_fdr} --fdr_threshold_prot ${params.pyprophet_protein_fdr} --workflow_version $workflow.manifest.version --output "${Sample}_${Condition}.mzTab"
+     mztab_output.py --input ${dialignr_file} \\
+                     --exp_design ${exp_design} \\
+                     --library ${lib_file.baseName}.tsv \\
+                     --fdr_level ${params.pyprophet_global_fdr_level} \\
+                     --fdr_threshold_pep ${params.pyprophet_peptide_fdr} \\
+                     --fdr_threshold_prot ${params.pyprophet_protein_fdr} \\
+                     --ms1_scoring ${params.use_ms1} \\
+                     --rt_extraction_window ${params.rt_extraction_window} \\
+                     --mz_extraction_window ${params.mz_extraction_window} \\
+                     --mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
+                     --mz_extraction_unit ${params.mz_extraction_window_unit} \\
+                     --mz_extraction_unit_ms1 ${params.mz_extraction_window_ms1_unit} \\
+                     --dialignr_global_align_fdr ${params.dialignr_global_align_fdr} \\
+                     --dialignr_analyte_fdr ${params.dialignr_analyte_fdr} \\
+                     --dialignr_unalign_fdr ${params.dialignr_unalign_fdr} \\
+                     --dialignr_align_fdr ${params.dialignr_align_fdr} \\
+                     --dialignr_query_fdr ${params.dialignr_query_fdr} \\
+                     --workflow_version $workflow.manifest.version \\
+                     --output "${Sample}_${Condition}.mzTab"
     """
 }
 
