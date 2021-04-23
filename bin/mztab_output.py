@@ -194,7 +194,7 @@ def main():
     df_prot=df.groupby(['ProteinName','Run'])['Intensity'].apply(sum).reset_index().pivot(index='ProteinName', columns='Run', values='Intensity').reset_index()
     col_idxs=df_prot.columns[1:].tolist()
     col_idxs_enum=[i[0]+1 for i in enumerate(col_idxs)]
-    df_prot.columns=['accession']+['protein_abundance_varialbe['+str(i)+']' for i in col_idxs_enum]
+    df_prot.columns=['accession']+['protein_abundance_variable['+str(i)+']' for i in col_idxs_enum]
     for i in col_idxs_enum:
         df_prot['protein_abundance_stdev['+str(i)+']']='null'
         df_prot['protein_abundance_std_error['+str(i)+']']='null'
