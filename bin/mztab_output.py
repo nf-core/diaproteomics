@@ -40,6 +40,24 @@ def main():
     )
 
     model.add_argument(
+        '-t', '--fdr_threshold_pep',
+        type=float,
+        help='fdr treshold'
+    )
+
+    model.add_argument(
+        '-p', '--fdr_threshold_prot',
+        type=float,
+        help='fdr treshold'
+    )
+
+    model.add_argument(
+        '-w', '--workflow_version',
+        type=str,
+        help='workflow version'
+    )
+
+    model.add_argument(
         '-o', '--output',
         type=str,
         help='output reformatted file'
@@ -51,6 +69,15 @@ def main():
     dialignR=args.input
     lib=args.library
     fdr_level=args.fdr_level
+    if fdr_level=='protein':
+       fdr_short='prot'
+       fdr_threshold=str(args.fdr_threshold_prot)
+    else:
+       fdr_short='pep'
+       fdr_threshold=str(args.fdr_threshold_pep) 
+
+    diaproteomics_version=str(args.workflow_version)
+    print(fdr_threshold)
 
     #parse library and rename columns
     df_lib=pd.read_csv(lib,sep='\t')
@@ -60,7 +87,7 @@ def main():
     #parse experimental design and rename columns
     df_I=pd.read_csv(exp_design, sep='\t')
     if any(['/' in f for f in df_I['Spectra_Filepath'].values.tolist()]):
-       files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','').split('/')[-1] for f in df_I['Spectra_Filepath'].values.tolist()]
+       files=[f.replace('.mzml','').replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','').split('/')[-1] for f in df_I['Spectra_Filepath'].values.tolist()]
     else:
        files=[f.replace('.mzML','').replace('.raw','').replace('.Raw','').replace('.RAW','') for f in df_I['Spectra_Filepath'].values.tolist()]
     print(files)
@@ -130,6 +157,12 @@ def main():
 
     #reformat MTD header
     header=['\t'.join(['MTD','mzTab-version','1.0'])+'\n']
+    header.append('\t'.join(['MTD','mzTab-mode','Summary'])+'\n')
+    header.append('\t'.join(['MTD','mzTab-type','Quantification'])+'\n')
+    header.append('\t'.join(['MTD','description','mztab-like output summarizing DIAproteomics search results'])+'\n')
+    header.append('\t'.join(['MTD','software','nfcore/DIAproteomics V.'+diaproteomics_version])+'\n')
+    header.append('\t'.join(['MTD','false_discovery_rate', fdr_short+':global FDR', fdr_threshold])+'\n')
+
     for i in enumerate(col_idxs):
         file_org=df_I[df_I['Sample']==i[1]]['run'].tolist()[0]
         header.append('\t'.join(['MTD','ms_run['+str(i[0]+1)+']-location',file_org])+'\n')

@@ -333,6 +333,8 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
+    FileInfo --help &> v_openms.txt
+    pyprophet --version &> v_pyprophet.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -888,7 +890,7 @@ process mztab_export {
      TargetedFileConverter -in ${lib_file} \\
                            -out ${lib_file.baseName}.tsv
 
-     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.mzTab"
+     mztab_output.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --fdr_threshold_pep ${params.pyprophet_peptide_fdr} --fdr_threshold_prot ${params.pyprophet_protein_fdr} --workflow_version $workflow.manifest.version --output "${Sample}_${Condition}.mzTab"
     """
 }
 
