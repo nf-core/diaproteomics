@@ -123,7 +123,7 @@ if( params.generate_spectral_library) {
         raw: hasExtension(it[2], 'raw')
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
-        other: true 
+        other: true
     }.set{input_dda_ms_files}
 
     Channel
@@ -461,7 +461,7 @@ process library_merging_and_alignment {
 
     output:
      set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
-     set val(id), val(Sample), file("*.png") optional true 
+     set val(id), val(Sample), file("*.png") optional true
 
     when:
      params.merge_libraries
@@ -619,7 +619,7 @@ process dia_spectral_library_search {
                        -Scoring:uis_threshold_sn -1 \\
                        -threads ${task.cpus} \\
                        ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi} \\
-  
+
      """
 }
 
@@ -816,8 +816,8 @@ process chromatogram_alignment {
     script:
      """
      mkdir osw
-     mv ${pyresults} osw/ 
-     mkdir xics 
+     mv ${pyresults} osw/
+     mkdir xics
      mv *.chrom.sqMass xics/
 
      DIAlignR.R ${params.dialignr_global_align_fdr} ${params.dialignr_analyte_fdr} ${params.dialignr_unalign_fdr} ${params.dialignr_align_fdr} ${params.dialignr_query_fdr} ${params.pyprophet_global_fdr_level} ${params.dialignr_xicfilter} ${dialignr_parallel} ${task.cpus}
@@ -1019,20 +1019,6 @@ workflow.onComplete {
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
-    // On success try attach the multiqc report
-    def mqc_report = null
-    try {
-        if (workflow.success) {
-            mqc_report = ch_multiqc_report.getVal()
-            if (mqc_report.getClass() == ArrayList) {
-                log.warn "[nf-core/diaproteomics] Found multiple reports from process 'multiqc', will use only one"
-                mqc_report = mqc_report[0]
-            }
-        }
-    } catch (all) {
-        log.warn "[nf-core/diaproteomics] Could not attach MultiQC report to summary email"
-    }
-
     // Check if we are only sending emails on failure
     email_address = params.email
     if (!params.email && params.email_on_fail && !workflow.success) {
@@ -1051,7 +1037,7 @@ workflow.onComplete {
     def email_html = html_template.toString()
 
     // Render the sendmail template
-    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
+    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir" ]
     def sf = new File("$projectDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
