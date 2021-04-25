@@ -194,10 +194,10 @@ def main():
     df_prot=df.groupby(['ProteinName','Run'])['Intensity'].apply(sum).reset_index().pivot(index='ProteinName', columns='Run', values='Intensity').reset_index()
     col_idxs=df_prot.columns[1:].tolist()
     col_idxs_enum=[i[0]+1 for i in enumerate(col_idxs)]
-    df_prot.columns=['accession']+['protein_abundance_varialbe['+str(i)+']' for i in col_idxs_enum]
+    df_prot.columns=['accession']+['protein_abundance_study_variable['+str(i)+']' for i in col_idxs_enum]
     for i in col_idxs_enum:
-        df_prot['protein_abundance_stdev['+str(i)+']']='null'
-        df_prot['protein_abundance_std_error['+str(i)+']']='null'
+        df_prot['protein_abundance_stdev_study_variable['+str(i)+']']='null'
+        df_prot['protein_abundance_std_error_study_variable['+str(i)+']']='null'
 
     cols=df_prot.columns.tolist()
     df_prot['PRH']='PRT'
@@ -217,10 +217,10 @@ def main():
 
     retention_time=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz'])['retention_time'].apply(np.median).reset_index()['retention_time']
     df_pep=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz','Run'])['Intensity'].apply(sum).unstack('Run').reset_index()
-    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_variable['+str(i)+']' for i in col_idxs_enum]
+    df_pep.columns=['sequence','accession','charge','mass_to_charge']+['peptide_abundance_study_variable['+str(i)+']' for i in col_idxs_enum]
     for i in col_idxs_enum:
-        df_pep['peptide_abundance_stdev['+str(i)+']']='null'
-        df_pep['peptide_abundance_std_error['+str(i)+']']='null'
+        df_pep['peptide_abundance_stdev_study_variable['+str(i)+']']='null'
+        df_pep['peptide_abundance_std_error_study_variable['+str(i)+']']='null'
 
     cols=df_pep.columns.tolist()
     df_pep['PEH']='PEP'
