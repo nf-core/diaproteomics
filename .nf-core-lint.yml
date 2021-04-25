@@ -1,0 +1,4 @@
+# Ignore lint failures - stripped MultiQC from these files
+files_unchanged:
+  - .github/CONTRIBUTING.md
+  - assets/sendmail_template.txt
