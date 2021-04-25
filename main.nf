@@ -16,7 +16,7 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 ////////////////////////////////////////////////////+
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    def command = "nextflow run nf-core/diaproteomics -profile test,docker"
+    def command = "nextflow run nf-core/diaproteomics --input sample_sheet.tsv --input_spectral_library library_sheet.tsv --irts irt_sheet.tsv"
     log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
     exit 0
 }
@@ -49,17 +49,18 @@ ch_output_docs = file("$projectDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 sample_sheet = file(params.input)
 Channel
- .from( sample_sheet )
- .into { input_exp_design; input_exp_design_mztab}
+    .from( sample_sheet )
+    .into { input_exp_design; input_exp_design_mztab}
 
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
-Channel.from( sample_sheet )
-       .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
-       .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
-       .into {input_branch;check_dia}
+Channel
+    .from( sample_sheet )
+    .splitCsv(header: true, sep:'\t')
+    .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
+    .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
+    .into { input_branch; check_dia }
 
 
 // Check file extension
@@ -68,10 +69,10 @@ def hasExtension(it, extension) {
 }
 
 input_branch.branch {
-        raw: hasExtension(it[3], 'raw')
-        mzml: hasExtension(it[3], 'mzml')
-        mzxml: hasExtension(it[3], 'mzxml')
-        other: true
+    raw: hasExtension(it[3], 'raw')
+    mzml: hasExtension(it[3], 'mzml')
+    mzxml: hasExtension(it[3], 'mzxml')
+    other: true
 }.set{input_dia_ms_files}
 
 input_dia_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
@@ -129,7 +130,7 @@ if( params.generate_spectral_library) {
     Channel
         .fromPath( params.unimod )
         .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
-        .set { input_unimod}
+        .set { input_unimod }
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
@@ -145,8 +146,8 @@ if( params.generate_spectral_library) {
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Sample}", "${col.BatchID}", file("${col.Library_Filepath}", checkifExists: true))}
-        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
-        .into {input_lib_nd; check_decoy; check_decoy_2}
+        .flatMap{ it -> [tuple(it[0],it[1],it[2])] }
+        .into { input_lib_nd; check_decoy; check_decoy_2 }
 
     check_decoy_n2 = check_decoy_2.toList().size().val
     check_decoy_n = check_decoy.map{it[1]}.unique().toList().size().val
@@ -169,7 +170,7 @@ if( params.generate_spectral_library) {
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
         other: true
-    }.set{input_dda_ms_files}
+    }.set { input_dda_ms_files }
     input_unimod = Channel.empty()
 
 } else {
@@ -204,20 +205,20 @@ if( params.generate_spectral_library) {
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
         other: true
-    }.set{input_dda_ms_files}
+    }.set { input_dda_ms_files }
     input_unimod = Channel.empty()
 }
 
 
 if( !params.generate_pseudo_irts){
-   // iRT library input
-   irt_sheet = file(params.irts)
+    // iRT library input
+    irt_sheet = file(params.irts)
 
-   Channel.from( irt_sheet )
-       .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
-       .flatMap{it -> [tuple(it[0],it[1])]}
-       .into {input_irts; input_irts_check; input_irts_check_2}
+    Channel.from( irt_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1])]}
+        .into {input_irts; input_irts_check; input_irts_check_2}
 
     check_irts_n = input_irts_check.toList().size().val
     check_irts_n2 = input_irts_check_2.map{it[0]}.unique().toList().size().val
@@ -240,26 +241,26 @@ if( !params.generate_pseudo_irts){
 
 // MS1 option
 if (params.use_ms1){
-    ms1_option='-use_ms1_traces'
-    ms1_scoring='-Scoring:Scores:use_ms1_mi'
-    ms1_mi='-Scoring:Scores:use_mi_score'
-   } else {
-    ms1_option=''
-    ms1_scoring=''
-    ms1_mi=''
+    ms1_option = '-use_ms1_traces'
+    ms1_scoring = '-Scoring:Scores:use_ms1_mi'
+    ms1_mi = '-Scoring:Scores:use_mi_score'
+} else {
+    ms1_option = ''
+    ms1_scoring = ''
+    ms1_mi = ''
 }
 
 // Force option
 if (params.force_option){
-    force_option='-force'
-   } else {
-    force_option=''
+    force_option = '-force'
+} else {
+    force_option = ''
 }
 
 // DIAlignR multithreading
 if (params.dialignr_parallelization){
     dialignr_parallel='parallel'
-   } else {
+} else {
     dialignr_parallel=''
 }
 
@@ -345,18 +346,18 @@ process get_software_versions {
  */
 process dda_raw_file_conversion {
     input:
-     set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
+    set val(id), val(sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
 
     output:
-     set val(id), val(Sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
+    set val(id), val(sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
-     """
+    """
+    ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+    """
 }
 
 
@@ -366,20 +367,18 @@ process dda_raw_file_conversion {
 process dda_id_format_conversion {
 
     input:
-     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
+    set val(id), val(sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
 
     output:
-     set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
+    set val(id), val(sample), file(dda_mzml), file("${id}_${sample}_peptide_ids.idXML") into input_dda_converted
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     IDFileConverter -in ${dda_id_file} \\
-                     -out ${id}_${Sample}_peptide_ids.idXML \\
-                     -threads ${task.cpus} \\
-     """
+    """
+    IDFileConverter -in ${dda_id_file} -out ${id}_${sample}_peptide_ids.idXML -threads ${task.cpus}
+    """
 }
 
 
@@ -389,29 +388,31 @@ process dda_id_format_conversion {
 process dda_library_generation {
 
     input:
-     set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
-     file unimod_file from input_unimod.first()
+    set val(id), val(sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
+    file unimod_file from input_unimod.first()
 
     output:
-     set val(id), val(Sample), file("${id}_${Sample}_library.tsv") into input_lib_dda_nd
+    set val(id), val(sample), file("${id}_${sample}_library.tsv") into input_lib_dda_nd
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     easypqp convert --unimod ${unimod_file} \\
-                     --pepxml ${idxml_file} \\
-                     --spectra ${dda_mzml_file} \\
+    """
+    easypqp convert \\
+        --unimod ${unimod_file} \\
+        --pepxml ${idxml_file} \\
+        --spectra ${dda_mzml_file}
 
-     easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
-                     --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
-                     --nofdr \\
-                     ${dda_mzml_file.baseName}.psmpkl \\
-                     ${dda_mzml_file.baseName}.peakpkl \\
+    easypqp library \\
+        --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
+        --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
+        --nofdr \\
+        ${dda_mzml_file.baseName}.psmpkl \\
+        ${dda_mzml_file.baseName}.peakpkl
 
-     mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${Sample}_library.tsv
-     """
+    mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${sample}_library.tsv
+    """
 }
 
 
@@ -421,32 +422,34 @@ process dda_library_generation {
 process assay_generation {
 
     input:
-     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
+    set val(id), val(sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
 
     output:
-     set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
+    set val(id), val(sample), file("${id}_${sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
 
     when:
-     !params.skip_decoy_generation
+    !params.skip_decoy_generation
 
     script:
-     """
-     TargetedFileConverter -in ${lib_file_na} \\
-                           -out ${lib_file_na.baseName}.tsv \\
-                           -threads ${task.cpus} \\
+    """
+    TargetedFileConverter \\
+        -in ${lib_file_na} \\
+        -out ${lib_file_na.baseName}.tsv \\
+        -threads ${task.cpus}
 
-     OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
-                             -min_transitions ${params.min_transitions} \\
-                             -max_transitions ${params.max_transitions} \\
-                             -out ${id}_${Sample}_assay.tsv \\
-                             -threads ${task.cpus} \\
-     """
+    OpenSwathAssayGenerator \\
+        -in ${lib_file_na.baseName}.tsv \\
+        -min_transitions ${params.min_transitions} \\
+        -max_transitions ${params.max_transitions} \\
+        -out ${id}_${sample}_assay.tsv \\
+        -threads ${task.cpus}
+    """
 }
 
 
 if(params.merge_libraries) {
-   input_lib_assay = Channel.empty()
-   input_lib_assay_for_irt = Channel.empty()
+    input_lib_assay = Channel.empty()
+    input_lib_assay_for_irt = Channel.empty()
 }
 
 
@@ -457,19 +460,24 @@ process library_merging_and_alignment {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
+    set val(id), val(sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
 
     output:
-     set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
-     set val(id), val(Sample), file("*.png") optional true
+    set val(id), val(sample), file("${sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
+    set val(id), val(sample), file("*.png") optional true
 
     when:
-     params.merge_libraries
+    params.merge_libraries
 
     script:
-     """
-     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv ${align_flag}\\
-     """
+    """
+    merge_and_align_libraries_from_easypqp.py \\
+        --input_libraries ${lib_files_for_merging} \\
+        --min_overlap ${params.min_overlap_for_merging} \\
+        --rsq_threshold 0.75  \\
+        --output ${sample}_library_merged.tsv \\
+        ${align_flag}
+    """
 }
 
 
@@ -480,22 +488,29 @@ process pseudo_irt_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
+    set val(id), val(sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
 
     output:
-     set val(Sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
+    set val(sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
 
     when:
-     params.generate_pseudo_irts
+    params.generate_pseudo_irts
 
     script:
-     """
-     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv ${quant_flag}\\
+    """
+    select_pseudo_irts_from_lib.py \\
+        --input_libraries ${lib_file_assay_irt} \\
+        --min_rt 0 \\
+        --n_irts ${params.n_irts} \\
+        --max_rt 100 \\
+        --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+        ${quant_flag}
 
-     TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
-                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
-                           -threads ${task.cpus} \\
-     """
+    TargetedFileConverter \\
+        -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+        -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
+        -threads ${task.cpus}
+    """
 }
 
 
@@ -506,25 +521,27 @@ process decoy_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
+    set val(id), val(sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
 
     output:
-     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into input_lib_decoy
+    set val(id), val(sample), file("${lib_file_nd.baseName}_decoy.pqp") into input_lib_decoy
 
     when:
-     !params.skip_decoy_generation
+    !params.skip_decoy_generation
 
     script:
-     """
-     TargetedFileConverter -in ${lib_file_nd} \\
-                           -out ${lib_file_nd.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    """
+    TargetedFileConverter \\
+        -in ${lib_file_nd} \\
+        -out ${lib_file_nd.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     OpenSwathDecoyGenerator -in ${lib_file_nd.baseName}.pqp \\
-                             -method ${params.decoy_method} \\
-                             -out ${lib_file_nd.baseName}_decoy.pqp \\
-                             -threads ${task.cpus} \\
-     """
+    OpenSwathDecoyGenerator \\
+        -in ${lib_file_nd.baseName}.pqp \\
+        -method ${params.decoy_method} \\
+        -out ${lib_file_nd.baseName}_decoy.pqp \\
+        -threads ${task.cpus}
+    """
 }
 
 
@@ -534,18 +551,18 @@ process decoy_generation {
 process dia_raw_file_conversion {
 
     input:
-     set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
+    set val(id), val(sample), val(condition), file(raw_file) from input_dia_ms_files.raw
 
     output:
-     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
+    set val(id), val(sample), val(condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
-     """
+    """
+    ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+    """
 }
 
 
@@ -558,69 +575,71 @@ process dia_spectral_library_search {
     label 'process_medium'
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
+    set val(sample), val(id), val(condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
-     set val(id), val(Sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I, input_lib_used_I_mztab)
+    set val(id), val(sample), val(condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
+    set val(id), val(sample), val(condition), file("${mzml_file.baseName}.osw") into osw_files
+    set val(id), val(sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I, input_lib_used_I_mztab)
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
 
     script:
-     """
-     mkdir tmp\\
+    """
+    mkdir tmp
 
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    TargetedFileConverter \\
+        -in ${lib_file} \\
+        -out ${lib_file.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     TargetedFileConverter -in ${irt_file} \\
-                           -out ${irt_file.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    TargetedFileConverter \\
+        -in ${irt_file} \\
+        -out ${irt_file.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     OpenSwathWorkflow -in ${mzml_file} \\
-                       -tr ${lib_file.baseName}.pqp \\
-                       -sort_swath_maps \\
-                       -tr_irt ${irt_file.baseName}.pqp \\
-                       -min_rsq ${params.irt_min_rsq} \\
-                       -out_osw ${mzml_file.baseName}.osw \\
-                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
-                       -mz_extraction_window ${params.mz_extraction_window} \\
-                       -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
-                       -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
-                       -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
-                       -rt_extraction_window ${params.rt_extraction_window} \\
-                       -min_upper_edge_dist ${params.min_upper_edge_dist} \\
-                       -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
-                       -RTNormalization:estimateBestPeptides \\
-                       -RTNormalization:outlierMethod none \\
-                       -RTNormalization:NrRTBins ${params.irt_n_bins} \\
-                       -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
-                       -mz_correction_function quadratic_regression_delta_ppm \\
-                       -Scoring:stop_report_after_feature 5 \\
-                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
-                       -Scoring:TransitionGroupPicker:peak_integration 'original' \\
-                       -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
-                       -batchSize 1000 \\
-                       -readOptions ${params.cache_option} \\
-                       -tempDirectory tmp \\
-                       -Scoring:DIAScoring:dia_nr_isotopes 3 \\
-                       -enable_uis_scoring \\
-                       -Scoring:uis_threshold_sn -1 \\
-                       -threads ${task.cpus} \\
-                       ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi} \\
-
-     """
+    OpenSwathWorkflow \\
+        -in ${mzml_file} \\
+        -tr ${lib_file.baseName}.pqp \\
+        -sort_swath_maps \\
+        -tr_irt ${irt_file.baseName}.pqp \\
+        -min_rsq ${params.irt_min_rsq} \\
+        -out_osw ${mzml_file.baseName}.osw \\
+        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
+        -mz_extraction_window ${params.mz_extraction_window} \\
+        -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
+        -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
+        -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
+        -rt_extraction_window ${params.rt_extraction_window} \\
+        -min_upper_edge_dist ${params.min_upper_edge_dist} \\
+        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
+        -RTNormalization:estimateBestPeptides \\
+        -RTNormalization:outlierMethod none \\
+        -RTNormalization:NrRTBins ${params.irt_n_bins} \\
+        -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
+        -mz_correction_function quadratic_regression_delta_ppm \\
+        -Scoring:stop_report_after_feature 5 \\
+        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+        -Scoring:TransitionGroupPicker:peak_integration 'original' \\
+        -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
+        -batchSize 1000 \\
+        -readOptions ${params.cache_option} \\
+        -tempDirectory tmp \\
+        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
+        -enable_uis_scoring \\
+        -Scoring:uis_threshold_sn -1 \\
+        -threads ${task.cpus} \\
+        ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
+    """
 }
 
 
@@ -630,21 +649,22 @@ process dia_spectral_library_search {
 process dia_search_output_merging {
 
     input:
-     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
+    set val(sample), val(id), val(condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into merged_osw_file_for_global
+    set val(id), val(sample), val(condition), file("${sample}_osw_file_merged.osw") into merged_osw_file_for_global
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     pyprophet merge --template=${lib_file_template} \\
-                     --out=${Sample}_osw_file_merged.osw \\
-                     --no-same_run \\
-                     ${all_osws} \\
-     """
+    """
+    pyprophet merge \\
+        --template=${lib_file_template} \\
+        --out=${sample}_osw_file_merged.osw \\
+        --no-same_run \\
+        ${all_osws}
+    """
 }
 
 
@@ -657,73 +677,65 @@ process global_false_discovery_rate_estimation {
     label 'process_medium'
 
     input:
-     set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
+    set val(id), val(sample), val(condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
-     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
+    set val(id), val(sample), val(condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
+    set val(id), val(sample), val(condition), file("*.pdf") into target_decoy_global_score_plots
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
     if (params.pyprophet_classifier=='LDA'){
-     """
-     pyprophet score --in=${scored_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${scored_osw.baseName}_scored.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
-                     --threads=${task.cpus} \\
+        """
+        pyprophet score \\
+            --in=${scored_osw} \\
+            --level=${params.pyprophet_fdr_ms_level} \\
+            --out=${scored_osw.baseName}_scored.osw \\
+            --classifier=${params.pyprophet_classifier} \\
+            --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
+            --threads=${task.cpus}
 
-     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
-                       --out=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet peptide \\
+            --in=${scored_osw.baseName}_scored.osw \\
+            --out=${scored_osw.baseName}_global_merged.osw \\
+            --context=run-specific
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=global
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=run-specific
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
-
-     """
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=global
+        """
     } else {
-     """
-     pyprophet score --in=${scored_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${scored_osw.baseName}_scored.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --threads=${task.cpus} \\
+        """
+        pyprophet score \\
+            --in=${scored_osw} \\
+            --level=${params.pyprophet_fdr_ms_level} \\
+            --out=${scored_osw.baseName}_scored.osw \\
+            --classifier=${params.pyprophet_classifier} \\
+            --threads=${task.cpus}
 
-     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
-                       --out=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet peptide \\
+            --in=${scored_osw.baseName}_scored.osw \\
+            --out=${scored_osw.baseName}_global_merged.osw \\
+            --context=run-specific
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=global
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=run-specific
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
-
-     """
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=global
+        """
     }
 }
 
@@ -735,23 +747,24 @@ process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
-     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
+    set val(id), val(sample), val(condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
 
     output:
-     set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
-     set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
+    set val(id), val(sample), val(condition), file("*.tsv") into pyprophet_results
+    set val(id), val(sample), val(condition), file(global_osw) into osw_for_dialignr
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     pyprophet export --in=${global_osw} \\
-                      --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
-                      --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
-                      --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
-                      --out=legacy.tsv \\
-     """
+    """
+    pyprophet export \\
+        --in=${global_osw} \\
+        --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
+        --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
+        --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
+        --out=legacy.tsv
+    """
 }
 
 
@@ -763,38 +776,40 @@ process chromatogram_indexing {
     label 'process_high'
 
     input:
-     set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
+    set val(id), val(sample), val(condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
+    set val(id), val(sample), val(condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     FileConverter -in ${chrom_file_noindex} \\
-                   -process_lowmemory \\
-                   -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+    """
+    FileConverter \\
+        -in ${chrom_file_noindex} \\
+        -process_lowmemory \\
+        -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML
 
-     OpenSwathMzMLFileCacher -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
-                             -lossy_compression false \\
-                             -process_lowmemory \\
-                             -lowmem_batchsize 50000 \\
-                             -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass \\
-     """
+    OpenSwathMzMLFileCacher \\
+        -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+        -lossy_compression false \\
+        -process_lowmemory \\
+        -lowmem_batchsize 50000 \\
+        -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass
+    """
 }
 
 
 // Combine channels of osw files and osw chromatograms
 osw_for_dialignr
- .transpose()
- .join(chromatogram_files_indexed, by:1)
- .groupTuple(by:0)
- // Channel contains now the following elements:
- // ([id, [Samples], [Conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
- .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
- .set{osw_and_chromatograms_combined_by_condition}
+    .transpose()
+    .join(chromatogram_files_indexed, by:1)
+    .groupTuple(by:0)
+    // Channel contains now the following elements:
+    // ([id, [samples], [conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
+    .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
+    .set{osw_and_chromatograms_combined_by_condition}
 
 /*
  * STEP 13 - Align DIA Chromatograms using DIAlignR
@@ -805,25 +820,34 @@ process chromatogram_alignment {
     label 'process_high_mem'
 
     input:
-     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
+    set val(sample), val(id), val(condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I, DIALignR_result_mztab)
+    set val(id), val(sample), val(condition), file("${sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I, DIALignR_result_mztab)
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     mkdir osw
-     mv ${pyresults} osw/
-     mkdir xics
-     mv *.chrom.sqMass xics/
+    """
+    mkdir osw
+    mv ${pyresults} osw/
+    mkdir xics
+    mv *.chrom.sqMass xics/
 
-     DIAlignR.R ${params.dialignr_global_align_fdr} ${params.dialignr_analyte_fdr} ${params.dialignr_unalign_fdr} ${params.dialignr_align_fdr} ${params.dialignr_query_fdr} ${params.pyprophet_global_fdr_level} ${params.dialignr_xicfilter} ${dialignr_parallel} ${task.cpus}
+    DIAlignR.R \\
+        ${params.dialignr_global_align_fdr} \\
+        ${params.dialignr_analyte_fdr} \\
+        ${params.dialignr_unalign_fdr} \\
+        ${params.dialignr_align_fdr} \\
+        ${params.dialignr_query_fdr} \\
+        ${params.pyprophet_global_fdr_level} \\
+        ${params.dialignr_xicfilter} \\
+        ${dialignr_parallel} \\
+        ${task.cpus}
 
-     mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
-     """
+    mv DIAlignR.tsv ${sample}_peptide_quantities.csv
+    """
 }
 
 
@@ -831,37 +855,47 @@ process chromatogram_alignment {
  * STEP 14 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process reformatting {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
-   input:
-    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
+    input:
+    set val(id), val(sample), val(condition), file(dialignr_file) from DIALignR_result
     file exp_design from input_exp_design.first()
-    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I.first()
+    set val(id), val(sample_lib), file(lib_file) from input_lib_used_I.first()
 
-   output:
-    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
+    output:
+    set val(id), val(sample), val(condition), file("${sample}_${condition}.csv") into msstats_file
 
-   when:
+    when:
     params.run_msstats
 
-   script:
+    script:
 
     if (params.pyprophet_global_fdr_level==''){
 
     """
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.tsv
+    TargetedFileConverter \\
+        -in ${lib_file} \\
+        -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.csv"
+    reformat_output_for_msstats.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level "none" \\
+        --output "${sample}_${condition}.csv"
     """
 
     } else {
 
     """
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.tsv
+    TargetedFileConverter -in ${lib_file} -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
+    reformat_output_for_msstats.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level ${params.pyprophet_global_fdr_level} \\
+        --output "${sample}_${condition}.csv"
     """
     }
 }
@@ -871,44 +905,44 @@ process reformatting {
  * STEP 14.5 - export_mztab
  */
 process mztab_export {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
-   input:
-    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result_mztab
+    input:
+    set val(id), val(sample), val(condition), file(dialignr_file) from DIALignR_result_mztab
     file exp_design from input_exp_design_mztab.first()
-    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I_mztab.first()
+    set val(id), val(sample_lib), file(lib_file) from input_lib_used_I_mztab.first()
 
-   output:
-    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.mzTab") into mztab_file
+    output:
+    set val(id), val(sample), val(condition), file("${sample}_${condition}.mzTab") into mztab_file
 
-   when:
+    when:
     params.mztab_export
 
-   script:
+    script:
 
     """
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.tsv
+    TargetedFileConverter -in ${lib_file} -out ${lib_file.baseName}.tsv
 
-     mztab_output.py --input ${dialignr_file} \\
-                     --exp_design ${exp_design} \\
-                     --library ${lib_file.baseName}.tsv \\
-                     --fdr_level ${params.pyprophet_global_fdr_level} \\
-                     --fdr_threshold_pep ${params.pyprophet_peptide_fdr} \\
-                     --fdr_threshold_prot ${params.pyprophet_protein_fdr} \\
-                     --ms1_scoring ${params.use_ms1} \\
-                     --rt_extraction_window ${params.rt_extraction_window} \\
-                     --mz_extraction_window ${params.mz_extraction_window} \\
-                     --mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
-                     --mz_extraction_unit ${params.mz_extraction_window_unit} \\
-                     --mz_extraction_unit_ms1 ${params.mz_extraction_window_ms1_unit} \\
-                     --dialignr_global_align_fdr ${params.dialignr_global_align_fdr} \\
-                     --dialignr_analyte_fdr ${params.dialignr_analyte_fdr} \\
-                     --dialignr_unalign_fdr ${params.dialignr_unalign_fdr} \\
-                     --dialignr_align_fdr ${params.dialignr_align_fdr} \\
-                     --dialignr_query_fdr ${params.dialignr_query_fdr} \\
-                     --workflow_version $workflow.manifest.version \\
-                     --output "${Sample}_${Condition}.mzTab"
+    mztab_output.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level ${params.pyprophet_global_fdr_level} \\
+        --fdr_threshold_pep ${params.pyprophet_peptide_fdr} \\
+        --fdr_threshold_prot ${params.pyprophet_protein_fdr} \\
+        --ms1_scoring ${params.use_ms1} \\
+        --rt_extraction_window ${params.rt_extraction_window} \\
+        --mz_extraction_window ${params.mz_extraction_window} \\
+        --mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
+        --mz_extraction_unit ${params.mz_extraction_window_unit} \\
+        --mz_extraction_unit_ms1 ${params.mz_extraction_window_ms1_unit} \\
+        --dialignr_global_align_fdr ${params.dialignr_global_align_fdr} \\
+        --dialignr_analyte_fdr ${params.dialignr_analyte_fdr} \\
+        --dialignr_unalign_fdr ${params.dialignr_unalign_fdr} \\
+        --dialignr_align_fdr ${params.dialignr_align_fdr} \\
+        --dialignr_query_fdr ${params.dialignr_query_fdr} \\
+        --workflow_version $workflow.manifest.version \\
+        --output "${sample}_${condition}.mzTab"
     """
 }
 
@@ -917,24 +951,24 @@ process mztab_export {
  * STEP 15 - Run MSstats
  */
 process statistical_post_processing {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
     label 'process_low'
 
-   input:
-    set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
+    input:
+    set val(id), val(sample), val(condition), file(csv) from msstats_file.groupTuple(by:1)
 
-   output:
+    output:
     file "*.pdf" optional true // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
     file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
     file "*.log" // logfile of msstats run
 
-   when:
+    when:
     params.run_msstats
 
-   script:
+    script:
     """
-     msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+    msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
     """
 }
 
@@ -948,22 +982,22 @@ process statistical_post_processing {
  * 5) Pyprophet score plots
  */
 process output_visualization {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
-   label 'process_low'
+    label 'process_low'
 
-   input:
-    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
+    input:
+    set val(sample), val(id), val(condition), file(quantity_csv_file), val(dummy_id), val(dummy_condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
 
-   output:
+    output:
     file "*.pdf" into output_plots
 
-   when:
+    when:
     params.generate_plots
 
-   script:
+    script:
     """
-    plot_quantities_and_counts.R ${Sample}
+    plot_quantities_and_counts.R ${sample}
     """
 }
 
