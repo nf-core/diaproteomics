@@ -187,7 +187,7 @@ def main():
     df=df.drop_duplicates()
 
     #reformat as PRT protein mzTab
-    remaining_prh_cols='unit_id,description,taxid,species,database,database_version,search_engine,search_engine_score,reliability,num_peptides_unambiguous,ambiguity_members,modifications,uri,go_terms,protein_coverage'.split(',')
+    remaining_prh_cols='description,taxid,species,database,database_version,best_search_engine_score,ambiguity_members,modifications'.split(',')
 
     num_peptides=df.groupby(['ProteinName'])['PeptideSequence'].apply(list).apply(len).reset_index()['PeptideSequence']
     num_peptides_distinct=df.groupby(['ProteinName'])['PeptideSequence'].apply(list).apply(set).apply(len).reset_index()['PeptideSequence']
@@ -202,6 +202,7 @@ def main():
     cols=df_prot.columns.tolist()
     df_prot['PRH']='PRT'
     df_prot=df_prot[['PRH']+cols]
+    df_prot['search_engine']='OpenSwathWorkflow'
     df_prot['num_peptides']=num_peptides
     df_prot['num_peptides_distinct']=num_peptides_distinct
     for c in remaining_prh_cols:
@@ -213,7 +214,7 @@ def main():
     op.close()
 
     #reformat as PEP peptide mzTab
-    remaining_pep_cols='unit_id,unique,database,database_version,search_engine_score,reliability,modifications,uri,spectra_ref'.split(',')
+    remaining_pep_cols='retention_time_window,unique,database,database_version,search_engine_score,modifications'.split(',')
 
     retention_time=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz'])['retention_time'].apply(np.median).reset_index()['retention_time']
     df_pep=df.groupby(['PeptideSequence','ProteinName','PrecursorCharge','PrecursorMz','Run'])['Intensity'].apply(sum).unstack('Run').reset_index()
@@ -227,6 +228,7 @@ def main():
     df_pep=df_pep[['PEH']+cols]
     df_pep['retention_time']=retention_time
     df_pep['search_engine']='OpenSwathWorkflow'
+    df_pep['charge']=df_pep['charge'].apply(int)
     for c in remaining_pep_cols:
         df_pep[c]='null'
 
@@ -242,7 +244,6 @@ def main():
     header.append('\t'.join(['MTD','mzTab-type','Quantification'])+'\n')
     header.append('\t'.join(['MTD','description','mztab-like output summarizing DIAproteomics search results'])+'\n')
     header.append('\t'.join(['MTD','software','nfcore/DIAproteomics V.'+diaproteomics_version])+'\n')
-    header.append('\t'.join(['MTD','false_discovery_rate', fdr_short+':global FDR', fdr_threshold])+'\n')
     header.append('\t'.join(['MTD', 'software[1]-setting[1]', 'ms1_scoring='+ms1_scoring])+'\n')
     header.append('\t'.join(['MTD', 'software[1]-setting[2]', 'rt_extraction_window='+rt_extraction_window])+'\n')
     header.append('\t'.join(['MTD', 'software[1]-setting[3]', 'mz_extraction_window='+mz_extraction_window])+'\n')
@@ -254,6 +255,13 @@ def main():
     header.append('\t'.join(['MTD', 'software[1]-setting[9]', 'dialignr_unalign_fdr='+dialignr_unalign_fdr])+'\n')
     header.append('\t'.join(['MTD', 'software[1]-setting[10]', 'dialignr_analyte_fdr='+dialignr_analyte_fdr])+'\n')
     header.append('\t'.join(['MTD', 'software[1]-setting[11]', 'dialignr_query_fdr='+dialignr_query_fdr])+'\n')
+    header.append('\t'.join(['MTD','false_discovery_rate', fdr_short+':global FDR', fdr_threshold])+'\n')
+    header.append('\t'.join(['MTD','protein_search_engine_score', 'pyProphet q-value'])+'\n')
+    header.append('\t'.join(['MTD','peptide_search_engine_score', 'pyProphet q-value'])+'\n')
+    header.append('\t'.join(['MTD','protein_quantification_unit', '[ , , Abundance, ]'])+'\n')
+    header.append('\t'.join(['MTD','peptide_quantification_unit', '[ , , Abundance, ]'])+'\n')
+    header.append('\t'.join(['MTD','variable_mod', 'library-based'])+'\n')
+    header.append('\t'.join(['MTD','fixed_mod', 'library-based'])+'\n')
 
     for i in enumerate(col_idxs):
         file_org=df_I[df_I['Sample']==i[1]]['run'].tolist()[0]
