@@ -9,112 +9,38 @@
 ----------------------------------------------------------------------------------------
 */
 
-def helpMessage() {
-    log.info nfcoreHeader()
-    log.info"""
+log.info Headers.nf_core(workflow, params.monochrome_logs)
 
-    Usage:
-
-    The typical command for running the pipeline is as follows:
-
-    nextflow run nf-core/diaproteomics --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv' -profile standard,docker
-
-    Mandatory arguments:
-      --input                           Path to input DIA raw/mzML/mzXML data sheet (must be surrounded with quotes)
-      -profile                          Configuration profile to use. Can use multiple (comma separated)
-                                        Available: standard, conda, docker, singularity, awsbatch, test
-    DIA Mass Spectrometry Search:
-      --input_spectral_library          Path to spectral library input sheet
-      --irts                            Path to internal retention time standards input_sheet
-      --irt_min_rsq			Minimal rsq error for irt RT alignment (default=0.95)
-      --irt_n_bins                      Number of RT bins for iRT alignment
-      --irt_min_bins_covered            Minimal number of RT bins covered for iRT alignment
-      --irt_alignment_method            Method for irt RT alignment ('linear','lowess')
-      --generate_spectral_library       Set flag if spectral libraries should be generated from provided DDA data (pepXML and mzML)
-      --merge_libraries                 Set flag if multiple input spectral libraries should be merged by BatchID Column
-      --align_libraries                 Set flag if multiple input spectral libraries should be aligned to the same RT reference
-      --min_overlap_for_merging         Minimal number of peptides overlapping between libraries for RT alignment when merging.
-      --generate_pseudo_irts            Set flag if pseudo irts should be generated from provided DDA data (pepXML and mzML)
-      --irts_from_outer_quantiles       Set flag if pseudo irts should be selected from 1st and 4th RT quantile only.
-      --n_irts                          Number of pseudo irts to be selected from dda data (default 250)
-      --input_sheet_dda                 Path to input sheet of mzML DDA MS raw data and mzid, idXML or other formats of DDA search results to use for spectral library generation
-      --library_rt_fdr                  PSM fdr threshold to align peptide ids with reference run (default = 0.01)
-      --unimod                          Path to unimod.xml file describing modifications (https://github.com/nf-core/test-datasets/tree/diaproteomics)
-      --skip_dia_processing             Set this flag if you only want to generate spectral libraries from DDA data
-      --skip_decoy_generation           Use a spectral library that already includes decoy sequences
-      --decoy_method                    Method for generating decoys ('shuffle','pseudo-reverse','reverse','shift')
-      --min_transitions                 Minimum number of transitions for assay
-      --max_transitions                 Maximum number of transitions for assay
-      --mz_extraction_window            Mass tolerance for transition extraction
-      --mz_extraction_window_unit       Unit for mass tolerance ('ppm' or 'Th')
-      --mz_extraction_window_ms1        Mass tolerance for precursor transition extraction
-      --mz_extraction_window_ms1_unit   Unit for ms1 mass tolerance ('ppm' or 'Th')
-      --min_upper_edge_dist             Minimal distance to the upper edge of a Swath window to still consider a precursor ('Th')
-      --rt_extraction_window            RT window for transition extraction (seconds)
-      --use_ms1                         Whether to extract and use ms1 precursor transitions for scoring
-      --pyprophet_classifier            Classifier used for target / decoy separation ('LDA','XGBoost')
-      --pyprophet_fdr_ms_level          MS Level of FDR calculation ('ms1', 'ms2', 'ms1ms2')
-      --pyprophet_global_fdr_level      Level of FDR calculation ('peptide', 'protein')
-      --pyprophet_peakgroup_fdr         Threshold for FDR filtering
-      --pyprophet_peptide_fdr           Threshold for global Peptide FDR
-      --pyprophet_protein_fdr           Threshold for global Protein FDR
-      --pyprophet_pi0_start             Start for non-parametric pi0 estimation
-      --pyprophet_pi0_end               End for non-parametric pi0 estimation
-      --pyprophet_pi0_steps             Steps for non-parametric pi0 estimation
-      --DIAlignR_global_align_FDR       DIAlignR global Aligment FDR threshold
-      --DIAlignR_analyte_FDR            DIAlignR Analyte FDR threshold
-      --DIAlignR_unalign_FDR            DIAlignR UnAligment FDR threshold
-      --DIAlignR_align_FDR              DIAlignR Aligment FDR threshold
-      --DIAlignR_query_FDR              DIAlignR Query FDR threshold
-      --DIAlignR_XICfilter              DIAlignR XIC filter option ("sgolay","boxcar","gaussian","loess","none")
-      --DIAlignR_parallelization            Set flag to enable multithread execution of DIAlignR (may cause errors)
-      --run_msstats                     Set flag if MSstats should be run
-      --generate_plots                  Set flag if plots should be generated and included in the output
-      --force_option                    Force the analysis despite severe warnings
-      --cache_option                    Specify whether to process data in memory or caching it first in case of very large files ("normal","cache","cacheWorkingInMemory","WorkingInMemor")
-
-    Other options:
-      --outdir [file]                 The output directory where the results will be saved
-      --publish_dir_mode [str]        Mode for publishing results in the output directory. Available: symlink, rellink, link, copy, copyNoFollow, move (Default: copy)
-      --email [email]                 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
-      --email_on_fail [email]         Same as --email, except only send mail if the workflow is not successful
-      --max_multiqc_email_size [str]  Threshold size for MultiQC report to be attached in notification email. If file generated by pipeline exceeds the threshold, it will not be attached (Default: 25MB)
-      -name [str]                     Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic
-
-    AWSBatch options:
-      --awsqueue [str]                The AWSBatch JobQueue that needs to be set when running on AWSBatch
-      --awsregion [str]               The AWS Region for your AWS Batch job to run on
-      --awscli [str]                  Path to the AWS CLI tool
-    """.stripIndent()
-}
-
-// Show help message
+////////////////////////////////////////////////////
+/* --               PRINT HELP                 -- */
+////////////////////////////////////////////////////+
+def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    helpMessage()
+    def command = "nextflow run nf-core/diaproteomics --input sample_sheet.tsv --input_spectral_library library_sheet.tsv --irts irt_sheet.tsv"
+    log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
     exit 0
 }
 
-/*
- * SET UP CONFIGURATION VARIABLES
- */
-
-
-// Has the run name been specified by the user?
-// this has the bonus effect of catching both -name and --name
-custom_runName = params.name
-if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
-    custom_runName = workflow.runName
+////////////////////////////////////////////////////
+/* --         VALIDATE PARAMETERS              -- */
+////////////////////////////////////////////////////+
+if (params.validate_params) {
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
+
+////////////////////////////////////////////////////
+/* --     Collect configuration parameters     -- */
+////////////////////////////////////////////////////
 
 // Check AWS batch settings
 if (workflow.profile.contains('awsbatch')) {
     // AWSBatch sanity checking
-    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+    if (!params.awsqueue || !params.awsregion) exit 1, 'Specify correct --awsqueue and --awsregion parameters on AWSBatch!'
     // Check outdir paths to be S3 buckets if running on AWSBatch
     // related: https://github.com/nextflow-io/nextflow/issues/813
-    if (!params.outdir.startsWith('s3:')) exit 1, "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
+    if (!params.outdir.startsWith('s3:')) exit 1, 'Outdir not on S3 - specify S3 Bucket to run on AWSBatch!'
     // Prevent trace files to be stored on S3 since S3 does not support rolling files.
-    if (params.tracedir.startsWith('s3:')) exit 1, "Specify a local tracedir or run without trace! S3 cannot be used for tracefiles."
+    if (params.tracedir.startsWith('s3:')) exit 1, 'Specify a local tracedir or run without trace! S3 cannot be used for tracefiles.'
 }
 
 // Stage config files
@@ -123,17 +49,18 @@ ch_output_docs = file("$projectDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 sample_sheet = file(params.input)
 Channel
- .from( sample_sheet )
- .set { input_exp_design}
+    .from( sample_sheet )
+    .into { input_exp_design; input_exp_design_mztab}
 
 params.outdir = params.outdir ?: { log.warn "No output directory provided. Will put the results into './results'"; return "./results" }()
 
 // DIA MS input
-Channel.from( sample_sheet )
-       .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
-       .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
-       .into {input_branch;check_dia}
+Channel
+    .from( sample_sheet )
+    .splitCsv(header: true, sep:'\t')
+    .map { col -> tuple("${col.Sample}", "${col.BatchID}", "${col.MSstats_Condition}", file("${col.Spectra_Filepath}", checkifExists: true))}
+    .flatMap{it -> [tuple(it[0],it[1].toString(),it[2],it[3])]}
+    .into { input_branch; check_dia }
 
 
 // Check file extension
@@ -142,10 +69,10 @@ def hasExtension(it, extension) {
 }
 
 input_branch.branch {
-        raw: hasExtension(it[3], 'raw')
-        mzml: hasExtension(it[3], 'mzml')
-        mzxml: hasExtension(it[3], 'mzxml')
-        other: true
+    raw: hasExtension(it[3], 'raw')
+    mzml: hasExtension(it[3], 'mzml')
+    mzxml: hasExtension(it[3], 'mzxml')
+    other: true
 }.set{input_dia_ms_files}
 
 input_dia_ms_files.other.subscribe { row -> log.warn("unknown format for entry " + row[3] + " in provided sample sheet. ignoring line."); exit 1 }
@@ -197,13 +124,13 @@ if( params.generate_spectral_library) {
         raw: hasExtension(it[2], 'raw')
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
-        other: true 
+        other: true
     }.set{input_dda_ms_files}
 
     Channel
         .fromPath( params.unimod )
         .ifEmpty { exit 1, "params.unimod was empty - no unimod.xml supplied" }
-        .set { input_unimod}
+        .set { input_unimod }
 
     input_lib = Channel.empty()
     input_lib_1 = Channel.empty()
@@ -219,8 +146,8 @@ if( params.generate_spectral_library) {
     Channel.from( library_sheet )
         .splitCsv(header: true, sep:'\t')
         .map { col -> tuple("${col.Sample}", "${col.BatchID}", file("${col.Library_Filepath}", checkifExists: true))}
-        .flatMap{it -> [tuple(it[0],it[1],it[2])]}
-        .into {input_lib_nd; check_decoy; check_decoy_2}
+        .flatMap{ it -> [tuple(it[0],it[1],it[2])] }
+        .into { input_lib_nd; check_decoy; check_decoy_2 }
 
     check_decoy_n2 = check_decoy_2.toList().size().val
     check_decoy_n = check_decoy.map{it[1]}.unique().toList().size().val
@@ -243,7 +170,7 @@ if( params.generate_spectral_library) {
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
         other: true
-    }.set{input_dda_ms_files}
+    }.set { input_dda_ms_files }
     input_unimod = Channel.empty()
 
 } else {
@@ -278,20 +205,20 @@ if( params.generate_spectral_library) {
         mzml: hasExtension(it[2], 'mzML')
         mzxml: hasExtension(it[2], 'mzXML')
         other: true
-    }.set{input_dda_ms_files}
+    }.set { input_dda_ms_files }
     input_unimod = Channel.empty()
 }
 
 
 if( !params.generate_pseudo_irts){
-   // iRT library input
-   irt_sheet = file(params.irts)
+    // iRT library input
+    irt_sheet = file(params.irts)
 
-   Channel.from( irt_sheet )
-       .splitCsv(header: true, sep:'\t')
-       .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
-       .flatMap{it -> [tuple(it[0],it[1])]}
-       .into {input_irts; input_irts_check; input_irts_check_2}
+    Channel.from( irt_sheet )
+        .splitCsv(header: true, sep:'\t')
+        .map { col -> tuple("${col.BatchID}", file("${col.irt_Filepath}", checkifExists: true))}
+        .flatMap{it -> [tuple(it[0],it[1])]}
+        .into {input_irts; input_irts_check; input_irts_check_2}
 
     check_irts_n = input_irts_check.toList().size().val
     check_irts_n2 = input_irts_check_2.map{it[0]}.unique().toList().size().val
@@ -314,35 +241,40 @@ if( !params.generate_pseudo_irts){
 
 // MS1 option
 if (params.use_ms1){
-    ms1_option='-use_ms1_traces'
-    ms1_scoring='-Scoring:Scores:use_ms1_mi'
-    ms1_mi='-Scoring:Scores:use_mi_score'
-   } else {
-    ms1_option=''
-    ms1_scoring=''
-    ms1_mi=''
+    ms1_option = '-use_ms1_traces'
+    ms1_scoring = '-Scoring:Scores:use_ms1_mi'
+    ms1_mi = '-Scoring:Scores:use_mi_score'
+} else {
+    ms1_option = ''
+    ms1_scoring = ''
+    ms1_mi = ''
 }
 
 // Force option
 if (params.force_option){
-    force_option='-force'
-   } else {
-    force_option=''
+    force_option = '-force'
+} else {
+    force_option = ''
 }
 
 // DIAlignR multithreading
-if (params.DIAlignR_parallelization){
-    DIAlignR_parallel='parallel'
-   } else {
-    DIAlignR_parallel=''
+if (params.dialignr_parallelization){
+    dialignr_parallel='parallel'
+} else {
+    dialignr_parallel=''
 }
 
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
+
 // Header log info
-log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
-summary['Run Name']         = custom_runName ?: workflow.runName
 summary['Spectral Library']    = params.input_spectral_library
+summary['Run Name']         = workflow.runName
+summary['Input']            = params.input
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
 if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
@@ -364,8 +296,6 @@ if (params.email || params.email_on_fail) {
     summary['E-mail Address']    = params.email
     summary['E-mail on failure'] = params.email_on_fail
 }
-log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
-log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 // Check the hostnames against configured profiles
 checkHostname()
@@ -392,18 +322,20 @@ Channel.from(summary.collect{ [it.key, it.value] })
 process get_software_versions {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
-                      if (filename.indexOf(".csv") > 0) filename
+                      if (filename.indexOf('.csv') > 0) filename
                       else null
-                }
+        }
 
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
-    file "software_versions.csv"
+    file 'software_versions.csv'
 
     script:
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
+    FileInfo --help &> v_openms.txt
+    pyprophet --version &> v_pyprophet.txt
     scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
@@ -414,18 +346,18 @@ process get_software_versions {
  */
 process dda_raw_file_conversion {
     input:
-     set val(id), val(Sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
+    set val(id), val(sample), file(raw_file), file(dda_id_file) from input_dda_ms_files.raw
 
     output:
-     set val(id), val(Sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
+    set val(id), val(sample), file("${raw_file.baseName}.mzML"), file(dda_id_file) into converted_dda_input_mzmls
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
-     """
+    """
+    ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+    """
 }
 
 
@@ -435,20 +367,18 @@ process dda_raw_file_conversion {
 process dda_id_format_conversion {
 
     input:
-     set val(id), val(Sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
+    set val(id), val(sample), file(dda_mzml), file(dda_id_file) from input_dda_ms_files.mzml.mix(input_dda_ms_files.mzxml).mix(converted_dda_input_mzmls)
 
     output:
-     set val(id), val(Sample), file(dda_mzml), file("${id}_${Sample}_peptide_ids.idXML") into input_dda_converted
+    set val(id), val(sample), file(dda_mzml), file("${id}_${sample}_peptide_ids.idXML") into input_dda_converted
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     IDFileConverter -in ${dda_id_file} \\
-                     -out ${id}_${Sample}_peptide_ids.idXML \\
-                     -threads ${task.cpus} \\
-     """
+    """
+    IDFileConverter -in ${dda_id_file} -out ${id}_${sample}_peptide_ids.idXML -threads ${task.cpus}
+    """
 }
 
 
@@ -458,29 +388,31 @@ process dda_id_format_conversion {
 process dda_library_generation {
 
     input:
-     set val(id), val(Sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
-     file unimod_file from input_unimod.first()
+    set val(id), val(sample), file(dda_mzml_file), file(idxml_file) from input_dda_converted
+    file unimod_file from input_unimod.first()
 
     output:
-     set val(id), val(Sample), file("${id}_${Sample}_library.tsv") into input_lib_dda_nd
+    set val(id), val(sample), file("${id}_${sample}_library.tsv") into input_lib_dda_nd
 
     when:
-     params.generate_spectral_library
+    params.generate_spectral_library
 
     script:
-     """
-     easypqp convert --unimod ${unimod_file} \\
-                     --pepxml ${idxml_file} \\
-                     --spectra ${dda_mzml_file} \\
+    """
+    easypqp convert \\
+        --unimod ${unimod_file} \\
+        --pepxml ${idxml_file} \\
+        --spectra ${dda_mzml_file}
 
-     easypqp library --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
-                     --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
-                     --nofdr \\
-                     ${dda_mzml_file.baseName}.psmpkl \\
-                     ${dda_mzml_file.baseName}.peakpkl \\
+    easypqp library \\
+        --out ${dda_mzml_file.baseName}_run_peaks.tsv \\
+        --rt_psm_fdr_threshold ${params.library_rt_fdr} \\
+        --nofdr \\
+        ${dda_mzml_file.baseName}.psmpkl \\
+        ${dda_mzml_file.baseName}.peakpkl
 
-     mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${Sample}_library.tsv
-     """
+    mv ${dda_mzml_file.baseName}_run_peaks.tsv ${id}_${sample}_library.tsv
+    """
 }
 
 
@@ -490,32 +422,34 @@ process dda_library_generation {
 process assay_generation {
 
     input:
-     set val(id), val(Sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
+    set val(id), val(sample), file(lib_file_na) from input_lib.mix(input_lib_dda_nd)
 
     output:
-     set val(id), val(Sample), file("${id}_${Sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
+    set val(id), val(sample), file("${id}_${sample}_assay.tsv") into (input_lib_assay, input_lib_assay_for_irt, input_lib_assay_for_merging)
 
     when:
-     !params.skip_decoy_generation
+    !params.skip_decoy_generation
 
     script:
-     """
-     TargetedFileConverter -in ${lib_file_na} \\
-                           -out ${lib_file_na.baseName}.tsv \\
-                           -threads ${task.cpus} \\
+    """
+    TargetedFileConverter \\
+        -in ${lib_file_na} \\
+        -out ${lib_file_na.baseName}.tsv \\
+        -threads ${task.cpus}
 
-     OpenSwathAssayGenerator -in ${lib_file_na.baseName}.tsv \\
-                             -min_transitions ${params.min_transitions} \\
-                             -max_transitions ${params.max_transitions} \\
-                             -out ${id}_${Sample}_assay.tsv \\
-                             -threads ${task.cpus} \\
-     """
+    OpenSwathAssayGenerator \\
+        -in ${lib_file_na.baseName}.tsv \\
+        -min_transitions ${params.min_transitions} \\
+        -max_transitions ${params.max_transitions} \\
+        -out ${id}_${sample}_assay.tsv \\
+        -threads ${task.cpus}
+    """
 }
 
 
 if(params.merge_libraries) {
-   input_lib_assay = Channel.empty()
-   input_lib_assay_for_irt = Channel.empty()
+    input_lib_assay = Channel.empty()
+    input_lib_assay_for_irt = Channel.empty()
 }
 
 
@@ -526,19 +460,24 @@ process library_merging_and_alignment {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
+    set val(id), val(sample), file(lib_files_for_merging) from input_lib_assay_for_merging.groupTuple(by:1)
 
     output:
-     set val(id), val(Sample), file("${Sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
-     set val(id), val(Sample), file("*.png") optional true 
+    set val(id), val(sample), file("${sample}_library_merged.tsv") into (input_lib_assay_merged, input_lib_assay_merged_for_irt)
+    set val(id), val(sample), file("*.png") optional true
 
     when:
-     params.merge_libraries
+    params.merge_libraries
 
     script:
-     """
-     merge_and_align_libraries_from_easypqp.py --input_libraries ${lib_files_for_merging} --min_overlap ${params.min_overlap_for_merging} --rsq_threshold 0.75  --output ${Sample}_library_merged.tsv ${align_flag}\\
-     """
+    """
+    merge_and_align_libraries_from_easypqp.py \\
+        --input_libraries ${lib_files_for_merging} \\
+        --min_overlap ${params.min_overlap_for_merging} \\
+        --rsq_threshold 0.75  \\
+        --output ${sample}_library_merged.tsv \\
+        ${align_flag}
+    """
 }
 
 
@@ -549,22 +488,29 @@ process pseudo_irt_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
+    set val(id), val(sample), file(lib_file_assay_irt) from input_lib_assay_for_irt.mix(input_lib_assay_merged_for_irt)
 
     output:
-     set val(Sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
+    set val(sample), file("${lib_file_assay_irt.baseName}_pseudo_irts.pqp") into input_lib_assay_irt_2
 
     when:
-     params.generate_pseudo_irts
+    params.generate_pseudo_irts
 
     script:
-     """
-     select_pseudo_irts_from_lib.py --input_libraries ${lib_file_assay_irt} --min_rt 0 --n_irts ${params.n_irts} --max_rt 100 --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv ${quant_flag}\\
+    """
+    select_pseudo_irts_from_lib.py \\
+        --input_libraries ${lib_file_assay_irt} \\
+        --min_rt 0 \\
+        --n_irts ${params.n_irts} \\
+        --max_rt 100 \\
+        --output ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+        ${quant_flag}
 
-     TargetedFileConverter -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
-                           -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
-                           -threads ${task.cpus} \\
-     """
+    TargetedFileConverter \\
+        -in ${lib_file_assay_irt.baseName}_pseudo_irts.tsv \\
+        -out ${lib_file_assay_irt.baseName}_pseudo_irts.pqp \\
+        -threads ${task.cpus}
+    """
 }
 
 
@@ -575,25 +521,27 @@ process decoy_generation {
     publishDir "${params.outdir}/spectral_library_files"
 
     input:
-     set val(id), val(Sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
+    set val(id), val(sample), file(lib_file_nd) from input_lib_assay.mix(input_lib_assay_merged)
 
     output:
-     set val(id), val(Sample), file("${lib_file_nd.baseName}_decoy.pqp") into input_lib_decoy
+    set val(id), val(sample), file("${lib_file_nd.baseName}_decoy.pqp") into input_lib_decoy
 
     when:
-     !params.skip_decoy_generation
+    !params.skip_decoy_generation
 
     script:
-     """
-     TargetedFileConverter -in ${lib_file_nd} \\
-                           -out ${lib_file_nd.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    """
+    TargetedFileConverter \\
+        -in ${lib_file_nd} \\
+        -out ${lib_file_nd.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     OpenSwathDecoyGenerator -in ${lib_file_nd.baseName}.pqp \\
-                             -method ${params.decoy_method} \\
-                             -out ${lib_file_nd.baseName}_decoy.pqp \\
-                             -threads ${task.cpus} \\
-     """
+    OpenSwathDecoyGenerator \\
+        -in ${lib_file_nd.baseName}.pqp \\
+        -method ${params.decoy_method} \\
+        -out ${lib_file_nd.baseName}_decoy.pqp \\
+        -threads ${task.cpus}
+    """
 }
 
 
@@ -603,18 +551,18 @@ process decoy_generation {
 process dia_raw_file_conversion {
 
     input:
-     set val(id), val(Sample), val(Condition), file(raw_file) from input_dia_ms_files.raw
+    set val(id), val(sample), val(condition), file(raw_file) from input_dia_ms_files.raw
 
     output:
-     set val(id), val(Sample), val(Condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
+    set val(id), val(sample), val(condition), file("${raw_file.baseName}.mzML") into converted_dia_input_mzmls
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
-     """
+    """
+    ThermoRawFileParser.sh -i=${raw_file} -f=2 -b=${raw_file.baseName}.mzML
+    """
 }
 
 
@@ -627,68 +575,71 @@ process dia_spectral_library_search {
     label 'process_medium'
 
     input:
-     set val(Sample), val(id), val(Condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
+    set val(sample), val(id), val(condition), file(mzml_file), val(dummy_id), file(lib_file), file(irt_file) from converted_dia_input_mzmls.mix(input_dia_ms_files.mzml.mix(input_dia_ms_files.mzxml)).combine(input_lib_decoy.mix(input_lib_nd), by:1).combine(input_irts.mix(input_lib_assay_irt_2), by:0)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
-     set val(id), val(Sample), val(Condition), file("${mzml_file.baseName}.osw") into osw_files
-     set val(id), val(Sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I)
+    set val(id), val(sample), val(condition), file("${mzml_file.baseName}_chrom.mzML") into chromatogram_files
+    set val(id), val(sample), val(condition), file("${mzml_file.baseName}.osw") into osw_files
+    set val(id), val(sample), file("${lib_file.baseName}.pqp") into (input_lib_used, input_lib_used_I, input_lib_used_I_mztab)
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
+
 
     script:
-     """
-     mkdir tmp\\
+    """
+    mkdir tmp
 
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    TargetedFileConverter \\
+        -in ${lib_file} \\
+        -out ${lib_file.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     TargetedFileConverter -in ${irt_file} \\
-                           -out ${irt_file.baseName}.pqp \\
-                           -threads ${task.cpus} \\
+    TargetedFileConverter \\
+        -in ${irt_file} \\
+        -out ${irt_file.baseName}.pqp \\
+        -threads ${task.cpus}
 
-     OpenSwathWorkflow -in ${mzml_file} \\
-                       -tr ${lib_file.baseName}.pqp \\
-                       -sort_swath_maps \\
-                       -tr_irt ${irt_file.baseName}.pqp \\
-                       -min_rsq ${params.irt_min_rsq} \\
-                       -out_osw ${mzml_file.baseName}.osw \\
-                       -out_chrom ${mzml_file.baseName}_chrom.mzML \\
-                       -mz_extraction_window ${params.mz_extraction_window} \\
-                       -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
-                       -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
-                       -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
-                       -rt_extraction_window ${params.rt_extraction_window} \\
-                       -min_upper_edge_dist ${params.min_upper_edge_dist} \\
-                       -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
-                       -RTNormalization:estimateBestPeptides \\
-                       -RTNormalization:outlierMethod none \\
-                       -RTNormalization:NrRTBins ${params.irt_n_bins} \\
-                       -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
-                       -mz_correction_function quadratic_regression_delta_ppm \\
-                       -Scoring:stop_report_after_feature 5 \\
-                       -Scoring:TransitionGroupPicker:compute_peak_quality false \\
-                       -Scoring:TransitionGroupPicker:peak_integration 'original' \\
-                       -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
-                       -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
-                       -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
-                       -batchSize 1000 \\
-                       -readOptions ${params.cache_option} \\
-                       -tempDirectory tmp \\
-                       -Scoring:DIAScoring:dia_nr_isotopes 3 \\
-                       -enable_uis_scoring \\
-                       -Scoring:uis_threshold_sn -1 \\
-                       -threads ${task.cpus} \\
-                       ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi} \\
-  
-     """
+    OpenSwathWorkflow \\
+        -in ${mzml_file} \\
+        -tr ${lib_file.baseName}.pqp \\
+        -sort_swath_maps \\
+        -tr_irt ${irt_file.baseName}.pqp \\
+        -min_rsq ${params.irt_min_rsq} \\
+        -out_osw ${mzml_file.baseName}.osw \\
+        -out_chrom ${mzml_file.baseName}_chrom.mzML \\
+        -mz_extraction_window ${params.mz_extraction_window} \\
+        -mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
+        -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
+        -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
+        -rt_extraction_window ${params.rt_extraction_window} \\
+        -min_upper_edge_dist ${params.min_upper_edge_dist} \\
+        -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
+        -RTNormalization:estimateBestPeptides \\
+        -RTNormalization:outlierMethod none \\
+        -RTNormalization:NrRTBins ${params.irt_n_bins} \\
+        -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
+        -mz_correction_function quadratic_regression_delta_ppm \\
+        -Scoring:stop_report_after_feature 5 \\
+        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+        -Scoring:TransitionGroupPicker:peak_integration 'original' \\
+        -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
+        -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
+        -batchSize 1000 \\
+        -readOptions ${params.cache_option} \\
+        -tempDirectory tmp \\
+        -Scoring:DIAScoring:dia_nr_isotopes 3 \\
+        -enable_uis_scoring \\
+        -Scoring:uis_threshold_sn -1 \\
+        -threads ${task.cpus} \\
+        ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
+    """
 }
 
 
@@ -698,21 +649,22 @@ process dia_spectral_library_search {
 process dia_search_output_merging {
 
     input:
-     set val(Sample), val(id), val(Condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
+    set val(sample), val(id), val(condition), file(all_osws), val(dummy_id), file(lib_file_template) from osw_files.groupTuple(by:1).join(input_lib_used, by:1)
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_osw_file_merged.osw") into merged_osw_file_for_global
+    set val(id), val(sample), val(condition), file("${sample}_osw_file_merged.osw") into merged_osw_file_for_global
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     pyprophet merge --template=${lib_file_template} \\
-                     --out=${Sample}_osw_file_merged.osw \\
-                     --no-same_run \\
-                     ${all_osws} \\
-     """
+    """
+    pyprophet merge \\
+        --template=${lib_file_template} \\
+        --out=${sample}_osw_file_merged.osw \\
+        --no-same_run \\
+        ${all_osws}
+    """
 }
 
 
@@ -725,73 +677,65 @@ process global_false_discovery_rate_estimation {
     label 'process_medium'
 
     input:
-     set val(id), val(Sample), val(Condition), file(scored_osw) from merged_osw_file_for_global
+    set val(id), val(sample), val(condition), file(scored_osw) from merged_osw_file_for_global
 
     output:
-     set val(id), val(Sample), val(Condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
-     set val(id), val(Sample), val(Condition), file("*.pdf") into target_decoy_global_score_plots
+    set val(id), val(sample), val(condition), file("${scored_osw.baseName}_global_merged.osw") into merged_osw_scored_global_for_pyprophet
+    set val(id), val(sample), val(condition), file("*.pdf") into target_decoy_global_score_plots
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
     if (params.pyprophet_classifier=='LDA'){
-     """
-     pyprophet score --in=${scored_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${scored_osw.baseName}_scored.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
-                     --threads=${task.cpus} \\
+        """
+        pyprophet score \\
+            --in=${scored_osw} \\
+            --level=${params.pyprophet_fdr_ms_level} \\
+            --out=${scored_osw.baseName}_scored.osw \\
+            --classifier=${params.pyprophet_classifier} \\
+            --pi0_lambda ${params.pyprophet_pi0_start} ${params.pyprophet_pi0_end} ${params.pyprophet_pi0_steps} \\
+            --threads=${task.cpus}
 
-     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
-                       --out=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet peptide \\
+            --in=${scored_osw.baseName}_scored.osw \\
+            --out=${scored_osw.baseName}_global_merged.osw \\
+            --context=run-specific
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=global
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=run-specific
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
-
-     """
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=global
+        """
     } else {
-     """
-     pyprophet score --in=${scored_osw} \\
-                     --level=${params.pyprophet_fdr_ms_level} \\
-                     --out=${scored_osw.baseName}_scored.osw \\
-                     --classifier=${params.pyprophet_classifier} \\
-                     --threads=${task.cpus} \\
+        """
+        pyprophet score \\
+            --in=${scored_osw} \\
+            --level=${params.pyprophet_fdr_ms_level} \\
+            --out=${scored_osw.baseName}_scored.osw \\
+            --classifier=${params.pyprophet_classifier} \\
+            --threads=${task.cpus}
 
-     pyprophet peptide --in=${scored_osw.baseName}_scored.osw \\
-                       --out=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet peptide \\
+            --in=${scored_osw.baseName}_scored.osw \\
+            --out=${scored_osw.baseName}_global_merged.osw \\
+            --context=run-specific
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
+        pyprophet peptide --in=${scored_osw.baseName}_global_merged.osw --context=global
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=run-specific \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=run-specific
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=experiment-wide \\
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=experiment-wide
 
-     pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw \\
-                       --context=global \\
-
-     """
+        pyprophet ${params.pyprophet_global_fdr_level} --in=${scored_osw.baseName}_global_merged.osw --context=global
+        """
     }
 }
 
@@ -803,23 +747,24 @@ process export_of_scoring_results {
     publishDir "${params.outdir}/pyprophet_output"
 
     input:
-     set val(id), val(Sample), val(Condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
+    set val(id), val(sample), val(condition), file(global_osw) from merged_osw_scored_global_for_pyprophet
 
     output:
-     set val(id), val(Sample), val(Condition), file("*.tsv") into pyprophet_results
-     set val(id), val(Sample), val(Condition), file(global_osw) into osw_for_dialignr
+    set val(id), val(sample), val(condition), file("*.tsv") into pyprophet_results
+    set val(id), val(sample), val(condition), file(global_osw) into osw_for_dialignr
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     pyprophet export --in=${global_osw} \\
-                      --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
-                      --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
-                      --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
-                      --out=legacy.tsv \\
-     """
+    """
+    pyprophet export \\
+        --in=${global_osw} \\
+        --max_rs_peakgroup_qvalue=${params.pyprophet_peakgroup_fdr} \\
+        --max_global_peptide_qvalue=${params.pyprophet_peptide_fdr} \\
+        --max_global_protein_qvalue=${params.pyprophet_protein_fdr} \\
+        --out=legacy.tsv
+    """
 }
 
 
@@ -828,39 +773,43 @@ process export_of_scoring_results {
  */
 process chromatogram_indexing {
 
+    label 'process_high'
+
     input:
-     set val(id), val(Sample), val(Condition), file(chrom_file_noindex) from chromatogram_files
+    set val(id), val(sample), val(condition), file(chrom_file_noindex) from chromatogram_files
 
     output:
-     set val(id), val(Sample), val(Condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
+    set val(id), val(sample), val(condition), file("${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass") into chromatogram_files_indexed
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     FileConverter -in ${chrom_file_noindex} \\
-                   -process_lowmemory \\
-                   -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+    """
+    FileConverter \\
+        -in ${chrom_file_noindex} \\
+        -process_lowmemory \\
+        -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML
 
-     OpenSwathMzMLFileCacher -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
-                             -lossy_compression false \\
-                             -process_lowmemory \\
-                             -lowmem_batchsize 50000 \\
-                             -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass \\
-     """
+    OpenSwathMzMLFileCacher \\
+        -in ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.mzML \\
+        -lossy_compression false \\
+        -process_lowmemory \\
+        -lowmem_batchsize 50000 \\
+        -out ${chrom_file_noindex.baseName.split('_chrom')[0]}.chrom.sqMass
+    """
 }
 
 
 // Combine channels of osw files and osw chromatograms
 osw_for_dialignr
- .transpose()
- .join(chromatogram_files_indexed, by:1)
- .groupTuple(by:0)
- // Channel contains now the following elements:
- // ([id, [Samples], [Conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
- .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
- .set{osw_and_chromatograms_combined_by_condition}
+    .transpose()
+    .join(chromatogram_files_indexed, by:1)
+    .groupTuple(by:0)
+    // Channel contains now the following elements:
+    // ([id, [samples], [conditions], [osw_files], id_2, condition_2, [chromatogram_files]])
+    .flatMap{it -> [tuple(it[0],it[1].unique()[0],it[2].unique()[0],it[3].unique()[0],it[4],it[5],it[6])]}
+    .set{osw_and_chromatograms_combined_by_condition}
 
 /*
  * STEP 13 - Align DIA Chromatograms using DIAlignR
@@ -871,25 +820,34 @@ process chromatogram_alignment {
     label 'process_high_mem'
 
     input:
-     set val(Sample), val(id), val(Condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
+    set val(sample), val(id), val(condition), file(pyresults), val(id_dummy), val(condition_dummy), file(chrom_files_index) from osw_and_chromatograms_combined_by_condition
 
     output:
-     set val(id), val(Sample), val(Condition), file("${Sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I)
+    set val(id), val(sample), val(condition), file("${sample}_peptide_quantities.csv") into (DIALignR_result, DIALignR_result_I, DIALignR_result_mztab)
 
     when:
-     !params.skip_dia_processing
+    !params.skip_dia_processing
 
     script:
-     """
-     mkdir osw
-     mv ${pyresults} osw/ 
-     mkdir xics 
-     mv *.chrom.sqMass xics/
+    """
+    mkdir osw
+    mv ${pyresults} osw/
+    mkdir xics
+    mv *.chrom.sqMass xics/
 
-     DIAlignR.R ${params.DIAlignR_global_align_FDR} ${params.DIAlignR_analyte_FDR} ${params.DIAlignR_unalign_FDR} ${params.DIAlignR_align_FDR} ${params.DIAlignR_query_FDR} ${params.pyprophet_global_fdr_level} ${params.DIAlignR_XICfilter} ${DIAlignR_parallel} ${task.cpus}
+    DIAlignR.R \\
+        ${params.dialignr_global_align_fdr} \\
+        ${params.dialignr_analyte_fdr} \\
+        ${params.dialignr_unalign_fdr} \\
+        ${params.dialignr_align_fdr} \\
+        ${params.dialignr_query_fdr} \\
+        ${params.pyprophet_global_fdr_level} \\
+        ${params.dialignr_xicfilter} \\
+        ${dialignr_parallel} \\
+        ${task.cpus}
 
-     mv DIAlignR.tsv ${Sample}_peptide_quantities.csv
-     """
+    mv DIAlignR.tsv ${sample}_peptide_quantities.csv
+    """
 }
 
 
@@ -897,39 +855,95 @@ process chromatogram_alignment {
  * STEP 14 - Reformat output for MSstats: Combine with experimental design and missing columns from input library
  */
 process reformatting {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
-   input:
-    set val(id), val(Sample), val(Condition), file(dialignr_file) from DIALignR_result
+    input:
+    set val(id), val(sample), val(condition), file(dialignr_file) from DIALignR_result
     file exp_design from input_exp_design.first()
-    set val(id), val(Sample_lib), file(lib_file) from input_lib_used_I.first()
+    set val(id), val(sample_lib), file(lib_file) from input_lib_used_I.first()
 
-   output:
-    set val(id), val(Sample), val(Condition), file("${Sample}_${Condition}.csv") into msstats_file
+    output:
+    set val(id), val(sample), val(condition), file("${sample}_${condition}.csv") into msstats_file
 
-   when:
+    when:
     params.run_msstats
 
-   script:
+    script:
 
     if (params.pyprophet_global_fdr_level==''){
 
     """
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.tsv
+    TargetedFileConverter \\
+        -in ${lib_file} \\
+        -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level "none" --output "${Sample}_${Condition}.csv"
+    reformat_output_for_msstats.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level "none" \\
+        --output "${sample}_${condition}.csv"
     """
 
     } else {
 
     """
-     TargetedFileConverter -in ${lib_file} \\
-                           -out ${lib_file.baseName}.tsv
+    TargetedFileConverter -in ${lib_file} -out ${lib_file.baseName}.tsv
 
-     reformat_output_for_msstats.py --input ${dialignr_file} --exp_design ${exp_design} --library ${lib_file.baseName}.tsv --fdr_level ${params.pyprophet_global_fdr_level} --output "${Sample}_${Condition}.csv"
+    reformat_output_for_msstats.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level ${params.pyprophet_global_fdr_level} \\
+        --output "${sample}_${condition}.csv"
     """
     }
+}
+
+
+/*
+ * STEP 14.5 - export_mztab
+ */
+process mztab_export {
+    publishDir "${params.outdir}/"
+
+    input:
+    set val(id), val(sample), val(condition), file(dialignr_file) from DIALignR_result_mztab
+    file exp_design from input_exp_design_mztab.first()
+    set val(id), val(sample_lib), file(lib_file) from input_lib_used_I_mztab.first()
+
+    output:
+    set val(id), val(sample), val(condition), file("${sample}_${condition}.mzTab") into mztab_file
+
+    when:
+    params.mztab_export
+
+    script:
+
+    """
+    TargetedFileConverter -in ${lib_file} -out ${lib_file.baseName}.tsv
+
+    mztab_output.py \\
+        --input ${dialignr_file} \\
+        --exp_design ${exp_design} \\
+        --library ${lib_file.baseName}.tsv \\
+        --fdr_level ${params.pyprophet_global_fdr_level} \\
+        --fdr_threshold_pep ${params.pyprophet_peptide_fdr} \\
+        --fdr_threshold_prot ${params.pyprophet_protein_fdr} \\
+        --ms1_scoring ${params.use_ms1} \\
+        --rt_extraction_window ${params.rt_extraction_window} \\
+        --mz_extraction_window ${params.mz_extraction_window} \\
+        --mz_extraction_window_ms1 ${params.mz_extraction_window_ms1} \\
+        --mz_extraction_unit ${params.mz_extraction_window_unit} \\
+        --mz_extraction_unit_ms1 ${params.mz_extraction_window_ms1_unit} \\
+        --dialignr_global_align_fdr ${params.dialignr_global_align_fdr} \\
+        --dialignr_analyte_fdr ${params.dialignr_analyte_fdr} \\
+        --dialignr_unalign_fdr ${params.dialignr_unalign_fdr} \\
+        --dialignr_align_fdr ${params.dialignr_align_fdr} \\
+        --dialignr_query_fdr ${params.dialignr_query_fdr} \\
+        --workflow_version $workflow.manifest.version \\
+        --output "${sample}_${condition}.mzTab"
+    """
 }
 
 
@@ -937,24 +951,24 @@ process reformatting {
  * STEP 15 - Run MSstats
  */
 process statistical_post_processing {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
     label 'process_low'
 
-   input:
-    set val(id), val(Sample), val(Condition), file(csv) from msstats_file.groupTuple(by:1)
+    input:
+    set val(id), val(sample), val(condition), file(csv) from msstats_file.groupTuple(by:1)
 
-   output:
+    output:
     file "*.pdf" optional true // Output plots: 1) Comparative plots across pairwise conditions, 2) VolcanoPlot
     file "*.csv" // Csv of normalized differential protein abundancies calculated by msstats
     file "*.log" // logfile of msstats run
 
-   when:
+    when:
     params.run_msstats
 
-   script:
+    script:
     """
-     msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
+    msstats.R > msstats.log || echo "Optional MSstats step failed. Please check logs and re-run or do a manual statistical analysis."
     """
 }
 
@@ -968,22 +982,22 @@ process statistical_post_processing {
  * 5) Pyprophet score plots
  */
 process output_visualization {
-   publishDir "${params.outdir}/"
+    publishDir "${params.outdir}/"
 
-   label 'process_low'
+    label 'process_low'
 
-   input:
-    set val(Sample), val(id), val(Condition), file(quantity_csv_file), val(dummy_id), val(dummy_Condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
+    input:
+    set val(sample), val(id), val(condition), file(quantity_csv_file), val(dummy_id), val(dummy_condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
 
-   output:
+    output:
     file "*.pdf" into output_plots
 
-   when:
+    when:
     params.generate_plots
 
-   script:
+    script:
     """
-    plot_quantities_and_counts.R ${Sample}
+    plot_quantities_and_counts.R ${sample}
     """
 }
 
@@ -998,7 +1012,7 @@ process output_documentation {
     file images from ch_output_docs_images
 
     output:
-    file "results_description.html"
+    file 'results_description.html'
 
     script:
     """
@@ -1018,7 +1032,7 @@ workflow.onComplete {
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
-    email_fields['runName'] = custom_runName ?: workflow.runName
+    email_fields['runName'] = workflow.runName
     email_fields['success'] = workflow.success
     email_fields['dateComplete'] = workflow.complete
     email_fields['duration'] = workflow.duration
@@ -1039,20 +1053,6 @@ workflow.onComplete {
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
-    // On success try attach the multiqc report
-    def mqc_report = null
-    try {
-        if (workflow.success) {
-            mqc_report = ch_multiqc_report.getVal()
-            if (mqc_report.getClass() == ArrayList) {
-                log.warn "[nf-core/diaproteomics] Found multiple reports from process 'multiqc', will use only one"
-                mqc_report = mqc_report[0]
-            }
-        }
-    } catch (all) {
-        log.warn "[nf-core/diaproteomics] Could not attach MultiQC report to summary email"
-    }
-
     // Check if we are only sending emails on failure
     email_address = params.email
     if (!params.email && params.email_on_fail && !workflow.success) {
@@ -1071,7 +1071,7 @@ workflow.onComplete {
     def email_html = html_template.toString()
 
     // Render the sendmail template
-    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
+    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir" ]
     def sf = new File("$projectDir/assets/sendmail_template.txt")
     def sendmail_template = engine.createTemplate(sf).make(smail_fields)
     def sendmail_html = sendmail_template.toString()
@@ -1086,9 +1086,6 @@ workflow.onComplete {
         } catch (all) {
             // Catch failures and try with plaintext
             def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
-            if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
-              mail_cmd += [ '-A', mqc_report ]
-            }
             mail_cmd.execute() << email_html
             log.info "[nf-core/diaproteomics] Sent summary e-mail to $email_address (mail)"
         }
@@ -1124,28 +1121,9 @@ workflow.onComplete {
 
 }
 
-
-def nfcoreHeader() {
-    // Log colors ANSI codes
-    c_black = params.monochrome_logs ? '' : "\033[0;30m";
-    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
-    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
-    c_dim = params.monochrome_logs ? '' : "\033[2m";
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_white = params.monochrome_logs ? '' : "\033[0;37m";
-    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
-
-    return """    -${c_dim}--------------------------------------------------${c_reset}-
-                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
-    ${c_blue}        ___     __   __   __   ___     ${c_green}/,-._.--~\'${c_reset}
-    ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
-    ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
-                                            ${c_green}`._,._,\'${c_reset}
-    ${c_purple}  nf-core/diaproteomics v${workflow.manifest.version}${c_reset}
-    -${c_dim}--------------------------------------------------${c_reset}-
-    """.stripIndent()
+workflow.onError {
+    // Print unexpected parameters - easiest is to just rerun validation
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
 
 def checkHostname() {
@@ -1154,15 +1132,15 @@ def checkHostname() {
     def c_red = params.monochrome_logs ? '' : "\033[1;91m"
     def c_yellow_bold = params.monochrome_logs ? '' : "\033[1;93m"
     if (params.hostnames) {
-        def hostname = "hostname".execute().text.trim()
+        def hostname = 'hostname'.execute().text.trim()
         params.hostnames.each { prof, hnames ->
             hnames.each { hname ->
                 if (hostname.contains(hname) && !workflow.profile.contains(prof)) {
-                    log.error "====================================================\n" +
+                    log.error '====================================================\n' +
                             "  ${c_red}WARNING!${c_reset} You are running with `-profile $workflow.profile`\n" +
                             "  but your machine hostname is ${c_white}'$hostname'${c_reset}\n" +
                             "  ${c_yellow_bold}It's highly recommended that you use `-profile $prof${c_reset}`\n" +
-                            "============================================================"
+                            '============================================================'
                 }
             }
         }

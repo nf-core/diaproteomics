@@ -6,18 +6,14 @@ import re
 regexes = {
     "nf-core/diaproteomics": ["v_pipeline.txt", r"(\S+)"],
     "Nextflow": ["v_nextflow.txt", r"(\S+)"],
-    'OpenMS': ['v_openms.txt', r"Version: (\S+)"],
-    'Pyprophet': ['v_pyprophet.txt', r"version: (\S+)"],
-    "FastQC": ["v_fastqc.txt", r"FastQC v(\S+)"],
-    "MultiQC": ["v_multiqc.txt", r"multiqc, version (\S+)"],
+    "OpenMS": ["v_openms.txt", r"Version: (\S+)"],
+    "Pyprophet": ["v_pyprophet.txt", r"version (\S+)"],
 }
 results = OrderedDict()
 results["nf-core/diaproteomics"] = '<span style="color:#999999;">N/A</span>'
 results["Nextflow"] = '<span style="color:#999999;">N/A</span>'
-results['OpenMS'] = '<span style="color:#999999;\">N/A</span>'
-results['Pyprophet']= '<span style="color:#999999;\">N/A</span>'
-results["FastQC"] = '<span style="color:#999999;">N/A</span>'
-results["MultiQC"] = '<span style="color:#999999;">N/A</span>'
+results["OpenMS"] = '<span style="color:#999999;">N/A</span>'
+results["Pyprophet"] = '<span style="color:#999999;">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():

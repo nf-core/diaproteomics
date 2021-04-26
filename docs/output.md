@@ -1,9 +1,5 @@
 # nf-core/diaproteomics: Output
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/diaproteomics/output](https://nf-co.re/diaproteomics/output)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
-
 ## Introduction
 
 This document describes the output produced by the pipeline.
@@ -25,7 +21,7 @@ For detailed information about file formats and how they are in the various step
 
 ## SummaryOutput
 
-Several csv tables are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
+Several csv tables and optional an mzTab file (Note: the mzTab format is not yet well supported for DIA) are generated summarizing peptide or protein quantities (if protein level msstats was applied). In addition PDF reports are created.
 
 * Output visualizations:
   * the number of peptide / protein identifications
