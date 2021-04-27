@@ -36,14 +36,28 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 4. Start running your own analysis!
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --input_spectral_library 'library_sheet.tsv' --irts 'irt_sheet.tsv'
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>
+                                       --input 'sample_sheet.tsv'
+                                       --input_spectral_library 'library_sheet.tsv'
+                                       --irts 'irt_sheet.tsv'
+                                       --mz_extraction_window 30
+                                       --mz_extraction_window_unit ppm
+                                       --rt_extraction_window 600
+                                       --pyprophet_global_fdr_level 'protein'
+                                       --pyprophet_protein_fdr 0.01
 
     ```
 
-    OR optionally:
+    Alternatively, create spectral libraries and iRTs:
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute> --input 'sample_sheet.tsv' --generate_spectral_library --input_sheet_dda 'dda_sheet.tsv' --generate_pseudo_irts --merge_libraries --align_libraries
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>
+                                       --input 'sample_sheet.tsv'
+                                       --generate_spectral_library
+                                       --input_sheet_dda 'dda_sheet.tsv'
+                                       --generate_pseudo_irts
+                                       --merge_libraries
+                                       --align_libraries
     ```
 
 See [usage docs](https://nf-co.re/diaproteomics/usage) for all of the available options when running the pipeline.
