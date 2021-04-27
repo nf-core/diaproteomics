@@ -36,14 +36,14 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
 4. Start running your own analysis!
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>\n
-                                       --input 'sample_sheet.tsv'\n
-                                       --input_spectral_library 'library_sheet.tsv'\n
-                                       --irts 'irt_sheet.tsv'\n
-                                       --mz_extraction_window 30\n
-                                       --mz_extraction_window_unit ppm\n
-                                       --rt_extraction_window 600\n
-                                       --pyprophet_global_fdr_level 'protein'\n
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>
+                                       --input 'sample_sheet.tsv'
+                                       --input_spectral_library 'library_sheet.tsv'
+                                       --irts 'irt_sheet.tsv'
+                                       --mz_extraction_window 30
+                                       --mz_extraction_window_unit ppm
+                                       --rt_extraction_window 600
+                                       --pyprophet_global_fdr_level 'protein'
                                        --pyprophet_protein_fdr 0.01
 
     ```
@@ -51,12 +51,12 @@ The workflow is based on the [OpenSwathWorkflow](http://openswath.org/en/latest/
     Alternatively, create spectral libraries and iRTs:
 
     ```bash
-    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>\n
-                                       --input 'sample_sheet.tsv'\n
-                                       --generate_spectral_library\n
-                                       --input_sheet_dda 'dda_sheet.tsv'\n
-                                       --generate_pseudo_irts\n
-                                       --merge_libraries\n
+    nextflow run nf-core/diaproteomics -profile <docker/singularity/podman/conda/institute>
+                                       --input 'sample_sheet.tsv'
+                                       --generate_spectral_library
+                                       --input_sheet_dda 'dda_sheet.tsv'
+                                       --generate_pseudo_irts
+                                       --merge_libraries
                                        --align_libraries
     ```
 
