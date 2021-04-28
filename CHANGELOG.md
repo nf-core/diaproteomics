@@ -5,7 +5,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v.1.2.4 - [27.04.21]
 
-- Raise memory requirements for FDR estimation
+- Raise memory requirements for FDR estimation and output visualization
 
 ## v.1.2.3 - [26.04.21]
 
