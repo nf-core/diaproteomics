@@ -674,7 +674,7 @@ process dia_search_output_merging {
 process global_false_discovery_rate_estimation {
     publishDir "${params.outdir}/pyprophet_output"
 
-    label 'process_medium'
+    label 'process_high_mem'
 
     input:
     set val(id), val(sample), val(condition), file(scored_osw) from merged_osw_file_for_global
@@ -984,7 +984,7 @@ process statistical_post_processing {
 process output_visualization {
     publishDir "${params.outdir}/"
 
-    label 'process_low'
+    label 'process_high'
 
     input:
     set val(sample), val(id), val(condition), file(quantity_csv_file), val(dummy_id), val(dummy_condition), file(pyprophet_tsv_file) from DIALignR_result_I.transpose().join(pyprophet_results, by:1)
