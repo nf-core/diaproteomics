@@ -13,17 +13,30 @@ on:
 
 jobs:
   test:
-    name: Run workflow tests
+    name: Run wf
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/diaproteomics') }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile:
+          - test
+          - test_with_library
+          - test_skip_processing
+          - test_no_align
+          - test_no_merge
+          - test_with_library_with_decoys
+          - test_with_library_without_irts
+          - test_without_library_with_irts
+        # Nextflow version: current latest
+        nxf_ver: ['']
+        # Nextflow version: pipeline minimum for just the test profile, not all test profiles
+        include:
+          - profile: test
+            nxf_ver: '20.04.0'
     env:
       NXF_VER: ${{ matrix.nxf_ver }}
       NXF_ANSI_LOG: false
-    strategy:
-      matrix:
-        # Nextflow versions: check pipeline minimum and current latest
-        nxf_ver: ['20.04.0', '']
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -53,46 +66,4 @@ jobs:
           sudo mv nextflow /usr/local/bin/
 
       - name: Run pipeline with test data
-        # For example: adding multiple test runs with different parameters
-        # Remember that you can parallelise this by using strategy.matrix
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker
-
-  profile:
-    env:
-      NXF_ANSI_LOG: false
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        profile: [test_with_library, test_skip_processing, test_no_align, test_no_merge, test_with_library_with_decoys, test_with_library_without_irts, test_without_library_with_irts]
-    steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v2
-
-      - name: Check if Dockerfile or Conda environment changed
-        uses: technote-space/get-diff-action@v4
-        with:
-          PREFIX_FILTER: |
-            Dockerfile
-            environment.yml
-
-      - name: Build new docker image
-        if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/diaproteomics:dev
-
-      - name: Pull docker image
-        if: ${{ !env.GIT_DIFF }}
-        run: |
-          docker pull nfcore/diaproteomics:dev
-          docker tag nfcore/diaproteomics:dev nfcore/diaproteomics:dev
-
-      - name: Install Nextflow
-        run: |
-          wget -qO- get.nextflow.io | bash
-          sudo mv nextflow /usr/local/bin/
-        env:
-          # Only check Nextflow pipeline minimum version
-          NXF_VER: '20.04.0'
-
-      - name: Run ${{ matrix.profile }} test
         run: nextflow run ${GITHUB_WORKSPACE} -profile ${{ matrix.profile }},docker

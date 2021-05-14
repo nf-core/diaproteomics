@@ -2,3 +2,6 @@
 files_unchanged:
   - .github/CONTRIBUTING.md
   - assets/sendmail_template.txt
+# Temporary - ignore actions CI lint test until tools is updated with this code style
+# See https://github.com/nf-core/diaproteomics/pull/131
+actions_ci: False
