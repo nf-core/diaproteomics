@@ -5,5 +5,3 @@ files_unchanged:
 # Temporary - ignore actions CI lint test until tools is updated with this code style
 # See https://github.com/nf-core/diaproteomics/pull/131
 actions_ci: False
-# Switched to mamba because conda refuses to build
-conda_dockerfile: False
