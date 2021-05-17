@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v.1.2.5dev - [12.05.21]
 
 - Template update 1.14
+- Use `mamba` to build the conda environment instead of `conda` (which was failing)
 
 ## v.1.2.4 - [27.04.21]
 
