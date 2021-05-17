@@ -4,16 +4,18 @@ LABEL authors="Leon Bichmann" \
 
 # Install mamba
 RUN conda install mamba -n base -c conda-forge
+# Alias mamba to conda, so that nf-core lint sees the commands it expects
+RUN alias mamba=conda
 
 # Install the conda environment
 COPY environment.yml /
-RUN mamba env create --quiet -f /environment.yml && mamba clean -a
+RUN conda env create --quiet -f /environment.yml && conda clean -a
 
 # Add conda installation dir to PATH (instead of doing 'conda activate')
 ENV PATH /opt/conda/envs/nf-core-diaproteomics-1.2.5dev/bin:$PATH
 
 # Dump the details of the installed packages to a file for posterity
-RUN mamba env export --name nf-core-diaproteomics-1.2.5dev > nf-core-diaproteomics-1.2.5dev.yml
+RUN conda env export --name nf-core-diaproteomics-1.2.5dev > nf-core-diaproteomics-1.2.5dev.yml
 
 # Install DIAlignR from GitHub
 RUN Rscript -e 'remotes::install_github("shubham1637/DIAlignR@d323ad7", dependencies=FALSE)'
