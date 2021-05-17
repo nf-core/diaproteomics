@@ -39,7 +39,6 @@ dependencies:
   - conda-forge::r-scales=1.1.1
   - conda-forge::r-reticulate=1.18
   - conda-forge::r-zoo=1.8_8
-  - conda-forge::r-remotes=2.2.0
   - bioconductor-MSstats=3.20.1
   - bioconductor-mzr=2.24.0
   - bioconductor-biocparallel=1.24.0
