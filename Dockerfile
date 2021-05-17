@@ -2,15 +2,18 @@ FROM nfcore/base:1.14
 LABEL authors="Leon Bichmann" \
       description="Docker image containing all software requirements for the nf-core/diaproteomics pipeline"
 
+# Install mamba
+RUN conda install mamba -n base -c conda-forge
+
 # Install the conda environment
 COPY environment.yml /
-RUN conda env create --quiet -f /environment.yml && conda clean -a
+RUN mamba env create --quiet -f /environment.yml && mamba clean -a
 
 # Add conda installation dir to PATH (instead of doing 'conda activate')
 ENV PATH /opt/conda/envs/nf-core-diaproteomics-1.2.5dev/bin:$PATH
 
 # Dump the details of the installed packages to a file for posterity
-RUN conda env export --name nf-core-diaproteomics-1.2.5dev > nf-core-diaproteomics-1.2.5dev.yml
+RUN mamba env export --name nf-core-diaproteomics-1.2.5dev > nf-core-diaproteomics-1.2.5dev.yml
 
 # Install DIAlignR from GitHub
 RUN Rscript -e 'remotes::install_github("shubham1637/DIAlignR@2119587", dependencies=FALSE)'
