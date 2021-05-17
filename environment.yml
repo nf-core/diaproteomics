@@ -16,6 +16,7 @@ dependencies:
   - bioconda::pyprophet=2.1.4
   - conda-forge::networkx=2.4
   - bioconda::easypqp=0.1.8
+  - conda-forge::importlib-metadata=4.0.1
   - conda-forge::r-rmsnumpress=1.0.1
   - conda-forge::r-magrittr=2.0.1
   - conda-forge::r-bit64=4.0.5
