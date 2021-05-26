@@ -604,7 +604,8 @@ process dia_spectral_library_search {
         -in ${mzml_file} \\
         -tr ${lib_file.baseName}.pqp \\
         -sort_swath_maps \\
-        -tr_irt ${irt_file.baseName}.pqp \\
+        -enable_ms1 ${params.enable_ms1} \\
+	-tr_irt ${irt_file.baseName}.pqp \\
         -min_rsq ${params.irt_min_rsq} \\
         -out_osw ${mzml_file.baseName}.osw \\
         -out_chrom ${mzml_file.baseName}_chrom.mzML \\
