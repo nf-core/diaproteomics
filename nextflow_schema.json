@@ -630,5 +630,43 @@
         {
             "$ref": "#/definitions/institutional_config_options"
         }
-    ]
+    ],
+    "properties": {
+        "enable_ms1": {
+            "type": "string",
+            "default": "true"
+        },
+        "enable_ipf": {
+            "type": "string",
+            "default": "true"
+        },
+        "extra_rt_extraction_window": {
+            "type": "integer",
+            "default": 0
+        },
+        "ion_mobility_window": {
+            "type": "integer",
+            "default": -1
+        },
+        "im_extraction_window_ms1": {
+            "type": "integer",
+            "default": -1
+        },
+        "use_ms1_ion_mobility": {
+            "type": "string",
+            "default": "true"
+        },
+        "irt_mz_extratcion_window": {
+            "type": "integer",
+            "default": 50
+        },
+        "irt_mz_extraction_window_unit": {
+            "type": "string",
+            "default": "ppm"
+        },
+        "irt_im_extraction_window": {
+            "type": "integer",
+            "default": -1
+        }
+    }
 }

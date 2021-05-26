@@ -605,6 +605,7 @@ process dia_spectral_library_search {
         -tr ${lib_file.baseName}.pqp \\
         -sort_swath_maps \\
         -enable_ms1 ${params.enable_ms1} \\
+	-enable_ipf ${params.enable_ipf} \\
 	-tr_irt ${irt_file.baseName}.pqp \\
         -min_rsq ${params.irt_min_rsq} \\
         -out_osw ${mzml_file.baseName}.osw \\
@@ -614,6 +615,13 @@ process dia_spectral_library_search {
         -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
         -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
         -rt_extraction_window ${params.rt_extraction_window} \\
+	-extra_rt_extraction_window ${params.extra_rt_extraction_window} \\
+	-ion_mobility_window ${params.ion_mobility_window} \\
+	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
+	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
+	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
+	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
+        -irt_im_extraction_window ${params.irt_im_extraction_window} \\
         -min_upper_edge_dist ${params.min_upper_edge_dist} \\
         -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
         -RTNormalization:estimateBestPeptides \\
