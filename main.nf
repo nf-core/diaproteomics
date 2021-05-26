@@ -619,30 +619,126 @@ process dia_spectral_library_search {
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
 	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
+	-matching_window_only ${params.matching_window_only} \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
-        -min_upper_edge_dist ${params.min_upper_edge_dist} \\
+	-split_file_input ${params.split_file_input} \\
+	-use_elution_model_score ${params.use_elution_model_score} \\
+	-mz_correction_function ${params.mz_correction_function} \\
+	-extraction_function ${params.extraction_function} \\
+	-outer_loop_threads ${params.outer_loop_threads} \\
+	-ms1_isotopes ${params.ms1_isotopes} \\
+	-log ${params.log} \\
+	-debug ${params.debug} \\
+	-no_progress ${params.no_progress} \\
+	-test ${params.test} \\
+	-Calibration:ms1_im_calibration ${params.ms1_im_calibration} \\
+	-Calibration:im_correction_function ${params.im_correction_function} \\
+	-Calibration:debug_im_file ${params.debug_im_file} \\
+	-Calibration:debug_mz_file ${params.debug_mz_file} \\
+        -Library:retentionTimeInterpretation ${params.retentionTimeInterpretation} \\
+	-Library:override_group_label_check ${params.override_group_label_check} \\
+	-Library:force_invalid_mods ${params.force_invalid_mods} \\
+	-min_upper_edge_dist ${params.min_upper_edge_dist} \\
+	-sonar ${params.sonar} \\
         -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
         -RTNormalization:estimateBestPeptides \\
         -RTNormalization:outlierMethod none \\
+	-RTNormalization:useIterativeChauvenet ${params.useIterativeChauvenet} \\
+	-RTNormalization:RANSACMaxIterations ${params.RANSACMaxIterations} \\
+        -RTNormalization:RANSACMaxPercentRTThreshold ${params.RANSACMaxPercentRTThreshold} \\
+        -RTNormalization:RANSACSamplingSize ${params.RANSACSamplingSize} \\
+        -RTNormalization:InitialQualityCutoff ${params.InitialQualityCutoff} \\
+        -RTNormalization:OverallQualityCutoff ${params.OverallQualityCutoff} \\
+	-RTNormalization:MinPeptidesPerBin ${parmas.MinPeptidesPerBin} \\
         -RTNormalization:NrRTBins ${params.irt_n_bins} \\
         -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
+	-RTNormalization:lowess:span ${params.span} \\
+        -RTNormalization:b_spline:num_nodes ${params.num_nodes} \\
         -mz_correction_function quadratic_regression_delta_ppm \\
         -Scoring:stop_report_after_feature 5 \\
+        -Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\
+        -Scoring:quantification_cutoff ${params.quantification_cutoff} \\
+        -Scoring:write_convex_hull ${params.write_convex_hull} \\
+        -Scoring:spectrum_addition_method ${params.spectrum_addition_method} \\
+        -Scoring:add_up_spectra ${params.add_up_spectra} \\
+        -Scoring:spacing_for_spectra_resampling ${params.spacing_for_spectra_resampling} \\
+        -Scoring:uis_threshold_sn ${params.uis_threshold_sn} \\
+        -Scoring:uis_threshold_peak_area ${params.uis_threshold_peak_area} \\
+        -Scoring:scoring_model ${params.scoring_model} \\
+        -Scoring:im_extra_drift ${params.im_extra_drift} \\
+        -Scoring:strict ${params.strict} \\
+        -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\
+        -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
+        -mz_correction_function quadratic_regression_delta_ppm \\
+        -Scoring:stop_report_after_feature 5 \\
+	-Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\ ??
+        -Scoring:quantification_cutoff ${params.quantification_cutoff} \\ ??
+        -Scoring:write_convex_hull ${params.write_convex_hull} \\ ??
+        -Scoring:spectrum_addition_method ${params.spectrum_addition_method} \\ ??
+        -Scoring:add_up_spectra ${params.add_up_spectra} \\ ??
+        -Scoring:spacing_for_spectra_resampling ${params.spacing_for_spectra_resampling} \\ ??
+        -Scoring:uis_threshold_sn ${params.uis_threshold_sn} \\ ??
+        -Scoring:uis_threshold_peak_area ${params.uis_threshold_peak_area} \\ ??
+        -Scoring:scoring_model ${params.scoring_model} \\ ??
+        -Scoring:im_extra_drift ${params.im_extra_drift} \\ ??
+        -Scoring:strict ${params.strict} \\ ??
+        -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\ ??
+        -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\ ??
         -Scoring:TransitionGroupPicker:compute_peak_quality false \\
         -Scoring:TransitionGroupPicker:peak_integration 'original' \\
         -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
+	-Scoring:TransitionGroupPicker:recalculate_peaks 'true' \\ ??
+        -Scoring:TransitionGroupPicker:use_precursors false \\ ??
+        -Scoring:TransitionGroupPicker:use_consensus 'true' \\ ??
+        -Scoring:TransitionGroupPicker:recalculate_peaks_max_z 0.75 \\ ??
+        -Scoring:TransitionGroupPicker:minimal_quality -1.5 \\ ??
+        -Scoring:TransitionGroupPicker:resample_boundary 15 \\ ??
+        -Scoring:TransitionGroupPicker:compute_peak_shape_metrics false \\ ??
+        -Scoring:TransitionGroupPicker:compute_total_mi false \\ ??
+        -Scoring:TransitionGroupPicker:boundary_selection_method 'largest' \\ ??
         -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
+	-Scoring:TransitionGroupPicker:PeakPickerMRM:peak_width ${params.peak_width} \\ ??
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:signal_to_noise ${params.signal_to_noise} \\ ??
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:write_sn_log_messages ${params.write_sn_log_messages} \\ ??
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:remove_overlapping_peaks ${params.remove_overlapping_peaks} \\ ??
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:method ${params.method} \\ ??
         -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
         -Scoring:TransitionGroupPicker:PeakIntegrator:baseline_type 'base_to_base' \\
         -Scoring:TransitionGroupPicker:PeakIntegrator:fit_EMG 'false' \\
         -batchSize 1000 \\
         -readOptions ${params.cache_option} \\
         -tempDirectory tmp \\
+	-Scoring:DIAScoring:dia_extraction_window ${params.dia_extraction_window} \\ ??
+        -Scoring:DIAScoring:dia_extraction_unit ${params.dia_extraction_unit} \\ ??
+        -Scoring:DIAScoring:dia_centroided ${params.dia_centroided} \\ ??
+        -Scoring:DIAScoring:dia_byseries_intensity_min ${params.byseries_intensity_min} \\ ??
+        -Scoring:DIAScoring:dia_byseries_ppm_diff ${params.dia_byseries_ppm_diff} \\ ??
+        -Scoring:DIAScoring:dia_nr_isotopes ${params.nr_isotopes} \\ ??
+        -Scoring:DIAScoring:dia_nr_charges ${params.nr_charges} \\ ??
+        -Scoring:DIAScoring:peak_before_mono_max_ppm_diff ${params.peak_before_mono_max_ppm_diff} \\ ??
+        -Scoring:EMGScoring:max_iteration ${params.max_iteration} \\ ??
+        -Scoring:Scores:use_shape_score ${params.use_shape_score} \\ ??
+        -Scoring:Scores:use_coelution_score ${params.use_coelution_score} \\ ??
+        -Scoring:Scores:use_rt_score ${params.use_rt_score} \\ ??
+        -Scoring:Scores:use_library_score ${params.use_library_score} \\ ??
+        -Scoring:Scores:use_intensity_score ${params.use_library_score} \\ ??
+        -Scoring:Scores:use_nr_peaks_score ${params.use_nr_peaks_score} \\ ??
+        -Scoring:Scores:use_total_xic_score ${params.use_total_xic_score} \\ ??
+        -Scoring:Scores:use_total_mi_score ${params.use_total_mi_score} \\ ??
+        -Scoring:Scores:use_sn_score ${params.use_sn_score} \\ ??
+        -Scoring:Scores:use_mi_score ${params.use_mi_score} \\ ??
+        -Scoring:Scores:use_dia_scores ${params.use_dia_scores} \\ ??
+        -Scoring:Scores:use_ms1_correlation ${params.use_ms1_correlation} \\ ??
+        -Scoring:Scores:use_sonar_scores ${params.use_sonar_scores} \\ ??
+        -Scoring:Scores:use_ion_mobility_scores ${params.use_ion_mobility_scores} \\ ??
+        -Scoring:Scores:use_ms1_fullscan ${params.use_ms1_fullscan} \\ ??
+        -Scoring:Scores:use_ms1_mi ${params.use_ms1_mi} \\ ??
+        -Scoring:Scores:use_uis_scores ${params.use_uis_scores} \\ ??
         -Scoring:DIAScoring:dia_nr_isotopes 3 \\
         -enable_uis_scoring \\
         -Scoring:uis_threshold_sn -1 \\
