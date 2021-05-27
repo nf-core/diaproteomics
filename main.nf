@@ -629,8 +629,6 @@ process dia_spectral_library_search {
 	-extraction_function ${params.extraction_function} \\
 	-outer_loop_threads ${params.outer_loop_threads} \\
 	-ms1_isotopes ${params.ms1_isotopes} \\
-	-log ${params.log} \\
-	-debug ${params.debug} \\
 	-no_progress ${params.no_progress} \\
 	-test ${params.test} \\
 	-Calibration:ms1_im_calibration ${params.ms1_im_calibration} \\
@@ -646,12 +644,12 @@ process dia_spectral_library_search {
         -RTNormalization:estimateBestPeptides \\
         -RTNormalization:outlierMethod none \\
 	-RTNormalization:useIterativeChauvenet ${params.useIterativeChauvenet} \\
-	-RTNormalization:RANSACMaxIterations ${params.RANSACMaxIterations} \\
-        -RTNormalization:RANSACMaxPercentRTThreshold ${params.RANSACMaxPercentRTThreshold} \\
-        -RTNormalization:RANSACSamplingSize ${params.RANSACSamplingSize} \\
-        -RTNormalization:InitialQualityCutoff ${params.InitialQualityCutoff} \\
-        -RTNormalization:OverallQualityCutoff ${params.OverallQualityCutoff} \\
-	-RTNormalization:MinPeptidesPerBin ${parmas.MinPeptidesPerBin} \\
+	-RTNormalization:RANSACMaxIterations ${params.ransacMaxIterations} \\
+        -RTNormalization:RANSACMaxPercentRTThreshold ${params.ransacMaxPercentRTThreshold} \\
+        -RTNormalization:RANSACSamplingSize ${params.ransacSamplingSize} \\
+        -RTNormalization:InitialQualityCutoff ${params.initialQualityCutoff} \\
+        -RTNormalization:OverallQualityCutoff ${params.overallQualityCutoff} \\
+	-RTNormalization:MinPeptidesPerBin ${parmas.minPeptidesPerBin} \\
         -RTNormalization:NrRTBins ${params.irt_n_bins} \\
         -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
 	-RTNormalization:lowess:span ${params.span} \\

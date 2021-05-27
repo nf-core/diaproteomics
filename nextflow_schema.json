@@ -633,340 +633,444 @@
     ],
     "properties": {
         "enable_ms1": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true,
+	    "description": "Extract the precursor ion trace(s) and use for scoring if present"
         },
         "enable_ipf": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true,
+	    "description": "Enable additional scoring of identification assays using IPF (see online documentation)"
         },
         "extra_rt_extraction_window": {
             "type": "integer",
-            "default": 0
+            "default": 0,
+	    "description": "Output an XIC with a RT-window by this much larger (e.g. to visually inspect a larger area of the chromatogram)"
         },
         "ion_mobility_window": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Extraction window in ion mobility dimension (in milliseconds). This is the full window size, e.g. a value of 10 milliseconds would extract 5 milliseconds on either side."
         },
         "im_extraction_window_ms1": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Extraction window in ion mobility dimension for MS1 (in milliseconds)."
         },
         "use_ms1_ion_mobility": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true,
+	    "description": "Also perform precursor extraction using the same ion mobility window as for fragment ion extraction"
         },
         "irt_mz_extratcion_window": {
             "type": "integer",
-            "default": 50
+            "default": 50,
+	    "description": "Unit for mz extraction"
         },
         "irt_mz_extraction_window_unit": {
             "type": "string",
-            "default": "ppm"
+            "default": "ppm",
+	    "description"
         },
         "irt_im_extraction_window": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Ion mobility extraction window used for iRT (in 1/K0 or milliseconds)"
         },
         "matching_windows_only": {
-            "type": "string"
+            "type": "string",
+	    "default": , "",
+	    "description": ""
         },
         "min_coverage": {
             "type": "number",
-            "default": 0.6
+            "default": 0.6,
+	    "description": "Minimum relative amount of RT peptides to keep"
         },
         "split_file_input": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "The input files each contain one single SWATH (alternatively: all SWATH are in separate files)"
         },
         "use_elution_model_score": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Turn on elution model score (EMG fit to peak)"
         },
         "mz_correction_function": {
             "type": "string",
-            "default": "none"
+            "default": "none",
+	    "description": "Use the retention time normalization peptide MS2 masses to perform a mass correction (linear, weighted by intensity linear or quadratic) of all spectra."
         },
         "extraction_function": {
             "type": "string",
-            "default": "tophat"
+            "default": "tophat",
+	    "description": "Function used to extract the signal"
         },
         "outer_loop_threads": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "How many threads should be used for the outer loop (-1 use all threads, use 4 to analyze 4 SWATH windows in memory at once)."
         },
         "ms1_isotopes": {
             "type": "integer",
-            "default": 3
-        },
-        "log": {
-            "type": "string"
-        },
-        "debug": {
-            "type": "integer",
-            "default": 0
+            "default": 3,
+	    "description": "The number of MS1 isotopes used for extraction"
         },
         "no_progress": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Disables progress logging to command line"
         },
         "test": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Enables the test mode (needed for internal use only)"
         },
         "ms1_im_calibration": {
-            "type": "string"
+            "type": "bool",
+	    "default": "Whether to use MS1 precursor data for the ion mobility calibration (default = false, uses MS2 / fragment ions for calibration)",
+	    "description": "Whether to use MS1 precursor data for the ion mobility calibration (default = false, uses MS2 / fragment ions for calibration)"
         },
         "debug_im_file": {
-            "type": "string"
+            "type": "string",
+	    "default": "",
+	    "description": "Debug file for Ion Mobility calibration."
         },
         "debug_mz_file": {
-            "type": "string"
+            "type": "string",
+            "default": "",
+	    "description": "Debug file for m/z calibration."
         },
         "retentionTimeInterpretation": {
             "type": "string",
-            "default": "iRT"
+            "default": "iRT",
+	    "description": "How to interpret the provided retention time (the retention time column can either be interpreted to be in iRT, minutes or seconds)"
         },
         "override_group_label_check": {
             "type": "string",
-            "default": "linear"
+            "default": "linear",
+	    "description": "Override an internal check that assures that all members of the same PeptideGroupLabel have the same PeptideSequence (this ensures that only different isotopic forms of the same peptide can be grouped together in the same label group). Only turn this off if you know what you are doing."
         },
         "force_invalid_mods": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Force reading even if invalid modifications are encountered (OpenMS may not recognize the modification)"
         },
         "sonar": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "data is scanning SWATH data"
         },
         "useIterativeChauvenet": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Whether to use Chauvenet&amp;#39;s criterion when using iterative methods. This should be used if the algorithm removes too many datapoints but it may lead to true outliers being retained."
         },
-        "RANSACMaxIterations": {
+        "ransacMaxIterations": {
             "type": "integer",
-            "default": 1000
+            "default": 1000,
+	    "description": "Maximum iterations for the RANSAC outlier detection algorithm."
         },
-        "RANSACMaxPercentRTThreshold": {
+        "ransacMaxPercentRTThreshold": {
             "type": "integer",
-            "default": 3
+            "default": 3,
+	    "description": "Maximum threshold in RT dimension for the RANSAC outlier detection algorithm (in percent of the total gradient). Default is set to 3% which is around +/- 4 minutes on a 120 gradient."
         },
-        "RANSACSamplingSize": {
+        "ransacSamplingSize": {
             "type": "integer",
-            "default": 10
+            "default": 10,
+	    "description": "Sampling size of data points per iteration for the RANSAC outlier detection algorithm."
         },
-        "InitialQualityCutoff": {
+        "initialQualityCutoff": {
             "type": "number",
-            "default": 0.5
+            "default": 0.5,
+	    "description": "The initial overall quality cutoff for a peak to be scored (range ca. -2 to 2)"
         },
-        "OverallQualityCutoff": {
+        "overallQualityCutoff": {
             "type": "number",
-            "default": 5.5
+            "default": 5.5,
+	    "description": "The overall quality cutoff for a peak to go into the retention time estimation (range ca. 0 to 10)"
         },
-        "MinPeptidesPerBin": {
+        "minPeptidesPerBin": {
             "type": "integer",
-            "default": 1
+            "default": 1,
+	    "description": "Minimal number of peptides that are required for a bin to counted as &amp;#39;covered&amp;#39;"
         },
         "span": {
             "type": "number",
-            "default": 0.05
+            "default": 0.05,
+	    "description": "Span parameter for lowess"
         },
         "num_nodes": {
             "type": "integer",
-            "default": 5
+            "default": 5,
+	    "description": "Number of nodes for b spline"
         },
         "rt_normalization_factor": {
             "type": "integer",
-            "default": 100
+            "default": 100,
+	    "description": "The normalized RT is expected to be between 0 and 1. If your normalized RT has a different range, pass this here (e.g. it goes from 0 to 100, set this value to 100)"
         },
         "quantification_cutoff": {
             "type": "integer",
-            "default": 0
+            "default": 0,
+	    "description": "Cutoff in m/z below which peaks should not be used for quantification any more"
         },
         "write_convex_hull": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Whether to write out all points of all features into the featureXML"
         },
         "spectrum_addition_method": {
             "type": "string",
-            "default": "simple"
+            "default": "simple",
+	    "description": "For spectrum addition, either use simple concatenation or use peak resampling"
         },
         "add_up_spectra": {
             "type": "integer",
-            "default": 1
+            "default": 1,
+	    "description": "Add up spectra around the peak apex (needs to be a non-even integer)"
         },
         "spacing_for_spectra_resampling": {
             "type": "number",
-            "default": 0.005
+            "default": 0.005,
+	    "description": "If spectra are to be added, use this spacing to add them up"
         },
         "uis_threshold_sn": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "S/N threshold to consider identification transition (set to -1 to consider all)"
         },
         "uis_threshold_peak_area": {
             "type": "integer",
-            "default": 0
+            "default": 0,
+	    "description": "Peak area threshold to consider identification transition (set to -1 to consider all)"
         },
         "scoring_model": {
             "type": "string",
-            "default": "default"
+            "default": "default",
+	    "description": "Scoring model to use"
         },
         "im_extra_drift": {
             "type": "integer",
-            "default": 0
+            "default": 0,
+	    "description": "Extra drift time to extract for IM scoring (as a fraction, e.g. 0.25 means 25% extra on each side)"
         },
         "strict": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true,
+	    "description": "Whether to error (true) or skip (false) if a transition in a transition group does not have a corresponding chromatogram."
         },
         "stop_after_feature": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Stop finding after feature (ordered by intensity; -1 means do not stop)."
         },
         "min_peak_width": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Minimal peak width (s), discard all peaks below this value (-1 means no action)."
         },
         "recalculate_peaks": {
             "type": "string",
-            "default": "true"
+            "default": "true",
+	    "description": "Tries to get better peak picking by looking at peak consistency of all picked peaks. Tries to use the consensus (median) peak border if the variation within the picked peaks is too large."
         },
         "use_precursors": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use precursor chromatogram for peak picking (note that this may lead to precursor signal driving the peak picking)"
         },
         "use_consensus": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use consensus peak boundaries when computing transition group picking (if false, compute independent peak boundaries for each transition)"
         },
         "recalculate_peaks_max_z": {
             "type": "number",
-            "default": 0.75
+            "default": 0.75,
+	    "description": "Determines the maximal Z-Score (difference measured in standard deviations) that is considered too large for peak boundaries. If the Z-Score is above this value, the median is used for peak boundaries (default value 1.0)."
         },
         "minimal_quality": {
             "type": "number",
-            "default": -1.5
+            "default": -1.5,
+	    "description": "Only if compute_peak_quality is set, this parameter will not consider peaks below this quality threshold"
         },
         "resample_boundary": {
             "type": "integer",
-            "default": 15
+            "default": 15,
+	    "description": "For computing peak quality, how many extra seconds should be sample left and right of the actual peak"
         },
         "compute_peak_shape_metrics": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Tries to compute a quality value for each peakgroup and detect outlier transitions. The resulting score is centered around zero and values above 0 are generally good and below -1 or -2 are usually bad."
         },
         "compute_total_mi": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Compute mutual information metrics for individual transitions that can be used for OpenSWATH/IPF scoring."
         },
         "boundary_selection_method": {
             "type": "string",
-            "default": "largest"
+            "default": "largest",
+	    "description": "Method to use when selecting the best boundaries for peaks."
         },
         "peak_width": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+	    "description": "Force a certain minimal peak_width on the data (e.g. extend the peak at least by this amount on both sides) in seconds. -1 turns this feature off."
         },
         "signal_to_noise": {
             "type": "number",
-            "default": 0.1
+            "default": 0.1,
+	    "description": "Signal-to-noise threshold at which a peak will not be extended any more. Note that setting this too high (e.g. 1.0) can lead to peaks whose flanks are not fully captured."
         },
         "write_sn_log_messages": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Write out log messages of the signal-to-noise estimator in case of sparse windows or median in rightmost histogram bin"
         },
         "remove_overlapping_peaks": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Try to remove overlapping peaks during peak picking"
         },
         "method": {
             "type": "string",
-            "default": "corrected"
+            "default": "corrected",
+	    "description": "Which method to choose for chromatographic peak-picking (OpenSWATH legacy on raw data, corrected picking on smoothed chromatogram or Crawdad on smoothed chromatogram)."
         },
         "dia_extraction_window": {
             "type": "number",
-            "default": 0.05
+            "default": 0.05,
+	    "description": "DIA extraction window in Th or ppm."
         },
         "dia_extraction_unit": {
             "type": "string",
-            "default": "Th"
+            "default": "Th",
+	    "description": "DIA extraction window unit"
         },
         "dia_centroided": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use centroided DIA data."
         },
         "dia_byseries_intensity_min": {
             "type": "integer",
-            "default": 300
+            "default": 300,
+	    "description": "DIA b/y series minimum intensity to consider."
         },
         "dia_byseries_ppm_diff": {
             "type": "integer",
-            "default": 10
+            "default": 10,
+	    "description": "DIA b/y series minimal difference in ppm to consider."
         },
         "dia_nr_isotopes": {
             "type": "integer",
-            "default": 3
+            "default": 3,
+	    "description": "DIA number of isotopes to consider."
         },
         "dia_nr_charges": {
             "type": "integer",
-            "default": 4
+            "default": 4,
+	    "description": "DIA number of charges to consider."
         },
         "peak_before_mono_max_ppm_diff": {
             "type": "integer",
-            "default": 20
+            "default": 20,
+	    "description": "DIA maximal difference in ppm to count a peak at lower m/z when searching for evidence that a peak might not be monoisotopic."
         },
         "max_iteration": {
             "type": "integer",
-            "default": 10
+            "default": 10,
+	    "description": "Maximum number of iterations using by Levenberg-Marquardt algorithm."
         },
         "use_shape_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the shape score (this score measures the similarity in shape of the transitions using a cross-correlation)"
         },
         "use_coelution_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the coelution score (this score measures the similarity in coelution of the transitions using a cross-correlation)"
         },
         "use_rt_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the retention time score (this score measure the difference in retention time)"
         },
         "use_library_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the library score"
         },
         "use_intensity_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the intensity score"
         },
         "use_nr_peaks_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the number of peaks score"
         },
         "use_total_xic_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the total XIC score"
         },
         "total_mi_score": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+            "description": "Use the total MI score"
         },
         "use_sn_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the SN (signal to noise) score"
         },
         "use_mi_score": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the MI (mutual information) score"
         },
         "use_dia_scores": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the DIA (SWATH) scores. If turned off, will not use fragment ion spectra for scoring."
         },
         "use_ms1_correlation": {
-            "type": "string"
+            "type": "bool",
+	    "default": true,
+	    "description": "Use the correlation scores with the MS1 elution profiles"
         },
         "use_sonar_scores": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use the scores for SONAR scans (scanning swath)"
         },
         "use_ion_mobility_scores": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use the scores for Ion Mobility scans"
         },
         "use_ms1_fullscan": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use the full MS1 scan at the peak apex for scoring (ppm accuracy of precursor and isotopic pattern)"
         },
         "use_ms1_mi": {
-            "type": "string",
-            "default": "true"
+            "type": "bool",
+            "default": true,
+	    "description": "Use the MS1 MI score"
         },
         "use_uis_scores": {
-            "type": "string"
+            "type": "bool",
+	    "default": false,
+	    "description": "Use UIS scores for peptidoform identification"
         }
     }
 }
