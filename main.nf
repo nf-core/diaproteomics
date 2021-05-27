@@ -630,7 +630,6 @@ process dia_spectral_library_search {
 	-outer_loop_threads ${params.outer_loop_threads} \\
 	-ms1_isotopes ${params.ms1_isotopes} \\
 	-no_progress ${params.no_progress} \\
-	-test ${params.test} \\
 	-Calibration:ms1_im_calibration ${params.ms1_im_calibration} \\
 	-Calibration:im_correction_function ${params.im_correction_function} \\
 	-Calibration:debug_im_file ${params.debug_im_file} \\

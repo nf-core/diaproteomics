@@ -700,9 +700,6 @@
         "no_progress": {
             "type": "string"
         },
-        "test": {
-            "type": "string"
-        },
         "ms1_im_calibration": {
             "type": "string"
         },
