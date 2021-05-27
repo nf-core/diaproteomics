@@ -619,7 +619,7 @@ process dia_spectral_library_search {
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
 	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
-	-matching_window_only ${params.matching_window_only} \\
+	#-matching_window_only ${params.matching_window_only} \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
@@ -648,7 +648,7 @@ process dia_spectral_library_search {
         -RTNormalization:RANSACSamplingSize ${params.ransacSamplingSize} \\
         -RTNormalization:InitialQualityCutoff ${params.initialQualityCutoff} \\
         -RTNormalization:OverallQualityCutoff ${params.overallQualityCutoff} \\
-	-RTNormalization:MinPeptidesPerBin ${parmas.minPeptidesPerBin} \\
+	-RTNormalization:MinPeptidesPerBin ${params.minPeptidesPerBin} \\
         -RTNormalization:NrRTBins ${params.irt_n_bins} \\
         -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
 	-RTNormalization:lowess:span ${params.span} \\
