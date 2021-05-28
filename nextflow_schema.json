@@ -957,6 +957,26 @@
         },
         "use_uis_scores": {
             "type": "string"
+        },
+        "im_correction_function": {
+            "type": "string",
+            "default": "linear"
+        },
+        "by_series_intensity_min": {
+            "type": "integer",
+            "default": 300
+        },
+        "nr_isotopes": {
+            "type": "integer",
+            "default": 3
+        },
+        "nr_charges": {
+            "type": "integer",
+            "default": 4
+        },
+        "use_total_mi_score": {
+            "type": "string",
+            "default": "true"
         }
     }
 }
