@@ -977,6 +977,13 @@
         "use_total_mi_score": {
             "type": "string",
             "default": "true"
+        },
+        "matching_window_only": {
+            "type": "string"
+        },
+        "byseries_intensity_min": {
+            "type": "integer",
+            "default": 300
         }
     }
 }
