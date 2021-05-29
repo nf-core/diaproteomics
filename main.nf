@@ -736,7 +736,6 @@ process dia_spectral_library_search {
         -enable_uis_scoring \\
         -Scoring:uis_threshold_sn -1 \\
         -threads ${task.cpus} \\
-        ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
     """
 }
 
