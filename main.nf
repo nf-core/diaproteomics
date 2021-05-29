@@ -677,7 +677,6 @@ process dia_spectral_library_search {
         -Scoring:uis_threshold_peak_area ${params.uis_threshold_peak_area} \\
         -Scoring:scoring_model ${params.scoring_model} \\
         -Scoring:im_extra_drift ${params.im_extra_drift} \\
-        -Scoring:strict ${params.strict} \\
         -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
         -Scoring:TransitionGroupPicker:compute_peak_quality false \\
