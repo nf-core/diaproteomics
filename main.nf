@@ -632,7 +632,7 @@ process dia_spectral_library_search {
 	-Calibration:im_correction_function ${params.im_correction_function} \\
 	-Calibration:debug_im_file ${params.debug_im_file} \\
 	-Calibration:debug_mz_file ${params.debug_mz_file} \\
-        -Library:retentionTimeInterpretation ${params.retentionTimeInterpretation} \\
+       -Library:retentionTimeInterpretation ${params.retentionTimeInterpretation} \\
 	-Library:override_group_label_check ${params.override_group_label_check} \\
 	-Library:force_invalid_mods ${params.force_invalid_mods} \\
 	-min_upper_edge_dist ${params.min_upper_edge_dist} \\
