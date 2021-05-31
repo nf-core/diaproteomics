@@ -807,15 +807,15 @@
             "default": -1
         },
         "recalculate_peaks": {
-            "type": "boolean",
-            "default": true
+            "type": "string",
+            "default": "true"
         },
         "use_precursors": {
             "type": "string"
         },
         "use_consensus": {
-            "type": "boolean",
-            "default": true
+            "type": "string",
+            "default": "true"
         },
         "recalculate_peaks_max_z": {
             "type": "number",
