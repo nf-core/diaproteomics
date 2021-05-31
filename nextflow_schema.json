@@ -976,8 +976,8 @@
             "default": "true"
         },
         "matching_window_only": {
-            "type": "boolean",
-            "default": false
+            "type": "string",
+            "default": "false"
         },
         "byseries_intensity_min": {
             "type": "integer",
