@@ -616,7 +616,7 @@ process dia_spectral_library_search {
 	-extra_rt_extraction_window ${params.extra_rt_extraction_window} \\
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
-	-use_ms1_ion_mobility \\
+	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
 	-matching_window_only \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
@@ -678,17 +678,17 @@ process dia_spectral_library_search {
         -Scoring:im_extra_drift ${params.im_extra_drift} \\
         -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
-        -Scoring:TransitionGroupPicker:compute_peak_quality false \\
+        -Scoring:TransitionGroupPicker:compute_peak_quality \\
         -Scoring:TransitionGroupPicker:peak_integration 'original' \\
         -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
-	-Scoring:TransitionGroupPicker:recalculate_peaks 'true' \\
-        -Scoring:TransitionGroupPicker:use_precursors false \\
-        -Scoring:TransitionGroupPicker:use_consensus 'true' \\
+	-Scoring:TransitionGroupPicker:recalculate_peaks \\
+        -Scoring:TransitionGroupPicker:use_precursors \\
+        -Scoring:TransitionGroupPicker:use_consensus \\
         -Scoring:TransitionGroupPicker:recalculate_peaks_max_z 0.75 \\
         -Scoring:TransitionGroupPicker:minimal_quality -1.5 \\
         -Scoring:TransitionGroupPicker:resample_boundary 15 \\
-        -Scoring:TransitionGroupPicker:compute_peak_shape_metrics false \\
-        -Scoring:TransitionGroupPicker:compute_total_mi false \\
+        -Scoring:TransitionGroupPicker:compute_peak_shape_metrics \\
+        -Scoring:TransitionGroupPicker:compute_total_mi \\
         -Scoring:TransitionGroupPicker:boundary_selection_method 'largest' \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_frame_length 11 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
