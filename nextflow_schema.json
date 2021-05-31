@@ -633,12 +633,12 @@
     ],
     "properties": {
         "enable_ms1": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "enable_ipf": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "extra_rt_extraction_window": {
             "type": "integer",
@@ -653,8 +653,8 @@
             "default": -1
         },
         "use_ms1_ion_mobility": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "irt_mz_extratcion_window": {
             "type": "integer",
@@ -807,15 +807,15 @@
             "default": -1
         },
         "recalculate_peaks": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "use_precursors": {
             "type": "string"
         },
         "use_consensus": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "recalculate_peaks_max_z": {
             "type": "number",
