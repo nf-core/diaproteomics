@@ -982,6 +982,9 @@
         "byseries_intensity_min": {
             "type": "integer",
             "default": 300
+        },
+        "compute_peak_quality": {
+            "type": "string"
         }
     }
 }
