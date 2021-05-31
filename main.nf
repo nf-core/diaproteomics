@@ -604,6 +604,8 @@ process dia_spectral_library_search {
         -in ${mzml_file} \\
         -tr ${lib_file.baseName}.pqp \\
         -sort_swath_maps \\
+	-enable_ms1 \\
+	-enable_ipf \\
 	-tr_irt ${irt_file.baseName}.pqp \\
         -min_rsq ${params.irt_min_rsq} \\
         -out_osw ${mzml_file.baseName}.osw \\
@@ -616,31 +618,31 @@ process dia_spectral_library_search {
 	-extra_rt_extraction_window ${params.extra_rt_extraction_window} \\
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
-	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
-	-matching_window_only ${params.matching_window_only} \\
+	-use_ms1_ion_mobility \\
+	-matching_window_only \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
-	-split_file_input ${params.split_file_input} \\
-	-use_elution_model_score ${params.use_elution_model_score} \\
+	-split_file_input \\
+	-use_elution_model_score \\
 	-mz_correction_function ${params.mz_correction_function} \\
 	-extraction_function ${params.extraction_function} \\
 	-outer_loop_threads ${params.outer_loop_threads} \\
 	-ms1_isotopes ${params.ms1_isotopes} \\
-	-no_progress ${params.no_progress} \\
-	-Calibration:ms1_im_calibration ${params.ms1_im_calibration} \\
+	-no_progress \\
+	-Calibration:ms1_im_calibration \\
 	-Calibration:im_correction_function ${params.im_correction_function} \\
 	-Calibration:debug_im_file ${params.debug_im_file} \\
 	-Calibration:debug_mz_file ${params.debug_mz_file} \\
         -Library:retentionTimeInterpretation ${params.retentionTimeInterpretation} \\
-	-Library:override_group_label_check ${params.override_group_label_check} \\
-	-Library:force_invalid_mods ${params.force_invalid_mods} \\
+	-Library:override_group_label_check \\
+	-Library:force_invalid_mods \\
 	-min_upper_edge_dist ${params.min_upper_edge_dist} \\
-	-sonar ${params.sonar} \\
+	-sonar \\
         -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
         -RTNormalization:estimateBestPeptides \\
         -RTNormalization:outlierMethod none \\
-	-RTNormalization:useIterativeChauvenet ${params.useIterativeChauvenet} \\
+	-RTNormalization:useIterativeChauvenet \\
 	-RTNormalization:RANSACMaxIterations ${params.ransacMaxIterations} \\
         -RTNormalization:RANSACMaxPercentRTThreshold ${params.ransacMaxPercentRTThreshold} \\
         -RTNormalization:RANSACSamplingSize ${params.ransacSamplingSize} \\
@@ -655,7 +657,7 @@ process dia_spectral_library_search {
         -Scoring:stop_report_after_feature 5 \\
         -Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\
         -Scoring:quantification_cutoff ${params.quantification_cutoff} \\
-        -Scoring:write_convex_hull ${params.write_convex_hull} \\
+        -Scoring:write_convex_hull \\
         -Scoring:spectrum_addition_method ${params.spectrum_addition_method} \\
         -Scoring:add_up_spectra ${params.add_up_spectra} \\
         -Scoring:spacing_for_spectra_resampling ${params.spacing_for_spectra_resampling} \\
@@ -669,7 +671,6 @@ process dia_spectral_library_search {
         -Scoring:stop_report_after_feature 5 \\
 	-Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\
         -Scoring:quantification_cutoff ${params.quantification_cutoff} \\
-        -Scoring:write_convex_hull ${params.write_convex_hull} \\
         -Scoring:spectrum_addition_method ${params.spectrum_addition_method} \\
         -Scoring:add_up_spectra ${params.add_up_spectra} \\
         -Scoring:spacing_for_spectra_resampling ${params.spacing_for_spectra_resampling} \\
@@ -697,7 +698,7 @@ process dia_spectral_library_search {
         -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
 	-Scoring:TransitionGroupPicker:PeakPickerMRM:peak_width ${params.peak_width} \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:signal_to_noise ${params.signal_to_noise} \\
-        -Scoring:TransitionGroupPicker:PeakPickerMRM:write_sn_log_messages ${params.write_sn_log_messages} \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:write_sn_log_messages \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:remove_overlapping_peaks ${params.remove_overlapping_peaks} \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:method ${params.method} \\
         -Scoring:TransitionGroupPicker:PeakIntegrator:integration_type 'intensity_sum' \\
@@ -708,7 +709,7 @@ process dia_spectral_library_search {
         -tempDirectory tmp \\
 	-Scoring:DIAScoring:dia_extraction_window ${params.dia_extraction_window} \\
         -Scoring:DIAScoring:dia_extraction_unit ${params.dia_extraction_unit} \\
-        -Scoring:DIAScoring:dia_centroided ${params.dia_centroided} \\
+        -Scoring:DIAScoring:dia_centroided \\
         -Scoring:DIAScoring:dia_byseries_intensity_min ${params.byseries_intensity_min} \\
         -Scoring:DIAScoring:dia_byseries_ppm_diff ${params.dia_byseries_ppm_diff} \\
         -Scoring:DIAScoring:dia_nr_isotopes ${params.nr_isotopes} \\
@@ -722,20 +723,21 @@ process dia_spectral_library_search {
         -Scoring:Scores:use_intensity_score ${params.use_library_score} \\
         -Scoring:Scores:use_nr_peaks_score ${params.use_nr_peaks_score} \\
         -Scoring:Scores:use_total_xic_score ${params.use_total_xic_score} \\
-        -Scoring:Scores:use_total_mi_score ${params.use_total_mi_score} \\
+        -Scoring:Scores:use_total_mi_score \\
         -Scoring:Scores:use_sn_score ${params.use_sn_score} \\
         -Scoring:Scores:use_mi_score ${params.use_mi_score} \\
         -Scoring:Scores:use_dia_scores ${params.use_dia_scores} \\
-        -Scoring:Scores:use_ms1_correlation ${params.use_ms1_correlation} \\
-        -Scoring:Scores:use_sonar_scores ${params.use_sonar_scores} \\
-        -Scoring:Scores:use_ion_mobility_scores ${params.use_ion_mobility_scores} \\
-        -Scoring:Scores:use_ms1_fullscan ${params.use_ms1_fullscan} \\
+        -Scoring:Scores:use_ms1_correlation \\
+        -Scoring:Scores:use_sonar_scores \\
+        -Scoring:Scores:use_ion_mobility_scores\\
+        -Scoring:Scores:use_ms1_fullscan \\
         -Scoring:Scores:use_ms1_mi ${params.use_ms1_mi} \\
-        -Scoring:Scores:use_uis_scores ${params.use_uis_scores} \\
+        -Scoring:Scores:use_uis_scores \\
         -Scoring:DIAScoring:dia_nr_isotopes 3 \\
         -enable_uis_scoring \\
         -Scoring:uis_threshold_sn -1 \\
         -threads ${task.cpus} \\
+	${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
     """
 }
 

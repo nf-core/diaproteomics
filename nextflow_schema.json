@@ -656,9 +656,6 @@
             "type": "string",
             "default": "true"
         },
-        "matching_windows_only": {
-            "type": "string"
-        },
         "irt_mz_extratcion_window": {
             "type": "integer",
             "default": 50
