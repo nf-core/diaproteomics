@@ -678,12 +678,12 @@ process dia_spectral_library_search {
         -Scoring:im_extra_drift ${params.im_extra_drift} \\
         -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
-        -Scoring:TransitionGroupPicker:compute_peak_quality \\
+        -Scoring:TransitionGroupPicker:compute_peak_quality ${params.compute_peak_quality.toString()} \\
         -Scoring:TransitionGroupPicker:peak_integration 'original' \\
         -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
-	-Scoring:TransitionGroupPicker:recalculate_peaks \\
+	-Scoring:TransitionGroupPicker:recalculate_peaks ${params.recalculate_peaks.toString()} \\
         -Scoring:TransitionGroupPicker:use_precursors \\
-        -Scoring:TransitionGroupPicker:use_consensus \\
+        -Scoring:TransitionGroupPicker:use_consensus ${params.use_consensus.toString()} \\
         -Scoring:TransitionGroupPicker:recalculate_peaks_max_z 0.75 \\
         -Scoring:TransitionGroupPicker:minimal_quality -1.5 \\
         -Scoring:TransitionGroupPicker:resample_boundary 15 \\
