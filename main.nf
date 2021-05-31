@@ -617,7 +617,7 @@ process dia_spectral_library_search {
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
 	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
-	-matching_window_only ${params.matching_window_only}.toString() \\
+	-matching_window_only ${params.matching_window_only.toString()} \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
