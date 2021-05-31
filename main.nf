@@ -620,7 +620,7 @@ process dia_spectral_library_search {
 	-matching_window_only ${params.matching_window_only} \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
-        -irt_im_extraction_window ${params.irt_im_extraction_window} \\
+       -irt_im_extraction_window ${params.irt_im_extraction_window} \\
 	-split_file_input ${params.split_file_input} \\
 	-use_elution_model_score ${params.use_elution_model_score} \\
 	-mz_correction_function ${params.mz_correction_function} \\
