@@ -807,15 +807,15 @@
             "default": -1
         },
         "recalculate_peaks": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "use_precursors": {
             "type": "string"
         },
         "use_consensus": {
-            "type": "string",
-            "default": "true"
+            "type": "boolean",
+            "default": true
         },
         "recalculate_peaks_max_z": {
             "type": "number",
@@ -976,16 +976,16 @@
             "default": "true"
         },
         "matching_window_only": {
-            "type": "string",
-            "default": "false"
+            "type": "boolean",
+            "default": false
         },
         "byseries_intensity_min": {
             "type": "integer",
             "default": 300
         },
         "compute_peak_quality": {
-            "type": "string",
-	    "default": "false"
+            "type": "boolean",
+            "default": false
         }
     }
 }
