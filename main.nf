@@ -617,7 +617,6 @@ process dia_spectral_library_search {
 	-ion_mobility_window ${params.ion_mobility_window} \\
 	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
 	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
-	-matching_window_only ${params.matching_window_only.toString()} \\
 	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
 	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
@@ -668,7 +667,6 @@ process dia_spectral_library_search {
         -Scoring:im_extra_drift ${params.im_extra_drift} \\
         -Scoring:TransitionGroupPicker:stop_after_feature ${params.stop_after_feature} \\
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
-        -Scoring:TransitionGroupPicker:compute_peak_quality ${params.compute_peak_quality.toString()} \\
         -Scoring:TransitionGroupPicker:peak_integration 'original' \\
         -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
 	-Scoring:TransitionGroupPicker:recalculate_peaks ${params.recalculate_peaks.toString()} \\
