@@ -604,7 +604,7 @@ process dia_spectral_library_search {
         -in ${mzml_file} \\
         -tr ${lib_file.baseName}.pqp \\
         -sort_swath_maps \\
-	-tr_irt ${irt_file.baseName}.pqp \\
+        -tr_irt ${irt_file.baseName}.pqp \\
         -min_rsq ${params.irt_min_rsq} \\
         -out_osw ${mzml_file.baseName}.osw \\
         -out_chrom ${mzml_file.baseName}_chrom.mzML \\
@@ -613,33 +613,33 @@ process dia_spectral_library_search {
         -mz_extraction_window_unit ${params.mz_extraction_window_unit} \\
         -mz_extraction_window_ms1_unit ${params.mz_extraction_window_ms1_unit} \\
         -rt_extraction_window ${params.rt_extraction_window} \\
-	-extra_rt_extraction_window ${params.extra_rt_extraction_window} \\
-	-ion_mobility_window ${params.ion_mobility_window} \\
-	-im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
-	-use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
-	-irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
-	-irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
+        -extra_rt_extraction_window ${params.extra_rt_extraction_window} \\
+        -ion_mobility_window ${params.ion_mobility_window} \\
+        -im_extraction_window_ms1 ${params.im_extraction_window_ms1} \\
+        -use_ms1_ion_mobility ${params.use_ms1_ion_mobility} \\
+        -irt_mz_extraction_window ${params.irt_mz_extratcion_window} \\
+        -irt_mz_extraction_window_unit ${params.irt_mz_extraction_window_unit} \\
         -irt_im_extraction_window ${params.irt_im_extraction_window} \\
-	-mz_correction_function ${params.mz_correction_function} \\
-	-extraction_function ${params.extraction_function} \\
-	-outer_loop_threads ${params.outer_loop_threads} \\
-	-ms1_isotopes ${params.ms1_isotopes} \\
-	-Calibration:im_correction_function ${params.im_correction_function} \\
-	-Calibration:debug_im_file ${params.debug_im_file} \\
-	-Calibration:debug_mz_file ${params.debug_mz_file} \\
+        -mz_correction_function ${params.mz_correction_function} \\
+        -extraction_function ${params.extraction_function} \\
+        -outer_loop_threads ${params.outer_loop_threads} \\
+        -ms1_isotopes ${params.ms1_isotopes} \\
+        -Calibration:im_correction_function ${params.im_correction_function} \\
+        -Calibration:debug_im_file ${params.debug_im_file} \\
+        -Calibration:debug_mz_file ${params.debug_mz_file} \\
         -Library:retentionTimeInterpretation ${params.retentionTimeInterpretation} \\
-	-min_upper_edge_dist ${params.min_upper_edge_dist} \\
+        -min_upper_edge_dist ${params.min_upper_edge_dist} \\
         -RTNormalization:alignmentMethod ${params.irt_alignment_method} \\
         -RTNormalization:outlierMethod none \\
-	-RTNormalization:RANSACMaxIterations ${params.ransacMaxIterations} \\
+        -RTNormalization:RANSACMaxIterations ${params.ransacMaxIterations} \\
         -RTNormalization:RANSACMaxPercentRTThreshold ${params.ransacMaxPercentRTThreshold} \\
         -RTNormalization:RANSACSamplingSize ${params.ransacSamplingSize} \\
         -RTNormalization:InitialQualityCutoff ${params.initialQualityCutoff} \\
         -RTNormalization:OverallQualityCutoff ${params.overallQualityCutoff} \\
-	-RTNormalization:MinPeptidesPerBin ${params.minPeptidesPerBin} \\
+        -RTNormalization:MinPeptidesPerBin ${params.minPeptidesPerBin} \\
         -RTNormalization:NrRTBins ${params.irt_n_bins} \\
         -RTNormalization:MinBinsFilled ${params.irt_min_bins_covered} \\
-	-RTNormalization:lowess:span ${params.span} \\
+        -RTNormalization:lowess:span ${params.span} \\
         -RTNormalization:b_spline:num_nodes ${params.num_nodes} \\
         -mz_correction_function quadratic_regression_delta_ppm \\
         -Scoring:stop_report_after_feature 5 \\
@@ -656,7 +656,7 @@ process dia_spectral_library_search {
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
         -mz_correction_function quadratic_regression_delta_ppm \\
         -Scoring:stop_report_after_feature 5 \\
-	-Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\
+        -Scoring:rt_normalization_factor ${params.rt_normalization_factor} \\
         -Scoring:quantification_cutoff ${params.quantification_cutoff} \\
         -Scoring:spectrum_addition_method ${params.spectrum_addition_method} \\
         -Scoring:add_up_spectra ${params.add_up_spectra} \\
@@ -669,7 +669,7 @@ process dia_spectral_library_search {
         -Scoring:TransitionGroupPicker:min_peak_width ${params.min_peak_width} \\
         -Scoring:TransitionGroupPicker:peak_integration 'original' \\
         -Scoring:TransitionGroupPicker:background_subtraction 'none' \\
-	-Scoring:TransitionGroupPicker:recalculate_peaks ${params.recalculate_peaks.toString()} \\
+        -Scoring:TransitionGroupPicker:recalculate_peaks ${params.recalculate_peaks.toString()} \\
         -Scoring:TransitionGroupPicker:use_consensus ${params.use_consensus.toString()} \\
         -Scoring:TransitionGroupPicker:recalculate_peaks_max_z 0.75 \\
         -Scoring:TransitionGroupPicker:minimal_quality -1.5 \\
@@ -679,7 +679,7 @@ process dia_spectral_library_search {
         -Scoring:TransitionGroupPicker:PeakPickerMRM:sgolay_polynomial_order 3 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:gauss_width 30 \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:use_gauss 'false' \\
-	-Scoring:TransitionGroupPicker:PeakPickerMRM:peak_width ${params.peak_width} \\
+        -Scoring:TransitionGroupPicker:PeakPickerMRM:peak_width ${params.peak_width} \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:signal_to_noise ${params.signal_to_noise} \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:remove_overlapping_peaks ${params.remove_overlapping_peaks} \\
         -Scoring:TransitionGroupPicker:PeakPickerMRM:method ${params.method} \\
@@ -689,7 +689,7 @@ process dia_spectral_library_search {
         -batchSize 1000 \\
         -readOptions ${params.cache_option} \\
         -tempDirectory tmp \\
-	-Scoring:DIAScoring:dia_extraction_window ${params.dia_extraction_window} \\
+        -Scoring:DIAScoring:dia_extraction_window ${params.dia_extraction_window} \\
         -Scoring:DIAScoring:dia_extraction_unit ${params.dia_extraction_unit} \\
         -Scoring:DIAScoring:dia_byseries_intensity_min ${params.byseries_intensity_min} \\
         -Scoring:DIAScoring:dia_byseries_ppm_diff ${params.dia_byseries_ppm_diff} \\
@@ -710,7 +710,7 @@ process dia_spectral_library_search {
         -enable_uis_scoring \\
         -Scoring:uis_threshold_sn -1 \\
         -threads ${task.cpus} \\
-	${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
+        ${force_option} ${ms1_option} ${ms1_scoring} ${ms1_mi}
     """
 }
 
