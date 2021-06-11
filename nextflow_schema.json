@@ -642,15 +642,18 @@
         },
         "extra_rt_extraction_window": {
             "type": "integer",
-            "default": 0
+            "default": 0,
+            "hidden": "true"
         },
         "ion_mobility_window": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+            "hidden": "true"
         },
         "im_extraction_window_ms1": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+            "hidden": "true"
         },
         "use_ms1_ion_mobility": {
             "type": "boolean",
@@ -666,7 +669,8 @@
         },
         "irt_im_extraction_window": {
             "type": "integer",
-            "default": -1
+            "default": -1,
+            "hidden": "true"
         },
         "min_coverage": {
             "type": "number",
@@ -712,7 +716,8 @@
         },
         "override_group_label_check": {
             "type": "string",
-            "default": "linear"
+            "default": "linear",
+            "hidden": "true"
         },
         "force_invalid_mods": {
             "type": "string"
@@ -725,15 +730,18 @@
         },
         "ransacMaxIterations": {
             "type": "integer",
-            "default": 1000
+            "default": 1000,
+            "hidden": "true"
         },
         "ransacMaxPercentRTThreshold": {
             "type": "integer",
-            "default": 3
+            "default": 3,
+            "hidden": "true"
         },
         "ransacSamplingSize": {
             "type": "integer",
-            "default": 10
+            "default": 10,
+            "hidden": "true"
         },
         "initialQualityCutoff": {
             "type": "number",
