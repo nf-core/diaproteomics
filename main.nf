@@ -4,7 +4,8 @@
     nf-core/diaproteomics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/nf-core/diaproteomics
-Website: https://nf-co.re/diaproteomics
+
+    Website: https://nf-co.re/diaproteomics
     Slack  : https://nfcore.slack.com/channels/diaproteomics
 ----------------------------------------------------------------------------------------
 */
